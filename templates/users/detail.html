@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تفاصيل المستخدم - {{ user_detail.user.first_name }} {{ user_detail.user.last_name }}{% endblock %}
+
+{% block page_title %}تفاصيل المستخدم{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <a href="{% url 'users:edit' user_detail.id %}" class="btn btn-warning">
+        <i class="fas fa-edit me-1"></i>تعديل
+    </a>
+    <a href="{% url 'users:list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- User Info -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <img src="{% static 'images/avatar-placeholder.png' %}" 
+                         alt="صورة المستخدم" 
+                         class="rounded-circle" 
+                         width="120" 
+                         height="120">
+                </div>
+                <h4 class="card-title">{{ user_detail.user.first_name }} {{ user_detail.user.last_name }}</h4>
+                <p class="text-muted">@{{ user_detail.user.username }}</p>
+                <p class="text-muted">{{ user_detail.user.email }}</p>
+                <span class="badge bg-{% if user_detail.user.is_active %}success{% else %}danger{% endif %}">
+                    {% if user_detail.user.is_active %}نشط{% else %}غير نشط{% endif %}
+                </span>
+                <span class="badge bg-primary ms-1">{{ user_detail.get_role_display }}</span>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="card shadow-sm mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>إحصائيات</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h5 class="text-primary">15</h5>
+                        <small class="text-muted">المهام المكتملة</small>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-success">8</h5>
+                        <small class="text-muted">المشاريع النشطة</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card shadow-sm mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-bolt me-2"></i>إجراءات سريعة</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'users:edit' user_detail.id %}" class="btn btn-warning btn-sm">
+                        <i class="fas fa-edit me-1"></i>تعديل المستخدم
+                    </a>
+                    <button type="button" class="btn btn-info btn-sm">
+                        <i class="fas fa-envelope me-1"></i>إرسال رسالة
+                    </button>
+                    <button type="button" class="btn btn-success btn-sm">
+                        <i class="fas fa-key me-1"></i>إعادة تعيين كلمة المرور
+                    </button>
+                    <button type="button" class="btn btn-{% if user_detail.is_active %}danger{% else %}success{% endif %} btn-sm">
+                        <i class="fas fa-{% if user_detail.is_active %}ban{% else %}check{% endif %} me-1"></i>
+                        {% if user_detail.is_active %}تعطيل الحساب{% else %}تفعيل الحساب{% endif %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Details -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>تفاصيل المستخدم</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">الاسم الكامل</label>
+                            <p class="form-control-plaintext">{{ user_detail.user.first_name }} {{ user_detail.user.last_name }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">اسم المستخدم</label>
+                            <p class="form-control-plaintext">@{{ user_detail.user.username }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">البريد الإلكتروني</label>
+                            <p class="form-control-plaintext">{{ user_detail.user.email }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">رقم الهاتف</label>
+                            <p class="form-control-plaintext">{{ user_detail.phone|default:"غير محدد" }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">المنصب</label>
+                            <p class="form-control-plaintext">{{ user_detail.position|default:"غير محدد" }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">القسم</label>
+                            <p class="form-control-plaintext">{{ user_detail.department|default:"غير محدد" }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">تاريخ الانضمام</label>
+                            <p class="form-control-plaintext">{{ user_detail.created_at|date:"Y/m/d" }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">آخر تسجيل دخول</label>
+                            <p class="form-control-plaintext">{{ user_detail.user.last_login|date:"Y/m/d H:i"|default:"لم يسجل دخول من قبل" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Log -->
+        <div class="card shadow-sm mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-history me-2"></i>سجل النشاط</h6>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-primary"></div>
+                        <div class="timeline-content">
+                            <h6 class="timeline-title">تسجيل دخول جديد</h6>
+                            <p class="timeline-text">تم تسجيل الدخول بنجاح من المتصفح</p>
+                            <small class="text-muted">منذ 5 دقائق</small>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-success"></div>
+                        <div class="timeline-content">
+                            <h6 class="timeline-title">تحديث الملف الشخصي</h6>
+                            <p class="timeline-text">تم تحديث معلومات الاتصال</p>
+                            <small class="text-muted">منذ ساعة</small>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-info"></div>
+                        <div class="timeline-content">
+                            <h6 class="timeline-title">إنشاء مهمة جديدة</h6>
+                            <p class="timeline-text">تم إنشاء مهمة "مراجعة التقارير"</p>
+                            <small class="text-muted">منذ 3 ساعات</small>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-warning"></div>
+                        <div class="timeline-content">
+                            <h6 class="timeline-title">تغيير كلمة المرور</h6>
+                            <p class="timeline-text">تم تغيير كلمة المرور بنجاح</p>
+                            <small class="text-muted">منذ يوم</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Permissions -->
+        <div class="card shadow-sm mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-shield-alt me-2"></i>الصلاحيات</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="can_view_employees" checked>
+                            <label class="form-check-label" for="can_view_employees">
+                                عرض الموظفين
+                            </label>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="can_edit_employees" checked>
+                            <label class="form-check-label" for="can_edit_employees">
+                                تعديل الموظفين
+                            </label>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="can_view_reports">
+                            <label class="form-check-label" for="can_view_reports">
+                                عرض التقارير
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="can_manage_schedules" checked>
+                            <label class="form-check-label" for="can_manage_schedules">
+                                إدارة الجداول
+                            </label>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="can_approve_leaves">
+                            <label class="form-check-label" for="can_approve_leaves">
+                                الموافقة على الإجازات
+                            </label>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="is_admin">
+                            <label class="form-check-label" for="is_admin">
+                                صلاحيات المدير
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -35px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 3px solid #dee2e6;
+}
+
+.timeline-title {
+    margin-bottom: 5px;
+    color: #495057;
+}
+
+.timeline-text {
+    margin-bottom: 5px;
+    color: #6c757d;
+}
+</style>
+{% endblock %}

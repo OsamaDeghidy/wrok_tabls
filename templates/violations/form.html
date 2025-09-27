@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if violation %}تعديل المخالفة{% else %}إضافة مخالفة جديدة{% endif %} - نظام إدارة الجداول التشغيلية
+{% endblock %}
+
+{% block page_title %}
+    {% if violation %}تعديل المخالفة{% else %}إضافة مخالفة جديدة{% endif %}
+{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <a href="{% url 'violations:list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    {% if violation %}تعديل المخالفة{% else %}إضافة مخالفة جديدة{% endif %}
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="employee" class="form-label">الموظف <span class="text-danger">*</span></label>
+                                <select class="form-select" id="employee" name="employee" required>
+                                    <option value="">اختر الموظف</option>
+                                    <option value="1" {% if violation.employee == '1' %}selected{% endif %}>أحمد محمد</option>
+                                    <option value="2" {% if violation.employee == '2' %}selected{% endif %}>فاطمة علي</option>
+                                    <option value="3" {% if violation.employee == '3' %}selected{% endif %}>محمد حسن</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="type" class="form-label">نوع المخالفة <span class="text-danger">*</span></label>
+                                <select class="form-select" id="type" name="type" required>
+                                    <option value="">اختر نوع المخالفة</option>
+                                    <option value="attendance" {% if violation.type == 'attendance' %}selected{% endif %}>تأخير</option>
+                                    <option value="absence" {% if violation.type == 'absence' %}selected{% endif %}>غياب</option>
+                                    <option value="behavior" {% if violation.type == 'behavior' %}selected{% endif %}>سلوك</option>
+                                    <option value="performance" {% if violation.type == 'performance' %}selected{% endif %}>أداء</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="date" class="form-label">التاريخ <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="date" name="date" value="{{ violation.date|default:'' }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="time" class="form-label">الوقت <span class="text-danger">*</span></label>
+                                <input type="time" class="form-control" id="time" name="time" value="{{ violation.time|default:'' }}" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">وصف المخالفة <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="description" name="description" rows="4" required>{{ violation.description|default:'' }}</textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="severity" class="form-label">درجة الخطورة</label>
+                                <select class="form-select" id="severity" name="severity">
+                                    <option value="low" {% if violation.severity == 'low' %}selected{% endif %}>منخفضة</option>
+                                    <option value="medium" {% if violation.severity == 'medium' %}selected{% endif %}>متوسطة</option>
+                                    <option value="high" {% if violation.severity == 'high' %}selected{% endif %}>عالية</option>
+                                    <option value="critical" {% if violation.severity == 'critical' %}selected{% endif %}>حرجة</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="status" class="form-label">الحالة</label>
+                                <select class="form-select" id="status" name="status">
+                                    <option value="pending" {% if violation.status == 'pending' %}selected{% endif %}>معلقة</option>
+                                    <option value="resolved" {% if violation.status == 'resolved' %}selected{% endif %}>محلولة</option>
+                                    <option value="escalated" {% if violation.status == 'escalated' %}selected{% endif %}>مرفوعة</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="action_taken" class="form-label">الإجراء المتخذ</label>
+                        <textarea class="form-control" id="action_taken" name="action_taken" rows="3">{{ violation.action_taken|default:'' }}</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">ملاحظات إضافية</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3">{{ violation.notes|default:'' }}</textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'violations:list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>إلغاء
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>حفظ
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">معلومات إضافية</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">درجات الخطورة:</label>
+                    <ul class="list-unstyled">
+                        <li><span class="badge bg-success">منخفضة</span> - مخالفات بسيطة</li>
+                        <li><span class="badge bg-warning">متوسطة</span> - مخالفات متكررة</li>
+                        <li><span class="badge bg-danger">عالية</span> - مخالفات خطيرة</li>
+                        <li><span class="badge bg-dark">حرجة</span> - مخالفات جسيمة</li>
+                    </ul>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">أنواع المخالفات:</label>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-clock text-warning me-1"></i> تأخير - عدم الالتزام بالمواعيد</li>
+                        <li><i class="fas fa-user-times text-danger me-1"></i> غياب - عدم الحضور بدون عذر</li>
+                        <li><i class="fas fa-exclamation-triangle text-warning me-1"></i> سلوك - سلوك غير لائق</li>
+                        <li><i class="fas fa-chart-line text-info me-1"></i> أداء - ضعف في الأداء</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

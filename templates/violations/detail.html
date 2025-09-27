@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تفاصيل المخالفة - نظام إدارة الجداول التشغيلية{% endblock %}
+
+{% block page_title %}تفاصيل المخالفة #{{ violation.id }}{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <a href="{% url 'violations:list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
+    </a>
+    <a href="{% url 'violations:edit' violation.id %}" class="btn btn-warning">
+        <i class="fas fa-edit me-1"></i>تعديل
+    </a>
+    <button type="button" class="btn btn-danger" onclick="confirmDelete({{ violation.id }})">
+        <i class="fas fa-trash me-1"></i>حذف
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Violation Details -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">تفاصيل المخالفة</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">رقم المخالفة:</label>
+                            <p class="form-control-plaintext">#{{ violation.id }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">التاريخ:</label>
+                            <p class="form-control-plaintext">{{ violation.date }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">الوقت:</label>
+                            <p class="form-control-plaintext">{{ violation.time }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">نوع المخالفة:</label>
+                            <p class="form-control-plaintext">
+                                <span class="badge bg-{{ violation.type_color }}">{{ violation.type_display }}</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">درجة الخطورة:</label>
+                            <p class="form-control-plaintext">
+                                <span class="badge bg-{{ violation.severity_color }}">{{ violation.severity_display }}</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">الحالة:</label>
+                            <p class="form-control-plaintext">
+                                <span class="badge bg-{{ violation.status_color }}">{{ violation.status_display }}</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">وصف المخالفة:</label>
+                    <div class="border rounded p-3 bg-light">
+                        {{ violation.description }}
+                    </div>
+                </div>
+
+                {% if violation.action_taken %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold">الإجراء المتخذ:</label>
+                    <div class="border rounded p-3 bg-light">
+                        {{ violation.action_taken }}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if violation.notes %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold">ملاحظات إضافية:</label>
+                    <div class="border rounded p-3 bg-light">
+                        {{ violation.notes }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Employee Information -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">معلومات الموظف</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <img class="rounded-circle me-3" src="{% static 'images/avatar-placeholder.png' %}" width="60" height="60" alt="">
+                    <div>
+                        <h5 class="mb-1">{{ violation.employee_name }}</h5>
+                        <p class="text-muted mb-1">{{ violation.employee_position }}</p>
+                        <p class="text-muted mb-0">{{ violation.employee_department }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Status Actions -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">إجراءات الحالة</h6>
+            </div>
+            <div class="card-body">
+                {% if violation.status == 'pending' %}
+                <div class="d-grid gap-2">
+                    <button class="btn btn-success" onclick="updateStatus('resolved')">
+                        <i class="fas fa-check me-1"></i>حل المخالفة
+                    </button>
+                    <button class="btn btn-warning" onclick="updateStatus('escalated')">
+                        <i class="fas fa-arrow-up me-1"></i>رفع المخالفة
+                    </button>
+                </div>
+                {% elif violation.status == 'resolved' %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-1"></i>
+                    تم حل هذه المخالفة
+                </div>
+                {% elif violation.status == 'escalated' %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-arrow-up me-1"></i>
+                    تم رفع هذه المخالفة للإدارة العليا
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Violation History -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">سجل المخالفات</h6>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    {% for event in violation.history %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-{{ event.color }}"></div>
+                        <div class="timeline-content">
+                            <h6 class="timeline-title">{{ event.title }}</h6>
+                            <p class="timeline-text">{{ event.description }}</p>
+                            <small class="text-muted">{{ event.date }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">إحصائيات سريعة</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h4 class="text-primary">{{ violation.employee_violations_count }}</h4>
+                            <small class="text-muted">مخالفات الموظف</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-warning">{{ violation.this_month_count }}</h4>
+                        <small class="text-muted">هذا الشهر</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -35px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    border-left: 3px solid #dee2e6;
+}
+
+.timeline-title {
+    margin-bottom: 5px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.timeline-text {
+    margin-bottom: 5px;
+    font-size: 13px;
+    color: #6c757d;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmDelete(violationId) {
+    if (confirm('هل أنت متأكد من حذف هذه المخالفة؟')) {
+        // Add delete functionality here
+        console.log('Delete violation:', violationId);
+    }
+}
+
+function updateStatus(status) {
+    if (confirm('هل أنت متأكد من تحديث حالة المخالفة؟')) {
+        // Add status update functionality here
+        console.log('Update status to:', status);
+    }
+}
+</script>
+{% endblock %}

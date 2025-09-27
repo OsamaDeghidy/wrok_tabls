@@ -1,0 +1,273 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تفاصيل الموظف - {{ employee.first_name }} {{ employee.last_name }}{% endblock %}
+
+{% block page_title %}تفاصيل الموظف{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <a href="{% url 'employees:edit' employee.id %}" class="btn btn-warning">
+        <i class="fas fa-edit me-1"></i>تعديل
+    </a>
+    <a href="{% url 'employees:list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Employee Info -->
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-body text-center">
+                <img src="{% static 'images/avatar-placeholder.png' %}" class="rounded-circle mb-3" width="120" height="120">
+                <h4 class="card-title">{{ employee.first_name }} {{ employee.last_name }}</h4>
+                <p class="text-muted">{{ employee.job_title }}</p>
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h5 class="text-primary">156</h5>
+                            <small class="text-muted">ساعة عمل</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-success">23</h5>
+                        <small class="text-muted">نوبة هذا الشهر</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Info -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">معلومات الاتصال</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <i class="fas fa-envelope me-2 text-muted"></i>
+                    <span>{{ employee.email|default:"غير محدد" }}</span>
+                </div>
+                <div class="mb-3">
+                    <i class="fas fa-phone me-2 text-muted"></i>
+                    <span>{{ employee.phone|default:"غير محدد" }}</span>
+                </div>
+                <div class="mb-3">
+                    <i class="fas fa-map-marker-alt me-2 text-muted"></i>
+                    <span>{{ employee.branch.name }}</span>
+                </div>
+                <div class="mb-3">
+                    <i class="fas fa-calendar me-2 text-muted"></i>
+                    <span>انضم في {{ employee.join_date|date:"d/m/Y" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Details -->
+    <div class="col-lg-8">
+        <!-- Basic Info -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">المعلومات الأساسية</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">رقم الموظف</label>
+                            <p class="form-control-plaintext">{{ employee.employee_number }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">نوع التوظيف</label>
+                            <p class="form-control-plaintext">{{ employee.get_employment_type_display }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">الحد الأقصى للساعات الأسبوعية</label>
+                            <p class="form-control-plaintext">{{ employee.max_weekly_hours }} ساعة</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">الحالة</label>
+                            <p class="form-control-plaintext">
+                                {% if employee.is_active %}
+                                    <span class="badge bg-success">نشط</span>
+                                {% else %}
+                                    <span class="badge bg-danger">غير نشط</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <ul class="nav nav-tabs card-header-tabs" id="employeeTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="shifts-tab" data-bs-toggle="tab" data-bs-target="#shifts" type="button" role="tab">
+                            النوبات
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="leaves-tab" data-bs-toggle="tab" data-bs-target="#leaves" type="button" role="tab">
+                            الإجازات
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="violations-tab" data-bs-toggle="tab" data-bs-target="#violations" type="button" role="tab">
+                            المخالفات
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button" role="tab">
+                            التقارير
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="employeeTabsContent">
+                    <!-- Shifts Tab -->
+                    <div class="tab-pane fade show active" id="shifts" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>التاريخ</th>
+                                        <th>بداية النوبة</th>
+                                        <th>نهاية النوبة</th>
+                                        <th>المدة</th>
+                                        <th>النوع</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>2024-01-15</td>
+                                        <td>08:00</td>
+                                        <td>16:00</td>
+                                        <td>8 ساعات</td>
+                                        <td><span class="badge bg-primary">عادي</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>2024-01-16</td>
+                                        <td>16:00</td>
+                                        <td>00:00</td>
+                                        <td>8 ساعات</td>
+                                        <td><span class="badge bg-warning">مسائي</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>2024-01-17</td>
+                                        <td>00:00</td>
+                                        <td>08:00</td>
+                                        <td>8 ساعات</td>
+                                        <td><span class="badge bg-info">ليلي</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Leaves Tab -->
+                    <div class="tab-pane fade" id="leaves" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>نوع الإجازة</th>
+                                        <th>من تاريخ</th>
+                                        <th>إلى تاريخ</th>
+                                        <th>المدة</th>
+                                        <th>الحالة</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>إجازة سنوية</td>
+                                        <td>2024-01-20</td>
+                                        <td>2024-01-25</td>
+                                        <td>5 أيام</td>
+                                        <td><span class="badge bg-success">معتمدة</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>إجازة مرضية</td>
+                                        <td>2024-01-10</td>
+                                        <td>2024-01-12</td>
+                                        <td>3 أيام</td>
+                                        <td><span class="badge bg-warning">معلقة</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Violations Tab -->
+                    <div class="tab-pane fade" id="violations" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>التاريخ</th>
+                                        <th>نوع المخالفة</th>
+                                        <th>الوصف</th>
+                                        <th>الإجراء</th>
+                                        <th>الحالة</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>2024-01-05</td>
+                                        <td>تأخير</td>
+                                        <td>تأخير 30 دقيقة</td>
+                                        <td>إنذار شفهي</td>
+                                        <td><span class="badge bg-warning">نشط</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Reports Tab -->
+                    <div class="tab-pane fade" id="reports" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title text-primary">ساعات العمل الشهرية</h5>
+                                        <h3 class="text-primary">156</h3>
+                                        <p class="text-muted">ساعة</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title text-success">معدل الحضور</h5>
+                                        <h3 class="text-success">95%</h3>
+                                        <p class="text-muted">هذا الشهر</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Tab functionality is handled by Bootstrap
+</script>
+{% endblock %}

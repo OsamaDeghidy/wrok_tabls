@@ -1,0 +1,228 @@
+ vercel
+ professionaldev.sa@gmail.com
+
+ digitalocean
+ professionaldev.sa@gmail.com
+Pdt123@#
+
+ ديجيتال اوشن خش مباشرة بالايميل والباسوورد مو عن طريق قوقل
+ تم اشتريت الدومينات
+ go dady
+ professionaldev.sa@gmail.com
+Professional123@#
+ Pdt.sa
+
+
+
+for jorry host and doman 
+degtal ocian 
+pass : osam0Esmael
+ip : 167.172.202.11
+
+pdt-admin.com
+
+
+
+
+#degtal ocean config
+#DB_USER=doadmin
+#DB_PASSWORD= osam0Esmael
+#DB_HOST= 167.172.202.11
+#DB_PORT=5432
+#DB_NAME=defaultdb
+
+alisthomepros.com
+################################## run my server
+# ssh root@167.172.202.11     username
+# osam0Esmael                password
+ su sammy
+ cd ~/myprojectdir
+ source myprojectenv/bin/activate
+
+# su sammy
+# cd ~/myprojectapi
+# source myprojectenv/bin/activate
+# sudo apt install snap
+# sudo snap install --classic certbot
+# sudo ln -s /snap/bin/certbot/usr/bin/certbot
+# sudo certbot --nginx
+
+# لما غيرت الداتا بيز connection
+###################################
+sudo systemctl restart gunicorn
+sudo systemctl daemon-reload 
+sudo systemctl restart gunicorn.socket gunicorn.service
+sudo nginx -t && sudo systemctl restart nginx
+###################################
+sudo nano /etc/nginx/nginx.conf
+pip freeze > requirements.txt
+
+pip install -r requirements.txt
+python test_email.py 
+python network_test.py
+python django_email_test.py
+sudo nano /etc/nginx/nginx.conf
+
+# sudo nano /etc/nginx/sites-available/myproject
+# sudo ln -s /etc/nginx/sites-available/myproject /etc/nginx/sites-enabled
+custrus.com
+Osama5555
+python manage.py makemigrations
+python manage.py migrate
+python manage.py migrate users 0003_rename_teacher_to_instructor_tables --fake
+python manage.py runserver 0.0.0.0:8000
+python manage.py collectstatic --no-input
+
+python manage.py createsuperuser
+python manage.py collectstatic
+
+pip install djangorestframework
+pip install djangorestframework-simplejwt
+pip install django-cors-headers
+pip install django-filter
+pip install django-ckeditor-5
+pip install pyyaml ua-parser user-agents
+pip install django-allauth
+pip install requests
+pip install cryptography
+pip install django-ckeditor
+chmod o+x /home/sammy
+chmod o+rx /home/sammy/myprojectdir
+# اجعل مجموعة الملفات www-data وتأكد من ملكية المجلد staticfiles
+sudo chown -R sammy:www-data /home/sammy/myprojectdir/staticfiles
+
+# مجلدات => 755 (rwxr-xr-x), ملفات => 644 (rw-r--r--)
+sudo find /home/sammy/myprojectdir/staticfiles -type d -exec chmod 755 {} +
+sudo find /home/sammy/myprojectdir/staticfiles -type f -exec chmod 644 {} +
+
+# تأكد أن المجلدات الأبوية قابلة للعبور (execute) من قبل nginx
+sudo chmod 755 /home/sammy
+sudo chmod 755 /home/sammy/myprojectdir
+
+
+
+sudo -u www-data test -r /home/sammy/myprojectdir/staticfiles/admin/css/base.css && echo "nginx can read file"
+curl -I http://167.172.202.11/static/admin/css/base.css
+
+http {
+    # ... existing settings ...
+    
+    # زيادة حد رفع الملفات
+    client_max_body_size 500M;  # 500 ميجابايت
+    client_body_timeout 300s;   # 5 دقائق timeout
+    client_header_timeout 300s;
+    
+    # إعدادات إضافية للملفات الكبيرة
+    proxy_connect_timeout 300s;
+    proxy_send_timeout 300s;
+    proxy_read_timeout 300s;
+    send_timeout 300s;
+    
+    # ... rest of settings ...
+}
+files
+triplesacademy.com  www.triplesacademy.com
+###############
+
+server {
+    listen 80;
+    server_name 167.172.202.11 ;
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    # Static files
+    location /static/ {
+        alias /home/sammy/myprojectdir/staticfiles/;
+        expires 30d;
+        add_header Cache-Control public;
+    }
+
+    # Media files
+    location /media/ {
+        alias /home/sammy/myprojectdir/media/;
+        expires 30d;
+        add_header Cache-Control public;
+    }
+
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/run/gunicorn.sock;
+    }
+}
+
+
+#########
+
+
+# إنشاء مجلدات media
+sudo mkdir -p /home/sammy/myprojectdir/media/courses/images
+sudo mkdir -p /home/sammy/myprojectdir/media/courses/syllabus
+sudo mkdir -p /home/sammy/myprojectdir/media/courses/materials
+sudo mkdir -p /home/sammy/myprojectdir/media/categories
+sudo mkdir -p /home/sammy/myprojectdir/media/uploads/ckeditor5
+
+# تعيين الصلاحيات
+sudo chown -R sammy:www-data /home/sammy/myprojectdir/media/
+sudo chmod -R 755 /home/sammy/myprojectdir/media/
+
+
+cd frontend
+npm run build
+
+git add .
+git commit -m "Fix Vercel SPA routing 404 issue"
+git push
+
+goddady domain for triple sss
+132.148.182.144
+
+
+
+
+
+
+
+ bashar@bluetech-jo.com
+Triple$2025
+ triplesacademy  
+Triplesacademy@123???
+ GoDaddy account
+ bunny
+bashar@bluetech-jo.com
+Triple$2025@
+Digital ocean
+
+
+
+كومنت للباك 
+لما الختار الفرع   يظهرلى المدراء التابعه للفرع و لو مدير واحد يختارو اتوماتك 
+
+فى الصفحه دى @http://127.0.0.1:8000/api/employees/create/    هنحتاج شويه تعديلات  
+بدل رقم الموظف    هكون الرقم الوظيفي 
+ و هضيف خانه ل عدد ساعات عمل الموظف و هتكون اختيارات 8 او 9 و الافتراضى 8 
+ ليه علشان 
+ اللى شغل 8 بينزل المعرض 6 ايام 
+ و اللى عدد ساعات المعمل 9 بيداوم  5 ايام
+
+فى صفحه 
+http://127.0.0.1:8000/api/branches/create/
+ يجب مراعاه    ان المرعرض  ممكن ان يكون  به اكثر من شفت 
+ و سعات العمل ساعات البدايه  وساعه نهايه و ساعات البريك   
+ليه انا بحدد الساعات   علشان اعرف التغطيات  للمعرض  و التقسيمه الصح  
+
+    
+    فى جميع الصفحات   كلمه فلتره  هتغيرها   ل تطبيق 
+
+
+خلى  فى حسابك المير الفرع ميظهرلوش  و يعمل جدول غير الفرع بتاعو  كل التعديلات على الموظفين اللى مربوطيف ب الفرع بتاعو 
+
+
+فى صفحه  
+http://127.0.0.1:8000/api/schedules/create/
+
+ ليه علشان 
+ اللى شغل 8 بينزل المعرض 6 ايام 
+ و اللى عدد ساعات المعمل 9 بيداوم  5 ايام
+
+يجب مراعاه    ان المرعرض  ممكن ان يكون  به اكثر من شفت 
+ و سعات العمل ساعات البدايه  وساعه نهايه و ساعات البريك   
+ليه انا بحدد الساعات   علشان اعرف التغطيات  للمعرض  و التقسيمه الصح  

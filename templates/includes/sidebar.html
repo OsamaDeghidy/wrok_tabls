@@ -1,0 +1,171 @@
+<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+            <!-- Authentication Section -->
+            <li class="nav-item">
+                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                    <span>المصادقة</span>
+                </h6>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link {% if 'login' in request.path %}active{% endif %}" href="{% url 'users:login' %}">
+                    <i class="fas fa-sign-in-alt me-2"></i>
+                    تسجيل الدخول
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link {% if 'register' in request.path %}active{% endif %}" href="{% url 'users:register' %}">
+                    <i class="fas fa-user-plus me-2"></i>
+                    إنشاء حساب جديد
+                </a>
+            </li>
+            
+            <!-- Dashboard -->
+            <li class="nav-item">
+                <a class="nav-link {% if request.path == '/dashboard/' or request.path == '/' %}active{% endif %}" href="{% url 'dashboard:index' %}">
+                    <i class="fas fa-home me-2"></i>
+                    لوحة التحكم
+                </a>
+            </li>
+            
+            <!-- Main Navigation -->
+            <li class="nav-item mt-3">
+                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                    <span>الإدارة الرئيسية</span>
+                </h6>
+            </li>
+            
+            <!-- Employees -->
+            <li class="nav-item">
+                <a class="nav-link {% if 'employees' in request.path %}active{% endif %}" href="{% url 'employees:list' %}">
+                    <i class="fas fa-users me-2"></i>
+                    الموظفين
+                </a>
+            </li>
+            
+            <!-- Users Management -->
+            <li class="nav-item">
+                <a class="nav-link {% if 'users' in request.path %}active{% endif %}" href="{% url 'users:list' %}">
+                    <i class="fas fa-user-cog me-2"></i>
+                    إدارة المستخدمين
+                </a>
+            </li>
+            
+            <!-- Branches -->
+            <li class="nav-item">
+                <a class="nav-link {% if 'branches' in request.path %}active{% endif %}" href="{% url 'branches:list' %}">
+                    <i class="fas fa-building me-2"></i>
+                    المعارض والفروع
+                </a>
+            </li>
+            
+            <!-- Schedules -->
+            <li class="nav-item">
+                <a class="nav-link {% if 'schedules' in request.path %}active{% endif %}" href="{% url 'schedules:list' %}">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    الجداول التشغيلية
+                </a>
+            </li>
+            
+            <!-- Leaves -->
+            <li class="nav-item">
+                <a class="nav-link {% if 'leaves' in request.path %}active{% endif %}" href="{% url 'leaves:list' %}">
+                    <i class="fas fa-calendar-times me-2"></i>
+                    الإجازات
+                </a>
+            </li>
+            
+            <!-- Approvals -->
+            <li class="nav-item">
+                <a class="nav-link {% if 'approvals' in request.path %}active{% endif %}" href="{% url 'approvals:list' %}">
+                    <i class="fas fa-check-circle me-2"></i>
+                    الموافقات
+                    <span class="badge bg-danger ms-2">5</span>
+                </a>
+            </li>
+            
+            <!-- Violations -->
+            <li class="nav-item">
+                <a class="nav-link {% if 'violations' in request.path %}active{% endif %}" href="{% url 'violations:list' %}">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    المخالفات
+                </a>
+            </li>
+            
+            <!-- Reports & Analytics -->
+            <li class="nav-item mt-3">
+                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                    <span>التقارير والتحليلات</span>
+                </h6>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link {% if 'reports' in request.path %}active{% endif %}" href="{% url 'reports:list' %}">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    التقارير
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link {% if 'integrations' in request.path %}active{% endif %}" href="{% url 'integrations:list' %}">
+                    <i class="fas fa-download me-2"></i>
+                    الاستيراد والتصدير
+                </a>
+            </li>
+            
+            <!-- User Profile Section -->
+            <li class="nav-item mt-3">
+                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                    <span>الملف الشخصي</span>
+                </h6>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link {% if 'profile' in request.path %}active{% endif %}" href="{% url 'users:profile' %}">
+                    <i class="fas fa-user me-2"></i>
+                    الملف الشخصي
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link {% if 'profile/edit' in request.path %}active{% endif %}" href="{% url 'users:edit_profile' %}">
+                    <i class="fas fa-user-edit me-2"></i>
+                    تعديل الملف الشخصي
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link {% if 'change-password' in request.path %}active{% endif %}" href="{% url 'users:change_password' %}">
+                    <i class="fas fa-key me-2"></i>
+                    تغيير كلمة المرور
+                </a>
+            </li>
+            
+            <!-- Admin Section -->
+            <li class="nav-item mt-3">
+                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                    <span>الإدارة المتقدمة</span>
+                </h6>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/">
+                    <i class="fas fa-cog me-2"></i>
+                    لوحة الإدارة
+                </a>
+            </li>
+            
+            <!-- Logout (only if authenticated) -->
+            {% if user.is_authenticated %}
+            <li class="nav-item mt-3">
+                <a class="nav-link text-danger" href="{% url 'users:logout' %}">
+                    <i class="fas fa-sign-out-alt me-2"></i>
+                    تسجيل الخروج
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+</nav>

@@ -1,0 +1,405 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}إدارة الإجازات - نظام إدارة الجداول التشغيلية{% endblock %}
+
+{% block page_title %}إدارة الإجازات{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <a href="{% url 'leaves:create' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>طلب إجازة
+    </a>
+    <button type="button" class="btn btn-outline-secondary">
+        <i class="fas fa-download me-1"></i>تصدير
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h5 class="card-title">معلقة</h5>
+                <h2 class="card-text">12</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h5 class="card-title">معتمدة</h5>
+                <h2 class="card-text">45</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body text-center">
+                <h5 class="card-title">مرفوضة</h5>
+                <h2 class="card-text">3</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h5 class="card-title">إجمالي</h5>
+                <h2 class="card-text">60</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">تطبيق الإجازات</h6>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="search" class="form-label">البحث</label>
+                <input type="text" class="form-control" id="search" name="search" placeholder="اسم الموظف">
+            </div>
+            <div class="col-md-3">
+                <label for="type" class="form-label">نوع الإجازة</label>
+                <select class="form-select" id="type" name="type">
+                    <option value="">جميع الأنواع</option>
+                    <option value="annual">سنوية</option>
+                    <option value="sick">مرضية</option>
+                    <option value="emergency">طارئة</option>
+                    <option value="maternity">أمومة</option>
+                    <option value="paternity">أبوة</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="status" class="form-label">الحالة</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="">جميع الحالات</option>
+                    <option value="pending">معلقة</option>
+                    <option value="approved">معتمدة</option>
+                    <option value="rejected">مرفوضة</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">تطبيق</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Leaves Table -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">قائمة الإجازات</h6>
+        <div class="text-muted">
+            إجمالي: <span class="badge bg-primary">60</span> إجازة
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="leavesTable">
+                <thead>
+                    <tr>
+                        <th>الموظف</th>
+                        <th>نوع الإجازة</th>
+                        <th>من تاريخ</th>
+                        <th>إلى تاريخ</th>
+                        <th>المدة</th>
+                        <th>الحالة</th>
+                        <th>تم الطلب</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="{% static 'images/avatar-placeholder.png' %}" class="rounded-circle me-2" width="32" height="32">
+                                <div>
+                                    <div class="fw-bold">أحمد محمد</div>
+                                    <small class="text-muted">98979001</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-primary">سنوية</span></td>
+                        <td>2024-01-20</td>
+                        <td>2024-01-25</td>
+                        <td>5 أيام</td>
+                        <td><span class="badge bg-warning">معلقة</span></td>
+                        <td>2024-01-15</td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button class="btn btn-success" onclick="approveLeave(1)" title="موافقة">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="btn btn-danger" onclick="rejectLeave(1)" title="رفض">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                <a href="{% url 'leaves:detail' 1 %}" class="btn btn-outline-primary" title="عرض">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="{% static 'images/avatar-placeholder.png' %}" class="rounded-circle me-2" width="32" height="32">
+                                <div>
+                                    <div class="fw-bold">فاطمة علي</div>
+                                    <small class="text-muted">98979002</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-info">مرضية</span></td>
+                        <td>2024-01-10</td>
+                        <td>2024-01-12</td>
+                        <td>3 أيام</td>
+                        <td><span class="badge bg-success">معتمدة</span></td>
+                        <td>2024-01-09</td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{% url 'leaves:detail' 2 %}" class="btn btn-outline-primary" title="عرض">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <button class="btn btn-outline-warning" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="{% static 'images/avatar-placeholder.png' %}" class="rounded-circle me-2" width="32" height="32">
+                                <div>
+                                    <div class="fw-bold">خالد سعد</div>
+                                    <small class="text-muted">98979003</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-warning">طارئة</span></td>
+                        <td>2024-01-05</td>
+                        <td>2024-01-05</td>
+                        <td>1 يوم</td>
+                        <td><span class="badge bg-danger">مرفوضة</span></td>
+                        <td>2024-01-04</td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{% url 'leaves:detail' 3 %}" class="btn btn-outline-primary" title="عرض">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <button class="btn btn-outline-warning" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" tabindex="-1">السابق</a>
+                </li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item">
+                    <a class="page-link" href="#">التالي</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Leave Request Modal -->
+<div class="modal fade" id="leaveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">طلب إجازة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="leaveForm">
+                    <div class="mb-3">
+                        <label for="leaveType" class="form-label">نوع الإجازة <span class="text-danger">*</span></label>
+                        <select class="form-select" id="leaveType" name="leaveType" required>
+                            <option value="">اختر نوع الإجازة</option>
+                            <option value="annual">سنوية</option>
+                            <option value="sick">مرضية</option>
+                            <option value="emergency">طارئة</option>
+                            <option value="maternity">أمومة</option>
+                            <option value="paternity">أبوة</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="startDate" class="form-label">من تاريخ <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="startDate" name="startDate" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="endDate" class="form-label">إلى تاريخ <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="endDate" name="endDate" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">السبب <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="reason" name="reason" rows="3" required placeholder="أدخل سبب الإجازة..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="attachment" class="form-label">مرفق (اختياري)</label>
+                        <input type="file" class="form-control" id="attachment" name="attachment" accept=".pdf,.jpg,.jpeg,.png">
+                        <div class="form-text">يدعم ملفات PDF والصور</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="submitLeaveRequest()">إرسال الطلب</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Table search functionality
+document.getElementById('search').addEventListener('keyup', function() {
+    const searchTerm = this.value.toLowerCase();
+    const table = document.getElementById('leavesTable');
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const text = row.textContent.toLowerCase();
+        if (text.indexOf(searchTerm) > -1) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    }
+});
+
+function approveLeave(id) {
+    if (confirm('هل أنت متأكد من الموافقة على هذه الإجازة؟')) {
+        // Show loading
+        const btn = document.querySelector(`[onclick="approveLeave(${id})"]`);
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        btn.disabled = true;
+        
+        // Simulate approval
+        setTimeout(() => {
+            showSuccessMessage('تم اعتماد الإجازة بنجاح!');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            
+            // Update status
+            const row = btn.closest('tr');
+            const statusCell = row.cells[5];
+            statusCell.innerHTML = '<span class="badge bg-success">معتمدة</span>';
+            
+            // Remove action buttons
+            const actionsCell = row.cells[7];
+            actionsCell.innerHTML = '<a href="#" class="btn btn-outline-primary btn-sm"><i class="fas fa-eye"></i></a>';
+        }, 1500);
+    }
+}
+
+function rejectLeave(id) {
+    if (confirm('هل أنت متأكد من رفض هذه الإجازة؟')) {
+        // Show loading
+        const btn = document.querySelector(`[onclick="rejectLeave(${id})"]`);
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        btn.disabled = true;
+        
+        // Simulate rejection
+        setTimeout(() => {
+            showWarningMessage('تم رفض الإجازة!');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            
+            // Update status
+            const row = btn.closest('tr');
+            const statusCell = row.cells[5];
+            statusCell.innerHTML = '<span class="badge bg-danger">مرفوضة</span>';
+            
+            // Remove action buttons
+            const actionsCell = row.cells[7];
+            actionsCell.innerHTML = '<a href="#" class="btn btn-outline-primary btn-sm"><i class="fas fa-eye"></i></a>';
+        }, 1500);
+    }
+}
+
+function submitLeaveRequest() {
+    const form = document.getElementById('leaveForm');
+    const formData = new FormData(form);
+    
+    // Basic validation
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    // Show loading
+    const submitBtn = document.querySelector('#leaveModal .btn-primary');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>جاري الإرسال...';
+    submitBtn.disabled = true;
+    
+    // Simulate submission
+    setTimeout(() => {
+        showSuccessMessage('تم إرسال طلب الإجازة بنجاح!');
+        bootstrap.Modal.getInstance(document.getElementById('leaveModal')).hide();
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+        form.reset();
+    }, 2000);
+}
+
+// Date validation
+document.getElementById('startDate').addEventListener('change', function() {
+    const startDate = new Date(this.value);
+    const endDateInput = document.getElementById('endDate');
+    
+    if (endDateInput.value) {
+        const endDate = new Date(endDateInput.value);
+        if (endDate < startDate) {
+            endDateInput.value = '';
+            showErrorMessage('تاريخ النهاية يجب أن يكون بعد تاريخ البداية');
+        }
+    }
+});
+
+document.getElementById('endDate').addEventListener('change', function() {
+    const endDate = new Date(this.value);
+    const startDateInput = document.getElementById('startDate');
+    
+    if (startDateInput.value) {
+        const startDate = new Date(startDateInput.value);
+        if (endDate < startDate) {
+            this.value = '';
+            showErrorMessage('تاريخ النهاية يجب أن يكون بعد تاريخ البداية');
+        }
+    }
+});
+</script>
+{% endblock %}

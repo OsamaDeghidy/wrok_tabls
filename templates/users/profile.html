@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}الملف الشخصي - {{ user.get_full_name|default:user.username }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-user-circle me-2"></i>الملف الشخصي</h2>
+                <a href="{% url 'users:edit_profile' %}" class="btn btn-primary">
+                    <i class="fas fa-edit me-1"></i>تعديل الملف الشخصي
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Profile Information -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <img src="{% static 'images/avatar-placeholder.png' %}" 
+                             alt="صورة المستخدم" 
+                             class="rounded-circle" 
+                             width="120" 
+                             height="120">
+                    </div>
+                    <h4 class="card-title">{{ user.get_full_name|default:user.username }}</h4>
+                    <p class="text-muted">{{ user.email }}</p>
+                    <span class="badge bg-success">{{ user.get_role_display|default:"مستخدم" }}</span>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="card shadow-sm mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>إحصائيات سريعة</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h5 class="text-primary">24</h5>
+                            <small class="text-muted">ساعات العمل</small>
+                        </div>
+                        <div class="col-6">
+                            <h5 class="text-success">5</h5>
+                            <small class="text-muted">المهام المكتملة</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Details -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>تفاصيل الملف الشخصي</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">الاسم الكامل</label>
+                                <p class="form-control-plaintext">{{ user.get_full_name|default:"غير محدد" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">اسم المستخدم</label>
+                                <p class="form-control-plaintext">{{ user.username }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">البريد الإلكتروني</label>
+                                <p class="form-control-plaintext">{{ user.email }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">رقم الهاتف</label>
+                                <p class="form-control-plaintext">{{ user.phone|default:"غير محدد" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">تاريخ الانضمام</label>
+                                <p class="form-control-plaintext">{{ user.date_joined|date:"Y/m/d" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">آخر تسجيل دخول</label>
+                                <p class="form-control-plaintext">{{ user.last_login|date:"Y/m/d H:i"|default:"لم يسجل دخول من قبل" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card shadow-sm mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-history me-2"></i>النشاط الأخير</h6>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content">
+                                <h6 class="timeline-title">تسجيل دخول جديد</h6>
+                                <p class="timeline-text">تم تسجيل الدخول بنجاح</p>
+                                <small class="text-muted">منذ 5 دقائق</small>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-success"></div>
+                            <div class="timeline-content">
+                                <h6 class="timeline-title">تحديث الملف الشخصي</h6>
+                                <p class="timeline-text">تم تحديث معلومات الاتصال</p>
+                                <small class="text-muted">منذ ساعة</small>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-info"></div>
+                            <div class="timeline-content">
+                                <h6 class="timeline-title">إنشاء مهمة جديدة</h6>
+                                <p class="timeline-text">تم إنشاء مهمة "مراجعة التقارير"</p>
+                                <small class="text-muted">منذ 3 ساعات</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -35px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 3px solid #dee2e6;
+}
+
+.timeline-title {
+    margin-bottom: 5px;
+    color: #495057;
+}
+
+.timeline-text {
+    margin-bottom: 5px;
+    color: #6c757d;
+}
+</style>
+{% endblock %}

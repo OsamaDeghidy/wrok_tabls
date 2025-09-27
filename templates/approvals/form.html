@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if approval %}تعديل طلب الموافقة - {{ approval.title }}{% else %}طلب موافقة جديد{% endif %}
+{% endblock %}
+
+{% block page_title %}
+    {% if approval %}تعديل طلب الموافقة{% else %}طلب موافقة جديد{% endif %}
+{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <a href="{% url 'approvals:list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
+    </a>
+    {% if approval %}
+    <a href="{% url 'approvals:detail' approval.id %}" class="btn btn-info">
+        <i class="fas fa-eye me-1"></i>عرض التفاصيل
+    </a>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-edit me-2"></i>
+                    {% if approval %}تعديل بيانات طلب الموافقة{% else %}بيانات طلب الموافقة الجديد{% endif %}
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row">
+                        <!-- Basic Information -->
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">المعلومات الأساسية</h6>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_title" class="form-label">عنوان الطلب <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="id_title" name="title" 
+                                       value="{{ approval.title|default:'' }}" placeholder="أدخل عنوان الطلب" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_type" class="form-label">نوع الطلب <span class="text-danger">*</span></label>
+                                <select class="form-select" id="id_type" name="type" required>
+                                    <option value="">اختر نوع الطلب</option>
+                                    <option value="leave" {% if approval.type == 'leave' %}selected{% endif %}>طلب إجازة</option>
+                                    <option value="overtime" {% if approval.type == 'overtime' %}selected{% endif %}>طلب عمل إضافي</option>
+                                    <option value="equipment" {% if approval.type == 'equipment' %}selected{% endif %}>طلب معدات</option>
+                                    <option value="training" {% if approval.type == 'training' %}selected{% endif %}>طلب تدريب</option>
+                                    <option value="travel" {% if approval.type == 'travel' %}selected{% endif %}>طلب سفر</option>
+                                    <option value="budget" {% if approval.type == 'budget' %}selected{% endif %}>طلب ميزانية</option>
+                                    <option value="other" {% if approval.type == 'other' %}selected{% endif %}>أخرى</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Priority and Deadline -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-primary mb-3">الأولوية والمواعيد</h6>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_priority" class="form-label">الأولوية <span class="text-danger">*</span></label>
+                                <select class="form-select" id="id_priority" name="priority" required>
+                                    <option value="">اختر الأولوية</option>
+                                    <option value="low" {% if approval.priority == 'low' %}selected{% endif %}>منخفضة</option>
+                                    <option value="medium" {% if approval.priority == 'medium' %}selected{% endif %}>متوسطة</option>
+                                    <option value="high" {% if approval.priority == 'high' %}selected{% endif %}>عالية</option>
+                                    <option value="urgent" {% if approval.priority == 'urgent' %}selected{% endif %}>عاجلة</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_deadline" class="form-label">الموعد النهائي</label>
+                                <input type="date" class="form-control" id="id_deadline" name="deadline" 
+                                       value="{{ approval.deadline|default:'' }}">
+                            </div>
+                        </div>
+
+                        <!-- Manager Selection -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-primary mb-3">المدير المطلوب</h6>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_manager" class="form-label">المدير المباشر <span class="text-danger">*</span></label>
+                                <select class="form-select" id="id_manager" name="manager" required>
+                                    <option value="">اختر المدير</option>
+                                    <option value="1" {% if approval.manager == '1' %}selected{% endif %}>سارة أحمد - مديرة التسويق</option>
+                                    <option value="2" {% if approval.manager == '2' %}selected{% endif %}>محمد حسن - مدير الموارد البشرية</option>
+                                    <option value="3" {% if approval.manager == '3' %}selected{% endif %}>أحمد محمد - مدير تقنية المعلومات</option>
+                                    <option value="4" {% if approval.manager == '4' %}selected{% endif %}>فاطمة علي - المديرة العامة</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_department" class="form-label">القسم</label>
+                                <input type="text" class="form-control" id="id_department" name="department" 
+                                       value="{{ approval.department|default:'تقنية المعلومات' }}" readonly>
+                            </div>
+                        </div>
+
+                        <!-- Status (for editing) -->
+                        {% if approval %}
+                        <div class="col-12 mt-4">
+                            <h6 class="text-primary mb-3">حالة الطلب</h6>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_status" class="form-label">الحالة</label>
+                                <select class="form-select" id="id_status" name="status">
+                                    <option value="pending" {% if approval.status == 'pending' %}selected{% endif %}>معلق</option>
+                                    <option value="approved" {% if approval.status == 'approved' %}selected{% endif %}>معتمد</option>
+                                    <option value="rejected" {% if approval.status == 'rejected' %}selected{% endif %}>مرفوض</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_review_notes" class="form-label">ملاحظات المراجعة</label>
+                                <textarea class="form-control" id="id_review_notes" name="review_notes" rows="2" 
+                                          placeholder="ملاحظات المراجعة...">{{ approval.review_notes|default:'' }}</textarea>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Request Details -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-primary mb-3">تفاصيل الطلب</h6>
+                        </div>
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="id_description" class="form-label">وصف الطلب <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="id_description" name="description" rows="4" 
+                                          placeholder="اكتب وصفاً مفصلاً للطلب..." required>{{ approval.description|default:'' }}</textarea>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="id_justification" class="form-label">مبرر الطلب <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="id_justification" name="justification" rows="3" 
+                                          placeholder="اشرح سبب الحاجة لهذا الطلب..." required>{{ approval.justification|default:'' }}</textarea>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="id_attachments" class="form-label">مرفقات (اختياري)</label>
+                                <input type="file" class="form-control" id="id_attachments" name="attachments" 
+                                       multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+                                <div class="form-text">يمكن رفع ملفات PDF، صور، أو مستندات Word</div>
+                                
+                                <!-- Show existing attachments -->
+                                {% if approval.attachments %}
+                                <div class="mt-2">
+                                    <small class="text-muted">المرفقات الحالية:</small>
+                                    <div class="list-group list-group-flush">
+                                        {% for attachment in approval.attachments %}
+                                        <div class="list-group-item d-flex justify-content-between align-items-center py-1">
+                                            <small>{{ attachment.name }}</small>
+                                            <a href="{{ attachment.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a href="{% url 'approvals:list' %}" class="btn btn-secondary">إلغاء</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>
+                            {% if approval %}حفظ التغييرات{% else %}إرسال الطلب{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Approval Guidelines -->
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>إرشادات الموافقات</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        تأكد من وضوح وصف الطلب
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        قدم مبرراً قوياً للطلب
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        أرفق المستندات المطلوبة
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        اختر الأولوية المناسبة
+                    </li>
+                    <li>
+                        <i class="fas fa-check text-success me-2"></i>
+                        حدد الموعد النهائي إذا لزم الأمر
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Priority Guidelines -->
+        <div class="card shadow-sm mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>دليل الأولويات</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <span class="badge bg-success me-2">منخفضة</span>
+                    <small>طلبات روتينية لا تحتاج موافقة فورية</small>
+                </div>
+                <div class="mb-3">
+                    <span class="badge bg-info me-2">متوسطة</span>
+                    <small>طلبات عادية تحتاج موافقة خلال 3 أيام</small>
+                </div>
+                <div class="mb-3">
+                    <span class="badge bg-warning me-2">عالية</span>
+                    <small>طلبات مهمة تحتاج موافقة خلال 24 ساعة</small>
+                </div>
+                <div>
+                    <span class="badge bg-danger me-2">عاجلة</span>
+                    <small>طلبات حرجة تحتاج موافقة فورية</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card shadow-sm mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-bolt me-2"></i>إجراءات سريعة</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if approval %}
+                    <a href="{% url 'approvals:detail' approval.id %}" class="btn btn-outline-info">
+                        <i class="fas fa-eye me-1"></i>عرض التفاصيل
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'approvals:list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-list me-1"></i>عرض جميع الطلبات
+                    </a>
+                    <button type="button" class="btn btn-outline-success">
+                        <i class="fas fa-download me-1"></i>تحميل النماذج
+                    </button>
+                    <button type="button" class="btn btn-outline-warning">
+                        <i class="fas fa-history me-1"></i>سجل الطلبات
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form submission
+document.querySelector('form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Show loading
+    const submitBtn = document.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>جاري الحفظ...';
+    submitBtn.disabled = true;
+    
+    // Simulate form submission
+    setTimeout(() => {
+        alert('تم حفظ طلب الموافقة بنجاح!');
+        window.location.href = '{% url "approvals:list" %}';
+    }, 2000);
+});
+
+// Auto-fill department based on manager selection
+document.getElementById('id_manager').addEventListener('change', function() {
+    const manager = this.value;
+    const departmentField = document.getElementById('id_department');
+    
+    // Mock department mapping
+    const departmentMap = {
+        '1': 'التسويق',
+        '2': 'الموارد البشرية',
+        '3': 'تقنية المعلومات',
+        '4': 'الإدارة العامة'
+    };
+    
+    if (departmentMap[manager]) {
+        departmentField.value = departmentMap[manager];
+    }
+});
+</script>
+{% endblock %}

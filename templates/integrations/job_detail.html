@@ -1,0 +1,325 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تفاصيل المهمة - نظام إدارة الجداول التشغيلية{% endblock %}
+
+{% block page_title %}تفاصيل المهمة: {{ job.name }}{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <a href="{% url 'integrations:jobs' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right me-1"></i>العودة للمهام
+    </a>
+    {% if job.status == 'active' %}
+    <button type="button" class="btn btn-warning" onclick="toggleJob('pause')">
+        <i class="fas fa-pause me-1"></i>إيقاف
+    </button>
+    {% elif job.status == 'paused' %}
+    <button type="button" class="btn btn-success" onclick="toggleJob('resume')">
+        <i class="fas fa-play me-1"></i>تشغيل
+    </button>
+    {% endif %}
+    <button type="button" class="btn btn-info" onclick="runJobNow()">
+        <i class="fas fa-bolt me-1"></i>تشغيل الآن
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Job Details -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">تفاصيل المهمة</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">اسم المهمة:</label>
+                            <p class="form-control-plaintext">{{ job.name }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">النوع:</label>
+                            <p class="form-control-plaintext">
+                                <span class="badge bg-{{ job.type_color }}">{{ job.type_display }}</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">الحالة:</label>
+                            <p class="form-control-plaintext">
+                                <span class="badge bg-{{ job.status_color }}">{{ job.status_display }}</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">الجدولة:</label>
+                            <p class="form-control-plaintext">{{ job.schedule_display }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">الوصف:</label>
+                    <div class="border rounded p-3 bg-light">
+                        {{ job.description }}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">آخر تشغيل:</label>
+                            <p class="form-control-plaintext">
+                                {% if job.last_run %}
+                                    {{ job.last_run }}
+                                    <br><small class="text-muted">المدة: {{ job.last_run_duration }}</small>
+                                {% else %}
+                                    <span class="text-muted">لم يتم التشغيل</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">التشغيل التالي:</label>
+                            <p class="form-control-plaintext">
+                                {% if job.next_run %}
+                                    {{ job.next_run }}
+                                {% else %}
+                                    <span class="text-muted">غير مجدولة</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {% if job.configuration %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold">الإعدادات:</label>
+                    <div class="border rounded p-3 bg-light">
+                        <pre class="mb-0">{{ job.configuration }}</pre>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Execution History -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">سجل التنفيذ</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="executionTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>وقت البداية</th>
+                                <th>وقت الانتهاء</th>
+                                <th>المدة</th>
+                                <th>الحالة</th>
+                                <th>النتيجة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for execution in job.execution_history %}
+                            <tr>
+                                <td>{{ execution.start_time }}</td>
+                                <td>{{ execution.end_time }}</td>
+                                <td>{{ execution.duration }}</td>
+                                <td>
+                                    <span class="badge bg-{{ execution.status_color }}">{{ execution.status_display }}</span>
+                                </td>
+                                <td>
+                                    {% if execution.status == 'completed' %}
+                                        <span class="text-success">
+                                            <i class="fas fa-check-circle me-1"></i>
+                                            {{ execution.records_processed }} سجل
+                                        </span>
+                                    {% elif execution.status == 'failed' %}
+                                        <span class="text-danger">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            {{ execution.error_message|truncatechars:30 }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">قيد التشغيل</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-outline-primary" title="عرض التفاصيل" onclick="viewExecutionDetails({{ execution.id }})">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        {% if execution.status == 'failed' %}
+                                        <button type="button" class="btn btn-sm btn-outline-warning" title="إعادة التشغيل" onclick="retryExecution({{ execution.id }})">
+                                            <i class="fas fa-redo"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="fas fa-history fa-3x mb-3"></i>
+                                        <p>لا يوجد سجل للتنفيذ</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Job Statistics -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">إحصائيات المهمة</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h4 class="text-primary">{{ job.total_executions }}</h4>
+                            <small class="text-muted">إجمالي التنفيذات</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-success">{{ job.successful_executions }}</h4>
+                        <small class="text-muted">ناجحة</small>
+                    </div>
+                </div>
+                <hr>
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h4 class="text-danger">{{ job.failed_executions }}</h4>
+                            <small class="text-muted">فاشلة</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-info">{{ job.avg_duration }}</h4>
+                        <small class="text-muted">متوسط المدة</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">إجراءات سريعة</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" onclick="editJob()">
+                        <i class="fas fa-edit me-1"></i>تعديل المهمة
+                    </button>
+                    <button class="btn btn-outline-info" onclick="viewLogs()">
+                        <i class="fas fa-file-alt me-1"></i>عرض السجلات
+                    </button>
+                    <button class="btn btn-outline-warning" onclick="testJob()">
+                        <i class="fas fa-vial me-1"></i>اختبار المهمة
+                    </button>
+                    <button class="btn btn-outline-danger" onclick="deleteJob()">
+                        <i class="fas fa-trash me-1"></i>حذف المهمة
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Job Configuration -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">إعدادات المهمة</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">نوع الجدولة:</label>
+                    <p class="form-control-plaintext">{{ job.schedule_type }}</p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">التكرار:</label>
+                    <p class="form-control-plaintext">{{ job.frequency }}</p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">المنطقة الزمنية:</label>
+                    <p class="form-control-plaintext">{{ job.timezone }}</p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">الحد الأقصى للمحاولات:</label>
+                    <p class="form-control-plaintext">{{ job.max_retries }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleJob(action) {
+    if (confirm('هل أنت متأكد من ' + (action === 'pause' ? 'إيقاف' : 'تشغيل') + ' هذه المهمة؟')) {
+        alert('تم ' + (action === 'pause' ? 'إيقاف' : 'تشغيل') + ' المهمة');
+        // Add toggle job functionality here
+    }
+}
+
+function runJobNow() {
+    if (confirm('هل تريد تشغيل هذه المهمة الآن؟')) {
+        alert('تم تشغيل المهمة الآن');
+        // Add run job now functionality here
+    }
+}
+
+function viewExecutionDetails(executionId) {
+    alert('عرض تفاصيل التنفيذ ' + executionId);
+    // Add view execution details functionality here
+}
+
+function retryExecution(executionId) {
+    if (confirm('هل تريد إعادة تشغيل هذا التنفيذ؟')) {
+        alert('تم إعادة تشغيل التنفيذ ' + executionId);
+        // Add retry execution functionality here
+    }
+}
+
+function editJob() {
+    alert('تعديل المهمة');
+    // Add edit job functionality here
+}
+
+function viewLogs() {
+    alert('عرض السجلات');
+    // Add view logs functionality here
+}
+
+function testJob() {
+    alert('اختبار المهمة');
+    // Add test job functionality here
+}
+
+function deleteJob() {
+    if (confirm('هل أنت متأكد من حذف هذه المهمة؟')) {
+        alert('تم حذف المهمة');
+        // Add delete job functionality here
+    }
+}
+</script>
+{% endblock %}

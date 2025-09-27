@@ -1,0 +1,82 @@
+{% load static %}
+<nav class="navbar navbar-expand-lg navbar-light" style="background: linear-gradient(135deg, var(--secondary-500) 0%, var(--secondary-700) 100%);">
+    <div class="container-fluid">
+        <!-- Brand -->
+        <a class="navbar-brand d-flex align-items-center" href="{% url 'dashboard:index' %}">
+            <img src="{% static 'images/logo5.png' %}" alt="الخزف السعودي" height="40" class="me-2">
+            <div>
+                <div class="fw-bold text-white">الخزف السعودي</div>
+                <small class="text-white-50">نظام الجداول التشغيلية</small>
+            </div>
+        </a>
+        
+        <!-- Mobile Toggle -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <!-- Navigation Items -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                {% if user.is_authenticated %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'dashboard:index' %}">
+                        <i class="fas fa-home me-1"></i>
+                        لوحة التحكم
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+            
+            <!-- User Menu -->
+            <ul class="navbar-nav">
+                {% if user.is_authenticated %}
+                <!-- Notifications -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-bell"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            3
+                        </span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><h6 class="dropdown-header">الإشعارات</h6></li>
+                        <li><a class="dropdown-item" href="#">طلب موافقة جديد</a></li>
+                        <li><a class="dropdown-item" href="#">تذكير بإنشاء جدول</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#">عرض جميع الإشعارات</a></li>
+                    </ul>
+                </li>
+                
+                <!-- User Dropdown -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user me-1"></i>
+                        {{ user.get_full_name|default:user.username }}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><h6 class="dropdown-header">{{ user.get_full_name|default:user.username }}</h6></li>
+                        <li><a class="dropdown-item" href="{% url 'users:profile' %}">
+                            <i class="fas fa-user me-2"></i>الملف الشخصي
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'users:settings' %}">
+                            <i class="fas fa-cog me-2"></i>الإعدادات
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'users:logout' %}">
+                            <i class="fas fa-sign-out-alt me-2"></i>تسجيل الخروج
+                        </a></li>
+                    </ul>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'users:login' %}">
+                        <i class="fas fa-sign-in-alt me-1"></i>
+                        تسجيل الدخول
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>

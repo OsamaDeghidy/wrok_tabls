@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if employee %}تعديل الموظف - {{ employee.first_name }} {{ employee.last_name }}{% else %}إضافة موظف جديد{% endif %}
+{% endblock %}
+
+{% block page_title %}
+    {% if employee %}تعديل الموظف{% else %}إضافة موظف جديد{% endif %}
+{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <a href="{% url 'employees:list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
+    </a>
+    {% if employee %}
+    <a href="{% url 'employees:detail' employee.id %}" class="btn btn-info">
+        <i class="fas fa-eye me-1"></i>عرض التفاصيل
+    </a>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-user me-2"></i>
+                    {% if employee %}تعديل بيانات الموظف{% else %}بيانات الموظف الجديد{% endif %}
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row">
+                        <!-- Personal Information -->
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">المعلومات الشخصية</h6>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_first_name" class="form-label">الاسم الأول <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="id_first_name" name="first_name" 
+                                       value="{{ employee.first_name|default:'' }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_last_name" class="form-label">الاسم الأخير <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="id_last_name" name="last_name" 
+                                       value="{{ employee.last_name|default:'' }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_email" class="form-label">البريد الإلكتروني <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="id_email" name="email" 
+                                       value="{{ employee.email|default:'' }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_phone" class="form-label">رقم الهاتف</label>
+                                <input type="tel" class="form-control" id="id_phone" name="phone" 
+                                       value="{{ employee.phone|default:'' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_national_id" class="form-label">رقم الهوية</label>
+                                <input type="text" class="form-control" id="id_national_id" name="national_id" 
+                                       value="{{ employee.national_id|default:'' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_birth_date" class="form-label">تاريخ الميلاد</label>
+                                <input type="date" class="form-control" id="id_birth_date" name="birth_date" 
+                                       value="{{ employee.birth_date|default:'' }}">
+                            </div>
+                        </div>
+
+                        <!-- Work Information -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-primary mb-3">المعلومات الوظيفية</h6>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_employee_id" class="form-label">الرقم الوظيفي <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="id_employee_id" name="employee_id" 
+                                       value="{{ employee.employee_id|default:'' }}" required>
+                                <div class="form-text">رقم فريد للموظف في النظام</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_position" class="form-label">المنصب <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="id_position" name="position" 
+                                       value="{{ employee.position|default:'' }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_work_hours" class="form-label">عدد ساعات العمل <span class="text-danger">*</span></label>
+                                <select class="form-select" id="id_work_hours" name="work_hours" required>
+                                    <option value="">اختر عدد الساعات</option>
+                                    <option value="8" {% if employee.work_hours == 8 %}selected{% endif %}>8 ساعات (6 أيام عمل)</option>
+                                    <option value="9" {% if employee.work_hours == 9 %}selected{% endif %}>9 ساعات (5 أيام عمل)</option>
+                                </select>
+                                <div class="form-text">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        8 ساعات = 6 أيام عمل في الأسبوع<br>
+                                        9 ساعات = 5 أيام عمل في الأسبوع
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_department" class="form-label">القسم</label>
+                                <select class="form-select" id="id_department" name="department">
+                                    <option value="">اختر القسم</option>
+                                    <option value="hr" {% if employee.department == 'hr' %}selected{% endif %}>الموارد البشرية</option>
+                                    <option value="it" {% if employee.department == 'it' %}selected{% endif %}>تقنية المعلومات</option>
+                                    <option value="finance" {% if employee.department == 'finance' %}selected{% endif %}>المالية</option>
+                                    <option value="operations" {% if employee.department == 'operations' %}selected{% endif %}>العمليات</option>
+                                    <option value="sales" {% if employee.department == 'sales' %}selected{% endif %}>المبيعات</option>
+                                    <option value="marketing" {% if employee.department == 'marketing' %}selected{% endif %}>التسويق</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_branch" class="form-label">الفرع</label>
+                                <select class="form-select" id="id_branch" name="branch">
+                                    <option value="">اختر الفرع</option>
+                                    <option value="main" {% if employee.branch == 'main' %}selected{% endif %}>الفرع الرئيسي</option>
+                                    <option value="branch1" {% if employee.branch == 'branch1' %}selected{% endif %}>الفرع الأول</option>
+                                    <option value="branch2" {% if employee.branch == 'branch2' %}selected{% endif %}>الفرع الثاني</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_hire_date" class="form-label">تاريخ التوظيف</label>
+                                <input type="date" class="form-control" id="id_hire_date" name="hire_date" 
+                                       value="{{ employee.hire_date|default:'' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_salary" class="form-label">الراتب</label>
+                                <input type="number" class="form-control" id="id_salary" name="salary" 
+                                       value="{{ employee.salary|default:'' }}" step="0.01">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_status" class="form-label">الحالة</label>
+                                <select class="form-select" id="id_status" name="status">
+                                    <option value="active" {% if employee.status == 'active' %}selected{% endif %}>نشط</option>
+                                    <option value="inactive" {% if employee.status == 'inactive' %}selected{% endif %}>غير نشط</option>
+                                    <option value="suspended" {% if employee.status == 'suspended' %}selected{% endif %}>معلق</option>
+                                    <option value="terminated" {% if employee.status == 'terminated' %}selected{% endif %}>مفصول</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_manager" class="form-label">المدير المباشر</label>
+                                <select class="form-select" id="id_manager" name="manager">
+                                    <option value="">اختر المدير</option>
+                                    <option value="1">أحمد محمد</option>
+                                    <option value="2">فاطمة علي</option>
+                                    <option value="3">محمد حسن</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Additional Information -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-primary mb-3">معلومات إضافية</h6>
+                        </div>
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="id_address" class="form-label">العنوان</label>
+                                <textarea class="form-control" id="id_address" name="address" rows="3" 
+                                          placeholder="اكتب العنوان الكامل...">{{ employee.address|default:'' }}</textarea>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="id_notes" class="form-label">ملاحظات</label>
+                                <textarea class="form-control" id="id_notes" name="notes" rows="3" 
+                                          placeholder="أي ملاحظات إضافية...">{{ employee.notes|default:'' }}</textarea>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="id_avatar" class="form-label">صورة الموظف</label>
+                                <input type="file" class="form-control" id="id_avatar" name="avatar" 
+                                       accept="image/*">
+                                <div class="form-text">الصور المسموحة: JPG, PNG, GIF (حد أقصى 2MB)</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a href="{% url 'employees:list' %}" class="btn btn-secondary">إلغاء</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>
+                            {% if employee %}حفظ التغييرات{% else %}إضافة الموظف{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Current Photo -->
+        {% if employee %}
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-image me-2"></i>الصورة الحالية</h6>
+            </div>
+            <div class="card-body text-center">
+                <img src="{% static 'images/avatar-placeholder.png' %}" 
+                     alt="صورة الموظف" 
+                     class="rounded-circle mb-3" 
+                     width="150" 
+                     height="150">
+                <p class="text-muted">صورة الموظف الحالية</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Quick Actions -->
+        <div class="card shadow-sm mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-bolt me-2"></i>إجراءات سريعة</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('id_avatar').click()">
+                        <i class="fas fa-camera me-1"></i>تغيير الصورة
+                    </button>
+                    {% if employee %}
+                    <a href="{% url 'employees:detail' employee.id %}" class="btn btn-outline-info">
+                        <i class="fas fa-eye me-1"></i>عرض التفاصيل
+                    </a>
+                    <button type="button" class="btn btn-outline-warning">
+                        <i class="fas fa-calendar me-1"></i>إضافة إجازة
+                    </button>
+                    <button type="button" class="btn btn-outline-success">
+                        <i class="fas fa-clock me-1"></i>تسجيل حضور
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Tips -->
+        <div class="card shadow-sm mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>نصائح</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        تأكد من صحة البيانات المدخلة
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        الصورة يجب أن تكون واضحة ومقبولة
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        رقم الهوية يجب أن يكون فريد
+                    </li>
+                    <li>
+                        <i class="fas fa-check text-success me-2"></i>
+                        البريد الإلكتروني يجب أن يكون صحيح
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default work hours to 8 if not already set
+    const workHoursSelect = document.getElementById('id_work_hours');
+    if (workHoursSelect && !workHoursSelect.value) {
+        workHoursSelect.value = '8';
+    }
+    
+    // Add change event listener to show work days info
+    workHoursSelect.addEventListener('change', function() {
+        const selectedHours = this.value;
+        const infoText = this.nextElementSibling.querySelector('small');
+        
+        if (selectedHours === '8') {
+            infoText.innerHTML = '<i class="fas fa-info-circle me-1"></i>8 ساعات = 6 أيام عمل في الأسبوع';
+        } else if (selectedHours === '9') {
+            infoText.innerHTML = '<i class="fas fa-info-circle me-1"></i>9 ساعات = 5 أيام عمل في الأسبوع';
+        } else {
+            infoText.innerHTML = '<i class="fas fa-info-circle me-1"></i>8 ساعات = 6 أيام عمل في الأسبوع<br>9 ساعات = 5 أيام عمل في الأسبوع';
+        }
+    });
+});
+</script>
+{% endblock %}

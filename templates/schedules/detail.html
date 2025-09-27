@@ -1,0 +1,546 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تفاصيل الجدول التشغيلي - نظام إدارة الجداول التشغيلية{% endblock %}
+
+{% block page_title %}تفاصيل الجدول التشغيلي{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <a href="{% url 'schedules:edit' 1 %}" class="btn btn-warning">
+        <i class="fas fa-edit me-1"></i>تعديل
+    </a>
+    <button type="button" class="btn btn-outline-primary" onclick="printSchedule()">
+        <i class="fas fa-print me-1"></i>طباعة
+    </button>
+    <button type="button" class="btn btn-outline-success" onclick="exportSchedule()">
+        <i class="fas fa-download me-1"></i>تصدير
+    </button>
+    <a href="{% url 'schedules:list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Schedule Overview -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-primary h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-building text-primary fs-2 mb-2"></i>
+                <h6 class="card-title">الفرع</h6>
+                <p class="card-text text-muted">فرع الرياض - المعرض الرئيسي</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-info h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-calendar-week text-info fs-2 mb-2"></i>
+                <h6 class="card-title">نوع الجدول</h6>
+                <p class="card-text text-muted">أسبوعي</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-success h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-users text-success fs-2 mb-2"></i>
+                <h6 class="card-title">الموظفين</h6>
+                <p class="card-text text-muted">5 موظف</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-warning h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-pie text-warning fs-2 mb-2"></i>
+                <h6 class="card-title">التغطية</h6>
+                <p class="card-text text-muted">100%</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Schedule Period and Status -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-gradient-primary text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-calendar-alt me-2"></i>معلومات الجدول
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <strong>تاريخ البداية:</strong><br>
+                        <span class="text-muted">15 يناير 2024</span>
+                    </div>
+                    <div class="col-6">
+                        <strong>تاريخ النهاية:</strong><br>
+                        <span class="text-muted">21 يناير 2024</span>
+                    </div>
+                    <div class="col-6 mt-3">
+                        <strong>المدة:</strong><br>
+                        <span class="text-muted">7 أيام</span>
+                    </div>
+                    <div class="col-6 mt-3">
+                        <strong>إجمالي الساعات:</strong><br>
+                        <span class="text-muted">840 ساعة</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-gradient-success text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>حالة الجدول
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <span class="badge bg-success fs-6 me-3">معتمد</span>
+                    <span class="text-muted">تم اعتماد الجدول بنجاح</span>
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        <strong>تم الإنشاء:</strong><br>
+                        <span class="text-muted">10 يناير 2024</span>
+                    </div>
+                    <div class="col-6">
+                        <strong>بواسطة:</strong><br>
+                        <span class="text-muted">أحمد محمد</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Schedule Table -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-gradient-primary text-white">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-table me-2"></i>الجدول التشغيلي التفصيلي
+            </h5>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-light" onclick="exportSchedule()">
+                    <i class="fas fa-download me-1"></i>تصدير
+                </button>
+                <button type="button" class="btn btn-sm btn-light" onclick="printSchedule()">
+                    <i class="fas fa-print me-1"></i>طباعة
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="text-center" style="width: 12%;">
+                            <i class="fas fa-calendar me-1"></i>اليوم
+                        </th>
+                        <th class="text-center" style="width: 22%;">
+                            <div class="d-flex flex-column align-items-center">
+                                <span class="fw-bold">الشفت الأول</span>
+                                <small class="text-muted">08:00 - 16:00</small>
+                                <span class="badge bg-primary">8 ساعات</span>
+                            </div>
+                        </th>
+                        <th class="text-center" style="width: 22%;">
+                            <div class="d-flex flex-column align-items-center">
+                                <span class="fw-bold">الشفت الثاني</span>
+                                <small class="text-muted">16:00 - 00:00</small>
+                                <span class="badge bg-success">8 ساعات</span>
+                            </div>
+                        </th>
+                        <th class="text-center" style="width: 22%;">
+                            <div class="d-flex flex-column align-items-center">
+                                <span class="fw-bold">الشفت الثالث</span>
+                                <small class="text-muted">00:00 - 08:00</small>
+                                <span class="badge bg-warning">8 ساعات</span>
+                            </div>
+                        </th>
+                        <th class="text-center" style="width: 12%;">
+                            <i class="fas fa-shield-alt me-1"></i>التغطية
+                        </th>
+                        <th class="text-center" style="width: 10%;">
+                            <i class="fas fa-chart-line me-1"></i>الإحصائيات
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="text-center fw-bold">
+                            <div class="d-flex flex-column align-items-center">
+                                <span class="fs-6">السبت</span>
+                                <small class="text-muted">15/01/2024</small>
+                                <span class="badge bg-secondary">يوم 1</span>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class="mb-2">
+                                <span class="review-employee-item assigned">أحمد محمد (8/8س)</span>
+                                <span class="review-employee-item assigned">فاطمة علي (8/9س)</span>
+                            </div>
+                            <div class="d-flex justify-content-center">
+                                <span class="badge bg-primary">16/8 ساعة</span>
+                            </div>
+                            <small class="text-warning">(1 متبقية)</small>
+                        </td>
+                        <td class="text-center">
+                            <div class="mb-2">
+                                <span class="review-employee-item assigned">خالد سعد (8/8س)</span>
+                                <span class="review-employee-item partial">فاطمة علي (1/9س)</span>
+                            </div>
+                            <div class="d-flex justify-content-center">
+                                <span class="badge bg-success">9/8 ساعة</span>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class="mb-2">
+                                <span class="review-employee-item assigned">سارة أحمد (8/8س)</span>
+                            </div>
+                            <div class="d-flex justify-content-center">
+                                <span class="badge bg-warning">8/8 ساعة</span>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class="d-flex flex-column align-items-center">
+                                <span class="badge bg-success fs-6">
+                                    <i class="fas fa-check me-1"></i>مغطى بالكامل
+                                </span>
+                                <small class="text-muted mt-1">33/24 ساعة</small>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class="d-flex flex-column align-items-center">
+                                <div class="progress" style="width: 60px; height: 8px;">
+                                    <div class="progress-bar bg-success" style="width: 100%"></div>
+                                </div>
+                                <small class="text-muted">138%</small>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-center fw-bold">
+                            <div class="d-flex flex-column align-items-center">
+                                <span class="fs-6">الأحد</span>
+                                <small class="text-muted">16/01/2024</small>
+                                <span class="badge bg-secondary">يوم 2</span>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class="mb-2">
+                                <span class="review-employee-item assigned">محمد حسن (8/9س)</span>
+                                <span class="review-employee-item assigned">أحمد محمد (8/8س)</span>
+                            </div>
+                            <div class="d-flex justify-content-center">
+                                <span class="badge bg-primary">16/8 ساعة</span>
+                            </div>
+                            <small class="text-warning">(1 متبقية)</small>
+                        </td>
+                        <td class="text-center">
+                            <div class="mb-2">
+                                <span class="review-employee-item assigned">فاطمة علي (8/9س)</span>
+                                <span class="review-employee-item partial">محمد حسن (1/9س)</span>
+                            </div>
+                            <div class="d-flex justify-content-center">
+                                <span class="badge bg-success">9/8 ساعة</span>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class="mb-2">
+                                <span class="review-employee-item assigned">خالد سعد (8/8س)</span>
+                            </div>
+                            <div class="d-flex justify-content-center">
+                                <span class="badge bg-warning">8/8 ساعة</span>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class="d-flex flex-column align-items-center">
+                                <span class="badge bg-success fs-6">
+                                    <i class="fas fa-check me-1"></i>مغطى بالكامل
+                                </span>
+                                <small class="text-muted mt-1">33/24 ساعة</small>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class="d-flex flex-column align-items-center">
+                                <div class="progress" style="width: 60px; height: 8px;">
+                                    <div class="progress-bar bg-success" style="width: 100%"></div>
+                                </div>
+                                <small class="text-muted">138%</small>
+                            </div>
+                        </td>
+                    </tr>
+                    <!-- Add more rows for other days -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Employee Hours Summary -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-gradient-info text-white">
+        <h6 class="mb-0">
+            <i class="fas fa-user-clock me-2"></i>ملخص ساعات عمل الموظفين
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="employee-summary-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="employee-name">أحمد محمد</div>
+                            <div class="employee-hours">مدير فرع • 8 ساعة</div>
+                        </div>
+                        <span class="badge bg-success">100%</span>
+                    </div>
+                    <div class="hours-progress">
+                        <div class="hours-progress-bar" style="width: 100%"></div>
+                    </div>
+                    <div class="mt-2 text-center">
+                        <small class="text-muted">56/56 ساعة مخصصة</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="employee-summary-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="employee-name">فاطمة علي</div>
+                            <div class="employee-hours">منسق • 9 ساعة</div>
+                        </div>
+                        <span class="badge bg-success">100%</span>
+                    </div>
+                    <div class="hours-progress">
+                        <div class="hours-progress-bar" style="width: 100%"></div>
+                    </div>
+                    <div class="mt-2 text-center">
+                        <small class="text-muted">63/63 ساعة مخصصة</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="employee-summary-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="employee-name">خالد سعد</div>
+                            <div class="employee-hours">موظف • 8 ساعة</div>
+                        </div>
+                        <span class="badge bg-success">100%</span>
+                    </div>
+                    <div class="hours-progress">
+                        <div class="hours-progress-bar" style="width: 100%"></div>
+                    </div>
+                    <div class="mt-2 text-center">
+                        <small class="text-muted">56/56 ساعة مخصصة</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="employee-summary-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="employee-name">سارة أحمد</div>
+                            <div class="employee-hours">موظف • 8 ساعة</div>
+                        </div>
+                        <span class="badge bg-success">100%</span>
+                    </div>
+                    <div class="hours-progress">
+                        <div class="hours-progress-bar" style="width: 100%"></div>
+                    </div>
+                    <div class="mt-2 text-center">
+                        <small class="text-muted">56/56 ساعة مخصصة</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="employee-summary-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="employee-name">محمد حسن</div>
+                            <div class="employee-hours">موظف • 9 ساعة</div>
+                        </div>
+                        <span class="badge bg-success">100%</span>
+                    </div>
+                    <div class="hours-progress">
+                        <div class="hours-progress-bar" style="width: 100%"></div>
+                    </div>
+                    <div class="mt-2 text-center">
+                        <small class="text-muted">63/63 ساعة مخصصة</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Coverage Analysis -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-gradient-success text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>تحليل التغطية
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="border-end">
+                            <h4 class="text-success mb-1">7</h4>
+                            <small class="text-muted">إجمالي الأيام</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="border-end">
+                            <h4 class="text-primary mb-1">7</h4>
+                            <small class="text-muted">أيام مغطاة</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <h4 class="text-warning mb-1">0</h4>
+                        <small class="text-muted">أيام غير مغطاة</small>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-gradient-success" role="progressbar" style="width: 100%">
+                            <span class="fw-bold">100%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-gradient-warning text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>ملخص الجدول
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center text-success mb-2">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <span>الجدول مكتمل ومغطى بالكامل</span>
+                </div>
+                <div class="d-flex align-items-center text-info mb-2">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <span>جميع الموظفين أكملوا ساعاتهم المطلوبة</span>
+                </div>
+                <div class="d-flex align-items-center text-primary mb-2">
+                    <i class="fas fa-calendar-check me-2"></i>
+                    <span>التغطية تتجاوز المطلوب بنسبة 38%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+/* Employee summary cards */
+.employee-summary-card {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    padding: 15px;
+    margin: 10px 0;
+    transition: all 0.3s ease;
+}
+
+.employee-summary-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.employee-summary-card .employee-name {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 5px;
+}
+
+.employee-summary-card .employee-hours {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.employee-summary-card .hours-progress {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.employee-summary-card .hours-progress-bar {
+    height: 100%;
+    background: linear-gradient(45deg, #28a745, #20c997);
+    transition: width 0.3s ease;
+}
+
+/* Review table employee items */
+.review-employee-item {
+    display: inline-block;
+    background: #e3f2fd;
+    border: 1px solid #bbdefb;
+    border-radius: 15px;
+    padding: 2px 8px;
+    margin: 1px;
+    font-size: 0.75rem;
+    color: #1565c0;
+}
+
+.review-employee-item.assigned {
+    background: #e8f5e8;
+    border-color: #c8e6c9;
+    color: #2e7d32;
+}
+
+.review-employee-item.partial {
+    background: #fff3e0;
+    border-color: #ffcc02;
+    color: #ef6c00;
+}
+
+/* Gradient backgrounds */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #007bff, #0056b3) !important;
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, #17a2b8, #138496) !important;
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #28a745, #1e7e34) !important;
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #ffc107, #e0a800) !important;
+}
+</style>
+
+<script>
+function printSchedule() {
+    window.print();
+}
+
+function exportSchedule() {
+    alert('تم تصدير الجدول بنجاح');
+    // TODO: Implement actual export functionality
+}
+</script>
+{% endblock %}

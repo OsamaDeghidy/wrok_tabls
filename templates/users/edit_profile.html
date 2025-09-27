@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تعديل الملف الشخصي{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-user-edit me-2"></i>تعديل الملف الشخصي</h2>
+                <a href="{% url 'users:profile' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-right me-1"></i>العودة للملف الشخصي
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-edit me-2"></i>معلومات الملف الشخصي</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_first_name" class="form-label">الاسم الأول</label>
+                                    <input type="text" class="form-control" id="id_first_name" name="first_name" 
+                                           value="{{ user.first_name }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_last_name" class="form-label">الاسم الأخير</label>
+                                    <input type="text" class="form-control" id="id_last_name" name="last_name" 
+                                           value="{{ user.last_name }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_email" class="form-label">البريد الإلكتروني</label>
+                                    <input type="email" class="form-control" id="id_email" name="email" 
+                                           value="{{ user.email }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_phone" class="form-label">رقم الهاتف</label>
+                                    <input type="tel" class="form-control" id="id_phone" name="phone" 
+                                           value="{{ user.phone|default:'' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_department" class="form-label">القسم</label>
+                                    <select class="form-select" id="id_department" name="department">
+                                        <option value="">اختر القسم</option>
+                                        <option value="hr" {% if user.department == 'hr' %}selected{% endif %}>الموارد البشرية</option>
+                                        <option value="it" {% if user.department == 'it' %}selected{% endif %}>تقنية المعلومات</option>
+                                        <option value="finance" {% if user.department == 'finance' %}selected{% endif %}>المالية</option>
+                                        <option value="operations" {% if user.department == 'operations' %}selected{% endif %}>العمليات</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_position" class="form-label">المنصب</label>
+                                    <input type="text" class="form-control" id="id_position" name="position" 
+                                           value="{{ user.position|default:'' }}">
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="id_bio" class="form-label">نبذة شخصية</label>
+                                    <textarea class="form-control" id="id_bio" name="bio" rows="4" 
+                                              placeholder="اكتب نبذة عن نفسك...">{{ user.bio|default:'' }}</textarea>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="id_avatar" class="form-label">صورة الملف الشخصي</label>
+                                    <input type="file" class="form-control" id="id_avatar" name="avatar" 
+                                           accept="image/*">
+                                    <div class="form-text">الصور المسموحة: JPG, PNG, GIF (حد أقصى 2MB)</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{% url 'users:profile' %}" class="btn btn-secondary">إلغاء</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>حفظ التغييرات
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Current Avatar -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-image me-2"></i>الصورة الحالية</h6>
+                </div>
+                <div class="card-body text-center">
+                    <img src="{% static 'images/avatar-placeholder.png' %}" 
+                         alt="صورة المستخدم" 
+                         class="rounded-circle mb-3" 
+                         width="150" 
+                         height="150">
+                    <p class="text-muted">صورة الملف الشخصي الحالية</p>
+                </div>
+            </div>
+
+            <!-- Password Change -->
+            <div class="card shadow-sm mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-lock me-2"></i>تغيير كلمة المرور</h6>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'users:change_password' %}" class="btn btn-warning w-100">
+                        <i class="fas fa-key me-1"></i>تغيير كلمة المرور
+                    </a>
+                </div>
+            </div>
+
+            <!-- Account Settings -->
+            <div class="card shadow-sm mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-cog me-2"></i>إعدادات الحساب</h6>
+                </div>
+                <div class="card-body">
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="email_notifications" checked>
+                        <label class="form-check-label" for="email_notifications">
+                            إشعارات البريد الإلكتروني
+                        </label>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="sms_notifications">
+                        <label class="form-check-label" for="sms_notifications">
+                            إشعارات الرسائل النصية
+                        </label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="two_factor" checked>
+                        <label class="form-check-label" for="two_factor">
+                            المصادقة الثنائية
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

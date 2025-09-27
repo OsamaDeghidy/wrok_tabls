@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}طلب موافقة جديد - نظام إدارة الجداول التشغيلية{% endblock %}
+
+{% block page_title %}طلب موافقة جديد{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'approvals:list' %}" class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    بيانات طلب الموافقة
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row">
+                        <!-- Basic Information -->
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">المعلومات الأساسية</h6>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_title" class="form-label">عنوان الطلب <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="id_title" name="title" 
+                                       placeholder="أدخل عنوان الطلب" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_type" class="form-label">نوع الطلب <span class="text-danger">*</span></label>
+                                <select class="form-select" id="id_type" name="type" required>
+                                    <option value="">اختر نوع الطلب</option>
+                                    <option value="leave">طلب إجازة</option>
+                                    <option value="overtime">طلب عمل إضافي</option>
+                                    <option value="equipment">طلب معدات</option>
+                                    <option value="training">طلب تدريب</option>
+                                    <option value="travel">طلب سفر</option>
+                                    <option value="budget">طلب ميزانية</option>
+                                    <option value="other">أخرى</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Priority and Deadline -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-primary mb-3">الأولوية والمواعيد</h6>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_priority" class="form-label">الأولوية <span class="text-danger">*</span></label>
+                                <select class="form-select" id="id_priority" name="priority" required>
+                                    <option value="">اختر الأولوية</option>
+                                    <option value="low">منخفضة</option>
+                                    <option value="medium">متوسطة</option>
+                                    <option value="high">عالية</option>
+                                    <option value="urgent">عاجلة</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_deadline" class="form-label">الموعد النهائي</label>
+                                <input type="date" class="form-control" id="id_deadline" name="deadline">
+                            </div>
+                        </div>
+
+                        <!-- Manager Selection -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-primary mb-3">المدير المطلوب</h6>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_manager" class="form-label">المدير المباشر <span class="text-danger">*</span></label>
+                                <select class="form-select" id="id_manager" name="manager" required>
+                                    <option value="">اختر المدير</option>
+                                    <option value="1">سارة أحمد - مديرة التسويق</option>
+                                    <option value="2">محمد حسن - مدير الموارد البشرية</option>
+                                    <option value="3">أحمد محمد - مدير تقنية المعلومات</option>
+                                    <option value="4">فاطمة علي - المديرة العامة</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_department" class="form-label">القسم</label>
+                                <input type="text" class="form-control" id="id_department" name="department" 
+                                       value="تقنية المعلومات" readonly>
+                            </div>
+                        </div>
+
+                        <!-- Request Details -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-primary mb-3">تفاصيل الطلب</h6>
+                        </div>
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="id_description" class="form-label">وصف الطلب <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="id_description" name="description" rows="4" 
+                                          placeholder="اكتب وصفاً مفصلاً للطلب..." required></textarea>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="id_justification" class="form-label">مبرر الطلب <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="id_justification" name="justification" rows="3" 
+                                          placeholder="اشرح سبب الحاجة لهذا الطلب..." required></textarea>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="id_attachments" class="form-label">مرفقات (اختياري)</label>
+                                <input type="file" class="form-control" id="id_attachments" name="attachments" 
+                                       multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+                                <div class="form-text">يمكن رفع ملفات PDF، صور، أو مستندات Word</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a href="{% url 'approvals:list' %}" class="btn btn-secondary">إلغاء</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-1"></i>إرسال الطلب
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Approval Guidelines -->
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>إرشادات الموافقات</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        تأكد من وضوح وصف الطلب
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        قدم مبرراً قوياً للطلب
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        أرفق المستندات المطلوبة
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        اختر الأولوية المناسبة
+                    </li>
+                    <li>
+                        <i class="fas fa-check text-success me-2"></i>
+                        حدد الموعد النهائي إذا لزم الأمر
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Priority Guidelines -->
+        <div class="card shadow-sm mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>دليل الأولويات</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <span class="badge bg-success me-2">منخفضة</span>
+                    <small>طلبات روتينية لا تحتاج موافقة فورية</small>
+                </div>
+                <div class="mb-3">
+                    <span class="badge bg-info me-2">متوسطة</span>
+                    <small>طلبات عادية تحتاج موافقة خلال 3 أيام</small>
+                </div>
+                <div class="mb-3">
+                    <span class="badge bg-warning me-2">عالية</span>
+                    <small>طلبات مهمة تحتاج موافقة خلال 24 ساعة</small>
+                </div>
+                <div>
+                    <span class="badge bg-danger me-2">عاجلة</span>
+                    <small>طلبات حرجة تحتاج موافقة فورية</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card shadow-sm mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-bolt me-2"></i>إجراءات سريعة</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'approvals:list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-list me-1"></i>عرض جميع الطلبات
+                    </a>
+                    <button type="button" class="btn btn-outline-info">
+                        <i class="fas fa-download me-1"></i>تحميل النماذج
+                    </button>
+                    <button type="button" class="btn btn-outline-success">
+                        <i class="fas fa-history me-1"></i>سجل الطلبات
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form submission
+document.querySelector('form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Show loading
+    const submitBtn = document.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>جاري الإرسال...';
+    submitBtn.disabled = true;
+    
+    // Simulate form submission
+    setTimeout(() => {
+        alert('تم إرسال طلب الموافقة بنجاح!');
+        window.location.href = '{% url "approvals:list" %}';
+    }, 2000);
+});
+
+// Auto-fill department based on manager selection
+document.getElementById('id_manager').addEventListener('change', function() {
+    const manager = this.value;
+    const departmentField = document.getElementById('id_department');
+    
+    // Mock department mapping
+    const departmentMap = {
+        '1': 'التسويق',
+        '2': 'الموارد البشرية',
+        '3': 'تقنية المعلومات',
+        '4': 'الإدارة العامة'
+    };
+    
+    if (departmentMap[manager]) {
+        departmentField.value = departmentMap[manager];
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,345 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}الموافقات - نظام إدارة الجداول التشغيلية{% endblock %}
+
+{% block page_title %}الموافقات المعلقة{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <button type="button" class="btn btn-outline-primary" onclick="refreshApprovals()">
+        <i class="fas fa-sync me-1"></i>تحديث
+    </button>
+    <button type="button" class="btn btn-outline-secondary">
+        <i class="fas fa-download me-1"></i>تصدير
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h5 class="card-title">معلقة</h5>
+                <h2 class="card-text">8</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h5 class="card-title">معتمدة</h5>
+                <h2 class="card-text">23</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body text-center">
+                <h5 class="card-title">مرفوضة</h5>
+                <h2 class="card-text">3</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h5 class="card-title">إجمالي</h5>
+                <h2 class="card-text">34</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">تطبيق الموافقات</h6>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="type" class="form-label">النوع</label>
+                <select class="form-select" id="type" name="type">
+                    <option value="">جميع الأنواع</option>
+                    <option value="schedule">جدول تشغيلي</option>
+                    <option value="leave">طلب إجازة</option>
+                    <option value="overtime">ساعات إضافية</option>
+                    <option value="shift_change">تغيير نوبة</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="status" class="form-label">الحالة</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="">جميع الحالات</option>
+                    <option value="pending">معلقة</option>
+                    <option value="approved">معتمدة</option>
+                    <option value="rejected">مرفوضة</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="priority" class="form-label">الأولوية</label>
+                <select class="form-select" id="priority" name="priority">
+                    <option value="">جميع الأولويات</option>
+                    <option value="high">عالية</option>
+                    <option value="medium">متوسطة</option>
+                    <option value="low">منخفضة</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">تطبيق</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Approvals List -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">قائمة الموافقات</h6>
+        <div class="text-muted">
+            إجمالي: <span class="badge bg-primary">8</span> موافقة معلقة
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="list-group list-group-flush">
+            <!-- Approval Item 1 -->
+            <div class="list-group-item">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <i class="fas fa-calendar-alt fa-2x text-primary"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">جدول تشغيلي - فرع الرياض</h6>
+                                <p class="mb-1 text-muted">الفترة: 15-21 يناير 2024</p>
+                                <small class="text-muted">
+                                    <i class="fas fa-user me-1"></i>أحمد محمد
+                                    <span class="mx-2">•</span>
+                                    <i class="fas fa-clock me-1"></i>منذ يومين
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-end align-items-center">
+                            <span class="badge bg-warning me-2">معلقة</span>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button class="btn btn-success" onclick="approveItem(1)">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="btn btn-danger" onclick="rejectItem(1)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                <button class="btn btn-outline-primary" onclick="viewDetails(1)">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Approval Item 2 -->
+            <div class="list-group-item">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <i class="fas fa-calendar-times fa-2x text-info"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">طلب إجازة - فاطمة علي</h6>
+                                <p class="mb-1 text-muted">إجازة سنوية - 5 أيام</p>
+                                <small class="text-muted">
+                                    <i class="fas fa-user me-1"></i>فاطمة علي
+                                    <span class="mx-2">•</span>
+                                    <i class="fas fa-clock me-1"></i>منذ 3 أيام
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-end align-items-center">
+                            <span class="badge bg-warning me-2">معلقة</span>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button class="btn btn-success" onclick="approveItem(2)">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="btn btn-danger" onclick="rejectItem(2)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                <button class="btn btn-outline-primary" onclick="viewDetails(2)">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Approval Item 3 -->
+            <div class="list-group-item">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <i class="fas fa-clock fa-2x text-warning"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">ساعات إضافية - خالد سعد</h6>
+                                <p class="mb-1 text-muted">4 ساعات إضافية - يوم السبت</p>
+                                <small class="text-muted">
+                                    <i class="fas fa-user me-1"></i>خالد سعد
+                                    <span class="mx-2">•</span>
+                                    <i class="fas fa-clock me-1"></i>منذ 5 أيام
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-end align-items-center">
+                            <span class="badge bg-warning me-2">معلقة</span>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button class="btn btn-success" onclick="approveItem(3)">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="btn btn-danger" onclick="rejectItem(3)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                <button class="btn btn-outline-primary" onclick="viewDetails(3)">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Approval Modal -->
+<div class="modal fade" id="approvalModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">الموافقة على الطلب</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="approvalForm">
+                    <div class="mb-3">
+                        <label for="approvalComment" class="form-label">تعليق (اختياري)</label>
+                        <textarea class="form-control" id="approvalComment" rows="3" placeholder="أضف تعليقاً..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="notifyRequester">
+                            <label class="form-check-label" for="notifyRequester">
+                                إشعار مقدم الطلب
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-success" onclick="confirmApproval()">موافقة</button>
+                <button type="button" class="btn btn-danger" onclick="confirmRejection()">رفض</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentApprovalId = null;
+
+function refreshApprovals() {
+    // Simulate refresh
+    showInfoMessage('تم تحديث القائمة');
+}
+
+function approveItem(id) {
+    currentApprovalId = id;
+    document.getElementById('approvalModal').querySelector('.modal-title').textContent = 'الموافقة على الطلب';
+    bootstrap.Modal.getInstance(document.getElementById('approvalModal')).show();
+}
+
+function rejectItem(id) {
+    currentApprovalId = id;
+    document.getElementById('approvalModal').querySelector('.modal-title').textContent = 'رفض الطلب';
+    bootstrap.Modal.getInstance(document.getElementById('approvalModal')).show();
+}
+
+function viewDetails(id) {
+    // Navigate to details page
+    window.location.href = `/approvals/${id}/`;
+}
+
+function confirmApproval() {
+    if (!currentApprovalId) return;
+    
+    const comment = document.getElementById('approvalComment').value;
+    const notify = document.getElementById('notifyRequester').checked;
+    
+    // Show loading
+    const btn = document.querySelector('#approvalModal .btn-success');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>جاري المعالجة...';
+    btn.disabled = true;
+    
+    // Simulate approval
+    setTimeout(() => {
+        showSuccessMessage('تم اعتماد الطلب بنجاح!');
+        bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        
+        // Remove item from list
+        const item = document.querySelector(`[onclick="approveItem(${currentApprovalId})"]`).closest('.list-group-item');
+        item.remove();
+        
+        currentApprovalId = null;
+    }, 1500);
+}
+
+function confirmRejection() {
+    if (!currentApprovalId) return;
+    
+    const comment = document.getElementById('approvalComment').value;
+    const notify = document.getElementById('notifyRequester').checked;
+    
+    // Show loading
+    const btn = document.querySelector('#approvalModal .btn-danger');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>جاري المعالجة...';
+    btn.disabled = true;
+    
+    // Simulate rejection
+    setTimeout(() => {
+        showWarningMessage('تم رفض الطلب!');
+        bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        
+        // Remove item from list
+        const item = document.querySelector(`[onclick="rejectItem(${currentApprovalId})"]`).closest('.list-group-item');
+        item.remove();
+        
+        currentApprovalId = null;
+    }, 1500);
+}
+
+// Auto-refresh every 30 seconds
+setInterval(refreshApprovals, 30000);
+</script>
+{% endblock %}

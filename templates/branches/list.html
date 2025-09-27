@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}إدارة المعارض - نظام إدارة الجداول التشغيلية{% endblock %}
+
+{% block page_title %}إدارة المعارض{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <a href="{% url 'branches:create' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>إضافة فرع
+    </a>
+    <button type="button" class="btn btn-outline-secondary">
+        <i class="fas fa-download me-1"></i>تصدير
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Filters -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">تطبيق المعارض</h6>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="search" class="form-label">البحث</label>
+                <input type="text" class="form-control" id="search" name="search" placeholder="اسم الفرع أو الكود">
+            </div>
+            <div class="col-md-3">
+                <label for="category" class="form-label">الفئة</label>
+                <select class="form-select" id="category" name="category">
+                    <option value="">جميع الفئات</option>
+                    <option value="A">فئة أ</option>
+                    <option value="B">فئة ب</option>
+                    <option value="C">فئة ج</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="region" class="form-label">المنطقة</label>
+                <select class="form-select" id="region" name="region">
+                    <option value="">جميع المناطق</option>
+                    <option value="الرياض">الرياض</option>
+                    <option value="جدة">جدة</option>
+                    <option value="الدمام">الدمام</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">تطبيق</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Branches Grid -->
+<div class="row">
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">فرع الرياض الرئيسي</h6>
+                <span class="badge bg-success">فئة أ</span>
+            </div>
+            <div class="card-body">
+                <div class="row text-center mb-3">
+                    <div class="col-4">
+                        <div class="border-end">
+                            <h5 class="text-primary">45</h5>
+                            <small class="text-muted">موظف</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="border-end">
+                            <h5 class="text-success">8</h5>
+                            <small class="text-muted">جداول نشطة</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <h5 class="text-info">95%</h5>
+                        <small class="text-muted">تغطية</small>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <i class="fas fa-map-marker-alt me-2 text-muted"></i>
+                    <span>الرياض، المملكة العربية السعودية</span>
+                </div>
+                <div class="mb-3">
+                    <i class="fas fa-clock me-2 text-muted"></i>
+                    <span>08:00 - 22:00</span>
+                </div>
+                <div class="mb-3">
+                    <i class="fas fa-calendar me-2 text-muted"></i>
+                    <span>السبت - الخميس</span>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="btn-group w-100" role="group">
+                    <a href="{% url 'branches:detail' 1 %}" class="btn btn-outline-primary btn-sm">عرض</a>
+                    <a href="{% url 'branches:edit' 1 %}" class="btn btn-outline-warning btn-sm">تعديل</a>
+                    <button class="btn btn-outline-danger btn-sm" data-confirm-delete>حذف</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">فرع جدة</h6>
+                <span class="badge bg-warning">فئة ب</span>
+            </div>
+            <div class="card-body">
+                <div class="row text-center mb-3">
+                    <div class="col-4">
+                        <div class="border-end">
+                            <h5 class="text-primary">32</h5>
+                            <small class="text-muted">موظف</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="border-end">
+                            <h5 class="text-success">6</h5>
+                            <small class="text-muted">جداول نشطة</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <h5 class="text-info">88%</h5>
+                        <small class="text-muted">تغطية</small>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <i class="fas fa-map-marker-alt me-2 text-muted"></i>
+                    <span>جدة، المملكة العربية السعودية</span>
+                </div>
+                <div class="mb-3">
+                    <i class="fas fa-clock me-2 text-muted"></i>
+                    <span>09:00 - 21:00</span>
+                </div>
+                <div class="mb-3">
+                    <i class="fas fa-calendar me-2 text-muted"></i>
+                    <span>السبت - الخميس</span>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="btn-group w-100" role="group">
+                    <a href="{% url 'branches:detail' 2 %}" class="btn btn-outline-primary btn-sm">عرض</a>
+                    <a href="{% url 'branches:edit' 2 %}" class="btn btn-outline-warning btn-sm">تعديل</a>
+                    <button class="btn btn-outline-danger btn-sm" data-confirm-delete>حذف</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">فرع الدمام</h6>
+                <span class="badge bg-info">فئة ج</span>
+            </div>
+            <div class="card-body">
+                <div class="row text-center mb-3">
+                    <div class="col-4">
+                        <div class="border-end">
+                            <h5 class="text-primary">28</h5>
+                            <small class="text-muted">موظف</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="border-end">
+                            <h5 class="text-success">5</h5>
+                            <small class="text-muted">جداول نشطة</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <h5 class="text-info">92%</h5>
+                        <small class="text-muted">تغطية</small>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <i class="fas fa-map-marker-alt me-2 text-muted"></i>
+                    <span>الدمام، المملكة العربية السعودية</span>
+                </div>
+                <div class="mb-3">
+                    <i class="fas fa-clock me-2 text-muted"></i>
+                    <span>10:00 - 20:00</span>
+                </div>
+                <div class="mb-3">
+                    <i class="fas fa-calendar me-2 text-muted"></i>
+                    <span>السبت - الخميس</span>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="btn-group w-100" role="group">
+                    <a href="{% url 'branches:detail' 3 %}" class="btn btn-outline-primary btn-sm">عرض</a>
+                    <a href="{% url 'branches:edit' 3 %}" class="btn btn-outline-warning btn-sm">تعديل</a>
+                    <button class="btn btn-outline-danger btn-sm" data-confirm-delete>حذف</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Statistics -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h5 class="card-title">إجمالي المعارض</h5>
+                <h2 class="card-text">3</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h5 class="card-title">إجمالي الموظفين</h5>
+                <h2 class="card-text">105</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h5 class="card-title">متوسط التغطية</h5>
+                <h2 class="card-text">92%</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h5 class="card-title">الجداول النشطة</h5>
+                <h2 class="card-text">19</h2>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Search functionality
+document.getElementById('search').addEventListener('keyup', function() {
+    const searchTerm = this.value.toLowerCase();
+    const cards = document.querySelectorAll('.card');
+    
+    cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        if (text.indexOf(searchTerm) > -1) {
+            card.closest('.col-lg-4, .col-md-6').style.display = '';
+        } else {
+            card.closest('.col-lg-4, .col-md-6').style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تفاصيل الموافقة - {{ approval.title }}{% endblock %}
+
+{% block page_title %}تفاصيل الموافقة{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    {% if approval.status == 'pending' %}
+    <button type="button" class="btn btn-success" onclick="approveRequest({{ approval.id }})">
+        <i class="fas fa-check me-1"></i>اعتماد
+    </button>
+    <button type="button" class="btn btn-danger" onclick="rejectRequest({{ approval.id }})">
+        <i class="fas fa-times me-1"></i>رفض
+    </button>
+    {% endif %}
+    <a href="{% url 'approvals:list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Approval Information -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">{{ approval.title }}</h5>
+                <p class="text-muted">{{ approval.type_display }}</p>
+                <div class="mb-3">
+                    <span class="badge bg-{% if approval.status == 'approved' %}success{% elif approval.status == 'pending' %}warning{% elif approval.status == 'rejected' %}danger{% else %}secondary{% endif %} fs-6">
+                        {% if approval.status == 'approved' %}معتمد{% elif approval.status == 'pending' %}معلق{% elif approval.status == 'rejected' %}مرفوض{% else %}غير محدد{% endif %}
+                    </span>
+                </div>
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h6 class="text-primary">{{ approval.priority_display }}</h6>
+                        <small class="text-muted">الأولوية</small>
+                    </div>
+                    <div class="col-6">
+                        <h6 class="text-success">{{ approval.created_at|date:"Y-m-d" }}</h6>
+                        <small class="text-muted">تاريخ التقديم</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Approval Details -->
+        <div class="card shadow-sm mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>تفاصيل الطلب</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <strong>نوع الطلب:</strong> {{ approval.type_display }}
+                </div>
+                <div class="mb-2">
+                    <strong>المقدم:</strong> {{ approval.requester_name }}
+                </div>
+                <div class="mb-2">
+                    <strong>القسم:</strong> {{ approval.department }}
+                </div>
+                <div class="mb-2">
+                    <strong>تاريخ التقديم:</strong> {{ approval.created_at }}
+                </div>
+                <div class="mb-2">
+                    <strong>الأولوية:</strong> {{ approval.priority_display }}
+                </div>
+                <div class="mb-2">
+                    <strong>المدير المطلوب:</strong> {{ approval.manager_name }}
+                </div>
+                <div class="mb-2">
+                    <strong>تاريخ المراجعة:</strong> {{ approval.reviewed_at|default:"لم يتم المراجعة بعد" }}
+                </div>
+                {% if approval.deadline %}
+                <div class="mb-2">
+                    <strong>الموعد النهائي:</strong> {{ approval.deadline }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card shadow-sm mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-bolt me-2"></i>إجراءات سريعة</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if approval.status == 'pending' %}
+                    <button type="button" class="btn btn-success btn-sm" onclick="approveRequest({{ approval.id }})">
+                        <i class="fas fa-check me-1"></i>اعتماد الطلب
+                    </button>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="rejectRequest({{ approval.id }})">
+                        <i class="fas fa-times me-1"></i>رفض الطلب
+                    </button>
+                    {% endif %}
+                    <button type="button" class="btn btn-info btn-sm">
+                        <i class="fas fa-print me-1"></i>طباعة الطلب
+                    </button>
+                    <button type="button" class="btn btn-primary btn-sm">
+                        <i class="fas fa-copy me-1"></i>نسخ الطلب
+                    </button>
+                    <button type="button" class="btn btn-warning btn-sm">
+                        <i class="fas fa-comment me-1"></i>إضافة تعليق
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approval Content -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="fas fa-file-alt me-2"></i>محتوى الطلب</h6>
+                <span class="badge bg-{% if approval.status == 'approved' %}success{% elif approval.status == 'pending' %}warning{% elif approval.status == 'rejected' %}danger{% else %}secondary{% endif %}">
+                    {% if approval.status == 'approved' %}معتمد{% elif approval.status == 'pending' %}معلق{% elif approval.status == 'rejected' %}مرفوض{% else %}غير محدد{% endif %}
+                </span>
+            </div>
+            <div class="card-body">
+                <!-- Description -->
+                <div class="mb-4">
+                    <h6 class="text-primary">وصف الطلب</h6>
+                    <p class="text-muted">{{ approval.description|default:"لم يتم تحديد وصف للطلب" }}</p>
+                </div>
+
+                <!-- Justification -->
+                {% if approval.justification %}
+                <div class="mb-4">
+                    <h6 class="text-primary">مبرر الطلب</h6>
+                    <p class="text-muted">{{ approval.justification }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Attachments -->
+                {% if approval.attachments %}
+                <div class="mb-4">
+                    <h6 class="text-primary">المرفقات</h6>
+                    <div class="list-group">
+                        {% for attachment in approval.attachments %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-paperclip me-2"></i>
+                                {{ attachment.name }}
+                            </div>
+                            <a href="{{ attachment.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                <i class="fas fa-download me-1"></i>تحميل
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Comments -->
+                {% if approval.comments %}
+                <div class="mb-4">
+                    <h6 class="text-primary">التعليقات</h6>
+                    <div class="timeline">
+                        {% for comment in approval.comments %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content">
+                                <h6 class="timeline-title">{{ comment.author }}</h6>
+                                <p class="timeline-text">{{ comment.text }}</p>
+                                <small class="text-muted">{{ comment.created_at }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Timeline -->
+                <div class="mb-4">
+                    <h6 class="text-primary">سجل الطلب</h6>
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content">
+                                <h6 class="timeline-title">تم تقديم الطلب</h6>
+                                <p class="timeline-text">{{ approval.created_at }} - {{ approval.requester_name }}</p>
+                            </div>
+                        </div>
+                        {% if approval.reviewed_at %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-{% if approval.status == 'approved' %}success{% elif approval.status == 'rejected' %}danger{% else %}warning{% endif %}"></div>
+                            <div class="timeline-content">
+                                <h6 class="timeline-title">
+                                    {% if approval.status == 'approved' %}تم اعتماد الطلب{% elif approval.status == 'rejected' %}تم رفض الطلب{% else %}تم مراجعة الطلب{% endif %}
+                                </h6>
+                                <p class="timeline-text">{{ approval.reviewed_at }} - {{ approval.manager_name|default:"المدير" }}</p>
+                                {% if approval.review_notes %}
+                                <p class="timeline-text">{{ approval.review_notes }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Requester Information -->
+        <div class="card shadow-sm mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-user me-2"></i>معلومات مقدم الطلب</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="{% static 'images/avatar-placeholder.png' %}" 
+                                 alt="صورة الموظف" 
+                                 class="rounded-circle me-3" 
+                                 width="50" 
+                                 height="50">
+                            <div>
+                                <h6 class="mb-0">{{ approval.requester_name }}</h6>
+                                <small class="text-muted">{{ approval.requester_position }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-2">
+                            <strong>القسم:</strong> {{ approval.department }}
+                        </div>
+                        <div class="mb-2">
+                            <strong>رقم الهاتف:</strong> {{ approval.requester_phone }}
+                        </div>
+                        <div class="mb-2">
+                            <strong>البريد الإلكتروني:</strong> {{ approval.requester_email }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Approval Modal -->
+<div class="modal fade" id="approvalModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="approvalModalTitle">تأكيد العملية</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="approvalModalText">هل أنت متأكد من هذا الإجراء؟</p>
+                <div class="mb-3">
+                    <label for="approvalNotes" class="form-label">ملاحظات (اختياري)</label>
+                    <textarea class="form-control" id="approvalNotes" rows="3" placeholder="أضف ملاحظاتك هنا..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn" id="approvalModalBtn" onclick="confirmAction()">تأكيد</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -30px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #dee2e6;
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 3px solid #dee2e6;
+}
+
+.timeline-title {
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.timeline-text {
+    margin-bottom: 0;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+</style>
+
+<script>
+let currentAction = '';
+let currentApprovalId = '';
+
+function approveRequest(approvalId) {
+    currentAction = 'approve';
+    currentApprovalId = approvalId;
+    document.getElementById('approvalModalTitle').textContent = 'اعتماد الطلب';
+    document.getElementById('approvalModalText').textContent = 'هل أنت متأكد من اعتماد هذا الطلب؟';
+    document.getElementById('approvalModalBtn').textContent = 'اعتماد';
+    document.getElementById('approvalModalBtn').className = 'btn btn-success';
+    new bootstrap.Modal(document.getElementById('approvalModal')).show();
+}
+
+function rejectRequest(approvalId) {
+    currentAction = 'reject';
+    currentApprovalId = approvalId;
+    document.getElementById('approvalModalTitle').textContent = 'رفض الطلب';
+    document.getElementById('approvalModalText').textContent = 'هل أنت متأكد من رفض هذا الطلب؟';
+    document.getElementById('approvalModalBtn').textContent = 'رفض';
+    document.getElementById('approvalModalBtn').className = 'btn btn-danger';
+    new bootstrap.Modal(document.getElementById('approvalModal')).show();
+}
+
+function confirmAction() {
+    const notes = document.getElementById('approvalNotes').value;
+    
+    // Show loading
+    const btn = document.getElementById('approvalModalBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>جاري المعالجة...';
+    btn.disabled = true;
+    
+    // Simulate API call
+    setTimeout(() => {
+        alert(`تم ${currentAction === 'approve' ? 'اعتماد' : 'رفض'} الطلب بنجاح!`);
+        window.location.reload();
+    }, 2000);
+}
+</script>
+{% endblock %}

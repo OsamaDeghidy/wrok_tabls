@@ -1,0 +1,453 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}التقارير - نظام إدارة الجداول التشغيلية{% endblock %}
+
+{% block page_title %}التقارير والتحليلات{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <button type="button" class="btn btn-outline-primary" onclick="refreshReports()">
+        <i class="fas fa-sync me-1"></i>تحديث
+    </button>
+    <button type="button" class="btn btn-outline-secondary" onclick="exportAll()">
+        <i class="fas fa-download me-1"></i>تصدير الكل
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Report Categories -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-calendar-alt fa-3x mb-3"></i>
+                <h5 class="card-title">تقارير الجداول</h5>
+                <p class="card-text">تحليل الجداول التشغيلية والتغطية</p>
+                <button class="btn btn-light" onclick="showScheduleReports()">عرض التقارير</button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-3x mb-3"></i>
+                <h5 class="card-title">تقارير الموظفين</h5>
+                <p class="card-text">إحصائيات الموظفين والأداء</p>
+                <button class="btn btn-light" onclick="showEmployeeReports()">عرض التقارير</button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-line fa-3x mb-3"></i>
+                <h5 class="card-title">تقارير الأداء</h5>
+                <p class="card-text">مؤشرات الأداء والكفاءة</p>
+                <button class="btn btn-light" onclick="showPerformanceReports()">عرض التقارير</button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                <h5 class="card-title">تقارير المخالفات</h5>
+                <p class="card-text">تحليل المخالفات والإجراءات</p>
+                <button class="btn btn-light" onclick="showViolationReports()">عرض التقارير</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Reports -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">التقارير السريعة</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card border-left-primary">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <h6 class="card-title">تقرير التغطية اليومية</h6>
+                                        <p class="card-text text-muted">عرض تغطية النوبات ليوم محدد</p>
+                                    </div>
+                                    <div class="ms-3">
+                                        <button class="btn btn-primary btn-sm" onclick="generateDailyCoverageReport()">
+                                            <i class="fas fa-file-alt me-1"></i>إنشاء
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card border-left-success">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <h6 class="card-title">تقرير ساعات العمل</h6>
+                                        <p class="card-text text-muted">إجمالي ساعات العمل الشهرية</p>
+                                    </div>
+                                    <div class="ms-3">
+                                        <button class="btn btn-success btn-sm" onclick="generateWorkHoursReport()">
+                                            <i class="fas fa-file-alt me-1"></i>إنشاء
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card border-left-info">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <h6 class="card-title">تقرير الإجازات</h6>
+                                        <p class="card-text text-muted">تحليل طلبات الإجازات</p>
+                                    </div>
+                                    <div class="ms-3">
+                                        <button class="btn btn-info btn-sm" onclick="generateLeavesReport()">
+                                            <i class="fas fa-file-alt me-1"></i>إنشاء
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Generator -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">مولد التقارير</h6>
+    </div>
+    <div class="card-body">
+        <form id="reportForm" class="row g-3">
+            <div class="col-md-3">
+                <label for="reportType" class="form-label">نوع التقرير <span class="text-danger">*</span></label>
+                <select class="form-select" id="reportType" name="reportType" required>
+                    <option value="">اختر نوع التقرير</option>
+                    <option value="coverage">تقرير التغطية</option>
+                    <option value="attendance">تقرير الحضور</option>
+                    <option value="overtime">تقرير الساعات الإضافية</option>
+                    <option value="violations">تقرير المخالفات</option>
+                    <option value="leaves">تقرير الإجازات</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="branch" class="form-label">الفرع</label>
+                <select class="form-select" id="branch" name="branch">
+                    <option value="">جميع الفروع</option>
+                    <option value="1">فرع الرياض</option>
+                    <option value="2">فرع جدة</option>
+                    <option value="3">فرع الدمام</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="dateFrom" class="form-label">من تاريخ <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" id="dateFrom" name="dateFrom" required>
+            </div>
+            <div class="col-md-3">
+                <label for="dateTo" class="form-label">إلى تاريخ <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" id="dateTo" name="dateTo" required>
+            </div>
+            <div class="col-md-3">
+                <label for="format" class="form-label">تنسيق التقرير</label>
+                <select class="form-select" id="format" name="format">
+                    <option value="html">HTML</option>
+                    <option value="pdf">PDF</option>
+                    <option value="excel">Excel</option>
+                    <option value="csv">CSV</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">إنشاء التقرير</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Recent Reports -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">التقارير الأخيرة</h6>
+        <div class="text-muted">
+            إجمالي: <span class="badge bg-primary">15</span> تقرير
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>اسم التقرير</th>
+                        <th>النوع</th>
+                        <th>الفترة</th>
+                        <th>التنسيق</th>
+                        <th>تم الإنشاء</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>تقرير التغطية - يناير 2024</td>
+                        <td><span class="badge bg-primary">تغطية</span></td>
+                        <td>01/01/2024 - 31/01/2024</td>
+                        <td>PDF</td>
+                        <td>2024-01-31 14:30</td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button class="btn btn-outline-primary" onclick="viewReport(1)" title="عرض">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-success" onclick="downloadReport(1)" title="تحميل">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteReport(1)" title="حذف">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>تقرير الحضور - فرع الرياض</td>
+                        <td><span class="badge bg-success">حضور</span></td>
+                        <td>15/01/2024 - 21/01/2024</td>
+                        <td>Excel</td>
+                        <td>2024-01-21 10:15</td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button class="btn btn-outline-primary" onclick="viewReport(2)" title="عرض">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-success" onclick="downloadReport(2)" title="تحميل">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteReport(2)" title="حذف">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>تقرير المخالفات - ديسمبر 2023</td>
+                        <td><span class="badge bg-warning">مخالفات</span></td>
+                        <td>01/12/2023 - 31/12/2023</td>
+                        <td>PDF</td>
+                        <td>2024-01-01 09:00</td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button class="btn btn-outline-primary" onclick="viewReport(3)" title="عرض">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-success" onclick="downloadReport(3)" title="تحميل">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteReport(3)" title="حذف">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Report Preview Modal -->
+<div class="modal fade" id="reportModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">معاينة التقرير</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="reportContent">
+                    <!-- Report content will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                <button type="button" class="btn btn-primary" onclick="downloadCurrentReport()">تحميل</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Report form submission
+document.getElementById('reportForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const reportType = formData.get('reportType');
+    const dateFrom = formData.get('dateFrom');
+    const dateTo = formData.get('dateTo');
+    const format = formData.get('format');
+    
+    // Show loading
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>جاري الإنشاء...';
+    submitBtn.disabled = true;
+    
+    // Simulate report generation
+    setTimeout(() => {
+        showSuccessMessage('تم إنشاء التقرير بنجاح!');
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+        
+        // Add to recent reports
+        addToRecentReports(reportType, dateFrom, dateTo, format);
+    }, 3000);
+});
+
+function showScheduleReports() {
+    showInfoMessage('تحميل تقارير الجداول...');
+}
+
+function showEmployeeReports() {
+    showInfoMessage('تحميل تقارير الموظفين...');
+}
+
+function showPerformanceReports() {
+    showInfoMessage('تحميل تقارير الأداء...');
+}
+
+function showViolationReports() {
+    showInfoMessage('تحميل تقارير المخالفات...');
+}
+
+function generateDailyCoverageReport() {
+    showInfoMessage('إنشاء تقرير التغطية اليومية...');
+}
+
+function generateWorkHoursReport() {
+    showInfoMessage('إنشاء تقرير ساعات العمل...');
+}
+
+function generateLeavesReport() {
+    showInfoMessage('إنشاء تقرير الإجازات...');
+}
+
+function viewReport(id) {
+    // Show report preview modal
+    document.getElementById('reportContent').innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">جاري التحميل...</span>
+            </div>
+            <p class="mt-3">جاري تحميل التقرير...</p>
+        </div>
+    `;
+    
+    bootstrap.Modal.getInstance(document.getElementById('reportModal')).show();
+    
+    // Simulate loading
+    setTimeout(() => {
+        document.getElementById('reportContent').innerHTML = `
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">تقرير التغطية - يناير 2024</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>إحصائيات التغطية</h6>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>متوسط التغطية</span>
+                                    <span class="badge bg-success">95%</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>إجمالي النوبات</span>
+                                    <span class="badge bg-primary">450</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>النوبات المغطاة</span>
+                                    <span class="badge bg-success">428</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>الرسوم البيانية</h6>
+                            <div class="text-center">
+                                <i class="fas fa-chart-bar fa-3x text-muted"></i>
+                                <p class="text-muted">الرسوم البيانية ستظهر هنا</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }, 2000);
+}
+
+function downloadReport(id) {
+    showSuccessMessage('جاري تحميل التقرير...');
+}
+
+function deleteReport(id) {
+    if (confirm('هل أنت متأكد من حذف هذا التقرير؟')) {
+        showWarningMessage('تم حذف التقرير!');
+    }
+}
+
+function downloadCurrentReport() {
+    showSuccessMessage('جاري تحميل التقرير...');
+}
+
+function addToRecentReports(type, dateFrom, dateTo, format) {
+    // Add new report to the table
+    const tbody = document.querySelector('#recentReports tbody');
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+        <td>تقرير ${type} - ${dateFrom}</td>
+        <td><span class="badge bg-primary">${type}</span></td>
+        <td>${dateFrom} - ${dateTo}</td>
+        <td>${format.toUpperCase()}</td>
+        <td>${new Date().toLocaleString()}</td>
+        <td>
+            <div class="btn-group btn-group-sm" role="group">
+                <button class="btn btn-outline-primary" onclick="viewReport(${Date.now()})" title="عرض">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-outline-success" onclick="downloadReport(${Date.now()})" title="تحميل">
+                    <i class="fas fa-download"></i>
+                </button>
+                <button class="btn btn-outline-danger" onclick="deleteReport(${Date.now()})" title="حذف">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </td>
+    `;
+    tbody.insertBefore(newRow, tbody.firstChild);
+}
+
+function refreshReports() {
+    showInfoMessage('تم تحديث التقارير');
+}
+
+function exportAll() {
+    showInfoMessage('جاري تصدير جميع التقارير...');
+}
+</script>
+{% endblock %}

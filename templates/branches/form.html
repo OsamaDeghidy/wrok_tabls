@@ -1,0 +1,445 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if branch %}تعديل الفرع - {{ branch.name }}{% else %}إضافة فرع جديد{% endif %}
+{% endblock %}
+
+{% block page_title %}
+    {% if branch %}تعديل الفرع{% else %}إضافة فرع جديد{% endif %}
+{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <a href="{% url 'branches:list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
+    </a>
+    {% if branch %}
+    <a href="{% url 'branches:detail' branch.id %}" class="btn btn-info">
+        <i class="fas fa-eye me-1"></i>عرض التفاصيل
+    </a>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-building me-2"></i>
+                    {% if branch %}تعديل بيانات الفرع{% else %}بيانات الفرع الجديد{% endif %}
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <!-- Basic Information -->
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">المعلومات الأساسية</h6>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_name" class="form-label">اسم الفرع <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="id_name" name="name" 
+                                       value="{{ branch.name|default:'' }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_code" class="form-label">كود الفرع <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="id_code" name="code" 
+                                       value="{{ branch.code|default:'' }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_type" class="form-label">نوع الفرع</label>
+                                <select class="form-select" id="id_type" name="type">
+                                    <option value="">اختر نوع الفرع</option>
+                                    <option value="main" {% if branch.type == 'main' %}selected{% endif %}>الفرع الرئيسي</option>
+                                    <option value="branch" {% if branch.type == 'branch' %}selected{% endif %}>فرع فرعي</option>
+                                    <option value="warehouse" {% if branch.type == 'warehouse' %}selected{% endif %}>مستودع</option>
+                                    <option value="office" {% if branch.type == 'office' %}selected{% endif %}>مكتب</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_status" class="form-label">الحالة</label>
+                                <select class="form-select" id="id_status" name="status">
+                                    <option value="active" {% if branch.status == 'active' %}selected{% endif %}>نشط</option>
+                                    <option value="inactive" {% if branch.status == 'inactive' %}selected{% endif %}>غير نشط</option>
+                                    <option value="maintenance" {% if branch.status == 'maintenance' %}selected{% endif %}>تحت الصيانة</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Location Information -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-primary mb-3">معلومات الموقع</h6>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_address" class="form-label">العنوان <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="id_address" name="address" rows="3" 
+                                          required>{{ branch.address|default:'' }}</textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_city" class="form-label">المدينة</label>
+                                <input type="text" class="form-control" id="id_city" name="city" 
+                                       value="{{ branch.city|default:'' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_region" class="form-label">المنطقة</label>
+                                <select class="form-select" id="id_region" name="region">
+                                    <option value="">اختر المنطقة</option>
+                                    <option value="riyadh" {% if branch.region == 'riyadh' %}selected{% endif %}>الرياض</option>
+                                    <option value="makkah" {% if branch.region == 'makkah' %}selected{% endif %}>مكة المكرمة</option>
+                                    <option value="eastern" {% if branch.region == 'eastern' %}selected{% endif %}>المنطقة الشرقية</option>
+                                    <option value="asir" {% if branch.region == 'asir' %}selected{% endif %}>عسير</option>
+                                    <option value="jazan" {% if branch.region == 'jazan' %}selected{% endif %}>جازان</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_postal_code" class="form-label">الرمز البريدي</label>
+                                <input type="text" class="form-control" id="id_postal_code" name="postal_code" 
+                                       value="{{ branch.postal_code|default:'' }}">
+                            </div>
+                        </div>
+
+                        <!-- Contact Information -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-primary mb-3">معلومات الاتصال</h6>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_phone" class="form-label">رقم الهاتف</label>
+                                <input type="tel" class="form-control" id="id_phone" name="phone" 
+                                       value="{{ branch.phone|default:'' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_email" class="form-label">البريد الإلكتروني</label>
+                                <input type="email" class="form-control" id="id_email" name="email" 
+                                       value="{{ branch.email|default:'' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_manager" class="form-label">مدير الفرع</label>
+                                <select class="form-select" id="id_manager" name="manager">
+                                    <option value="">اختر مدير الفرع</option>
+                                    <option value="1">أحمد محمد</option>
+                                    <option value="2">فاطمة علي</option>
+                                    <option value="3">محمد حسن</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_capacity" class="form-label">السعة الاستيعابية</label>
+                                <input type="number" class="form-control" id="id_capacity" name="capacity" 
+                                       value="{{ branch.capacity|default:'' }}" min="1">
+                            </div>
+                        </div>
+
+                        <!-- Additional Information -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-primary mb-3">معلومات إضافية</h6>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_opening_date" class="form-label">تاريخ الافتتاح</label>
+                                <input type="date" class="form-control" id="id_opening_date" name="opening_date" 
+                                       value="{{ branch.opening_date|default:'' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_working_days" class="form-label">أيام العمل</label>
+                                <select class="form-select" id="id_working_days" name="working_days" multiple>
+                                    <option value="saturday" {% if 'saturday' in branch.working_days %}selected{% endif %}>السبت</option>
+                                    <option value="sunday" {% if 'sunday' in branch.working_days %}selected{% endif %}>الأحد</option>
+                                    <option value="monday" {% if 'monday' in branch.working_days %}selected{% endif %}>الاثنين</option>
+                                    <option value="tuesday" {% if 'tuesday' in branch.working_days %}selected{% endif %}>الثلاثاء</option>
+                                    <option value="wednesday" {% if 'wednesday' in branch.working_days %}selected{% endif %}>الأربعاء</option>
+                                    <option value="thursday" {% if 'thursday' in branch.working_days %}selected{% endif %}>الخميس</option>
+                                    <option value="friday" {% if 'friday' in branch.working_days %}selected{% endif %}>الجمعة</option>
+                                </select>
+                                <div class="form-text">اضغط Ctrl لاختيار عدة أيام</div>
+                            </div>
+                        </div>
+
+                        <!-- Shifts Configuration -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-primary mb-3">إعدادات الشفتات وساعات العمل</h6>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                يمكن للمعرض أن يحتوي على أكثر من شفت واحد. حدد ساعات العمل والاستراحات لكل شفت.
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="card bg-light">
+                                <div class="card-header">
+                                    <h6 class="mb-0">الشفتات</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="shiftsContainer">
+                                        <!-- Shift 1 -->
+                                        <div class="shift-item mb-3 p-3 border rounded">
+                                            <div class="row">
+                                                <div class="col-md-3">
+                                                    <label class="form-label">اسم الشفت</label>
+                                                    <input type="text" class="form-control" name="shift_name[]" value="الشفت الأول" required>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">ساعة البداية</label>
+                                                    <input type="time" class="form-control" name="shift_start[]" value="08:00" required>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">ساعة النهاية</label>
+                                                    <input type="time" class="form-control" name="shift_end[]" value="16:00" required>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">ساعة الاستراحة</label>
+                                                    <input type="time" class="form-control" name="break_start[]" value="12:00">
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">نهاية الاستراحة</label>
+                                                    <input type="time" class="form-control" name="break_end[]" value="13:00">
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <label class="form-label">&nbsp;</label>
+                                                    <button type="button" class="btn btn-danger btn-sm d-block" onclick="removeShift(this)">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Shift 2 -->
+                                        <div class="shift-item mb-3 p-3 border rounded">
+                                            <div class="row">
+                                                <div class="col-md-3">
+                                                    <label class="form-label">اسم الشفت</label>
+                                                    <input type="text" class="form-control" name="shift_name[]" value="الشفت الثاني" required>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">ساعة البداية</label>
+                                                    <input type="time" class="form-control" name="shift_start[]" value="16:00" required>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">ساعة النهاية</label>
+                                                    <input type="time" class="form-control" name="shift_end[]" value="00:00" required>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">ساعة الاستراحة</label>
+                                                    <input type="time" class="form-control" name="break_start[]" value="20:00">
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">نهاية الاستراحة</label>
+                                                    <input type="time" class="form-control" name="break_end[]" value="21:00">
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <label class="form-label">&nbsp;</label>
+                                                    <button type="button" class="btn btn-danger btn-sm d-block" onclick="removeShift(this)">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <button type="button" class="btn btn-outline-primary" onclick="addShift()">
+                                        <i class="fas fa-plus me-2"></i>إضافة شفت جديد
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="id_description" class="form-label">وصف الفرع</label>
+                                <textarea class="form-control" id="id_description" name="description" rows="3" 
+                                          placeholder="اكتب وصفاً مختصراً للفرع...">{{ branch.description|default:'' }}</textarea>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="id_notes" class="form-label">ملاحظات</label>
+                                <textarea class="form-control" id="id_notes" name="notes" rows="3" 
+                                          placeholder="أي ملاحظات إضافية...">{{ branch.notes|default:'' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a href="{% url 'branches:list' %}" class="btn btn-secondary">إلغاء</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>
+                            {% if branch %}حفظ التغييرات{% else %}إضافة الفرع{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Quick Actions -->
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-bolt me-2"></i>إجراءات سريعة</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if branch %}
+                    <a href="{% url 'branches:detail' branch.id %}" class="btn btn-outline-info">
+                        <i class="fas fa-eye me-1"></i>عرض التفاصيل
+                    </a>
+                    <button type="button" class="btn btn-outline-success">
+                        <i class="fas fa-users me-1"></i>عرض الموظفين
+                    </button>
+                    <button type="button" class="btn btn-outline-warning">
+                        <i class="fas fa-calendar me-1"></i>عرض الجداول
+                    </button>
+                    <button type="button" class="btn btn-outline-primary">
+                        <i class="fas fa-chart-bar me-1"></i>عرض التقارير
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Tips -->
+        <div class="card shadow-sm mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>نصائح</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        تأكد من صحة العنوان والموقع
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        كود الفرع يجب أن يكون فريد
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        اختر مدير الفرع المناسب
+                    </li>
+                    <li>
+                        <i class="fas fa-check text-success me-2"></i>
+                        حدد السعة الاستيعابية بدقة
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Branch Statistics -->
+        {% if branch %}
+        <div class="card shadow-sm mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>إحصائيات الفرع</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h5 class="text-primary">15</h5>
+                        <small class="text-muted">الموظفين</small>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-success">8</h5>
+                        <small class="text-muted">المناوبات</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let shiftCounter = 2; // Starting from 2 since we have 2 default shifts
+
+function addShift() {
+    shiftCounter++;
+    const shiftsContainer = document.getElementById('shiftsContainer');
+    const newShift = document.createElement('div');
+    newShift.className = 'shift-item mb-3 p-3 border rounded';
+    newShift.innerHTML = `
+        <div class="row">
+            <div class="col-md-3">
+                <label class="form-label">اسم الشفت</label>
+                <input type="text" class="form-control" name="shift_name[]" value="الشفت ${shiftCounter}" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">ساعة البداية</label>
+                <input type="time" class="form-control" name="shift_start[]" value="08:00" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">ساعة النهاية</label>
+                <input type="time" class="form-control" name="shift_end[]" value="16:00" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">ساعة الاستراحة</label>
+                <input type="time" class="form-control" name="break_start[]" value="12:00">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">نهاية الاستراحة</label>
+                <input type="time" class="form-control" name="break_end[]" value="13:00">
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">&nbsp;</label>
+                <button type="button" class="btn btn-danger btn-sm d-block" onclick="removeShift(this)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    shiftsContainer.appendChild(newShift);
+}
+
+function removeShift(button) {
+    const shiftItem = button.closest('.shift-item');
+    const shiftsContainer = document.getElementById('shiftsContainer');
+    
+    // Don't allow removing if only one shift remains
+    if (shiftsContainer.children.length <= 1) {
+        alert('يجب أن يحتوي المعرض على شفت واحد على الأقل');
+        return;
+    }
+    
+    shiftItem.remove();
+}
+
+// Set default working days
+document.addEventListener('DOMContentLoaded', function() {
+    const workingDaysSelect = document.getElementById('id_working_days');
+    if (workingDaysSelect && !workingDaysSelect.value) {
+        // Set default working days (Saturday to Thursday)
+        const defaultDays = ['saturday', 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday'];
+        Array.from(workingDaysSelect.options).forEach(option => {
+            if (defaultDays.includes(option.value)) {
+                option.selected = true;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

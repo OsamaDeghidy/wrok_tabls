@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}المهام المجدولة - نظام إدارة الجداول التشغيلية{% endblock %}
+
+{% block page_title %}المهام المجدولة{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <a href="{% url 'integrations:list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right me-1"></i>العودة للتكاملات
+    </a>
+    <button type="button" class="btn btn-primary" onclick="createNewJob()">
+        <i class="fas fa-plus me-1"></i>إنشاء مهمة جديدة
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Job Statistics -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card bg-primary text-white shadow">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">إجمالي المهام</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ total_jobs }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-tasks fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card bg-success text-white shadow">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">مكتملة</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ completed_jobs }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card bg-warning text-white shadow">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">قيد التشغيل</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ running_jobs }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-play-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card bg-danger text-white shadow">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">فاشلة</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ failed_jobs }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Jobs Table -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">قائمة المهام المجدولة</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>اسم المهمة</th>
+                        <th>النوع</th>
+                        <th>الجدولة</th>
+                        <th>الحالة</th>
+                        <th>آخر تشغيل</th>
+                        <th>التشغيل التالي</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for job in jobs %}
+                    <tr>
+                        <td>
+                            <div>
+                                <div class="fw-bold">{{ job.name }}</div>
+                                <small class="text-muted">{{ job.description }}</small>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ job.type_color }}">{{ job.type_display }}</span>
+                        </td>
+                        <td>{{ job.schedule_display }}</td>
+                        <td>
+                            <span class="badge bg-{{ job.status_color }}">{{ job.status_display }}</span>
+                        </td>
+                        <td>
+                            {% if job.last_run %}
+                                {{ job.last_run }}
+                                <br><small class="text-muted">{{ job.last_run_duration }}</small>
+                            {% else %}
+                                <span class="text-muted">لم يتم التشغيل</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if job.next_run %}
+                                {{ job.next_run }}
+                            {% else %}
+                                <span class="text-muted">غير مجدولة</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'integrations:job_detail' job.id %}" class="btn btn-sm btn-outline-primary" title="عرض التفاصيل">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if job.status == 'active' %}
+                                <button type="button" class="btn btn-sm btn-outline-warning" title="إيقاف" onclick="toggleJob({{ job.id }}, 'pause')">
+                                    <i class="fas fa-pause"></i>
+                                </button>
+                                {% elif job.status == 'paused' %}
+                                <button type="button" class="btn btn-sm btn-outline-success" title="تشغيل" onclick="toggleJob({{ job.id }}, 'resume')">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                {% endif %}
+                                <button type="button" class="btn btn-sm btn-outline-info" title="تشغيل الآن" onclick="runJobNow({{ job.id }})">
+                                    <i class="fas fa-bolt"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="fas fa-tasks fa-3x mb-3"></i>
+                                <p>لا توجد مهام مجدولة</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Job History -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">سجل المهام</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="historyTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>المهمة</th>
+                        <th>الحالة</th>
+                        <th>وقت البداية</th>
+                        <th>وقت الانتهاء</th>
+                        <th>المدة</th>
+                        <th>النتيجة</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for history in job_history %}
+                    <tr>
+                        <td>{{ history.job_name }}</td>
+                        <td>
+                            <span class="badge bg-{{ history.status_color }}">{{ history.status_display }}</span>
+                        </td>
+                        <td>{{ history.start_time }}</td>
+                        <td>{{ history.end_time }}</td>
+                        <td>{{ history.duration }}</td>
+                        <td>
+                            {% if history.status == 'completed' %}
+                                <span class="text-success">
+                                    <i class="fas fa-check-circle me-1"></i>
+                                    {{ history.records_processed }} سجل
+                                </span>
+                            {% elif history.status == 'failed' %}
+                                <span class="text-danger">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    {{ history.error_message|truncatechars:30 }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">قيد التشغيل</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'integrations:job_detail' history.job_id %}" class="btn btn-sm btn-outline-primary" title="عرض التفاصيل">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if history.status == 'failed' %}
+                                <button type="button" class="btn btn-sm btn-outline-warning" title="إعادة التشغيل" onclick="retryJob({{ history.job_id }})">
+                                    <i class="fas fa-redo"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="fas fa-history fa-3x mb-3"></i>
+                                <p>لا يوجد سجل للمهام</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function createNewJob() {
+    alert('إنشاء مهمة جديدة');
+    // Add create job functionality here
+}
+
+function toggleJob(jobId, action) {
+    if (confirm('هل أنت متأكد من ' + (action === 'pause' ? 'إيقاف' : 'تشغيل') + ' هذه المهمة؟')) {
+        alert('تم ' + (action === 'pause' ? 'إيقاف' : 'تشغيل') + ' المهمة ' + jobId);
+        // Add toggle job functionality here
+    }
+}
+
+function runJobNow(jobId) {
+    if (confirm('هل تريد تشغيل هذه المهمة الآن؟')) {
+        alert('تم تشغيل المهمة ' + jobId + ' الآن');
+        // Add run job now functionality here
+    }
+}
+
+function retryJob(jobId) {
+    if (confirm('هل تريد إعادة تشغيل هذه المهمة؟')) {
+        alert('تم إعادة تشغيل المهمة ' + jobId);
+        // Add retry job functionality here
+    }
+}
+</script>
+{% endblock %}

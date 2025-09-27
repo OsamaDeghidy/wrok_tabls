@@ -1,0 +1,317 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تفاصيل الفرع - {{ branch.name }}{% endblock %}
+
+{% block page_title %}تفاصيل الفرع{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <a href="{% url 'branches:edit' branch.id %}" class="btn btn-warning">
+        <i class="fas fa-edit me-1"></i>تعديل
+    </a>
+    <a href="{% url 'branches:list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Branch Info -->
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-building fa-3x text-primary"></i>
+                </div>
+                <h4 class="card-title">{{ branch.name }}</h4>
+                <p class="text-muted">{{ branch.code }}</p>
+                <span class="badge bg-{% if branch.category == 'A' %}success{% elif branch.category == 'B' %}warning{% else %}info{% endif %} fs-6">
+                    فئة {{ branch.category }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Contact Info -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">معلومات الاتصال</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <i class="fas fa-map-marker-alt me-2 text-muted"></i>
+                    <span>{{ branch.address|default:"غير محدد" }}</span>
+                </div>
+                <div class="mb-3">
+                    <i class="fas fa-phone me-2 text-muted"></i>
+                    <span>{{ branch.phone|default:"غير محدد" }}</span>
+                </div>
+                <div class="mb-3">
+                    <i class="fas fa-envelope me-2 text-muted"></i>
+                    <span>{{ branch.email|default:"غير محدد" }}</span>
+                </div>
+                <div class="mb-3">
+                    <i class="fas fa-clock me-2 text-muted"></i>
+                    <span>{{ branch.open_time }} - {{ branch.close_time }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Working Days -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">أيام العمل</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col">
+                        <div class="day {% if 'saturday' in branch.working_days %}active{% endif %}">
+                            <div class="day-name">سبت</div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="day {% if 'sunday' in branch.working_days %}active{% endif %}">
+                            <div class="day-name">أحد</div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="day {% if 'monday' in branch.working_days %}active{% endif %}">
+                            <div class="day-name">اثن</div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="day {% if 'tuesday' in branch.working_days %}active{% endif %}">
+                            <div class="day-name">ثلاث</div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="day {% if 'wednesday' in branch.working_days %}active{% endif %}">
+                            <div class="day-name">أربع</div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="day {% if 'thursday' in branch.working_days %}active{% endif %}">
+                            <div class="day-name">خمس</div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="day {% if 'friday' in branch.working_days %}active{% endif %}">
+                            <div class="day-name">جمعة</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Branch Details -->
+    <div class="col-lg-8">
+        <!-- Statistics -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">الموظفين</h5>
+                        <h2 class="card-text">45</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">الجداول النشطة</h5>
+                        <h2 class="card-text">8</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">متوسط التغطية</h5>
+                        <h2 class="card-text">95%</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">الساعات الأسبوعية</h5>
+                        <h2 class="card-text">360</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <ul class="nav nav-tabs card-header-tabs" id="branchTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="employees-tab" data-bs-toggle="tab" data-bs-target="#employees" type="button" role="tab">
+                            الموظفين
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="schedules-tab" data-bs-toggle="tab" data-bs-target="#schedules" type="button" role="tab">
+                            الجداول
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab">
+                            الإعدادات
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="branchTabsContent">
+                    <!-- Employees Tab -->
+                    <div class="tab-pane fade show active" id="employees" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>الاسم</th>
+                                        <th>المنصب</th>
+                                        <th>نوع التوظيف</th>
+                                        <th>الحالة</th>
+                                        <th>الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <img src="{% static 'images/avatar-placeholder.png' %}" class="rounded-circle me-2" width="32" height="32">
+                                                <div>
+                                                    <div class="fw-bold">أحمد محمد</div>
+                                                    <small class="text-muted">98979001</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>مدير فرع</td>
+                                        <td>دوام كامل</td>
+                                        <td><span class="badge bg-success">نشط</span></td>
+                                        <td>
+                                            <a href="{% url 'employees:detail' 1 %}" class="btn btn-outline-primary btn-sm">عرض</a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <img src="{% static 'images/avatar-placeholder.png' %}" class="rounded-circle me-2" width="32" height="32">
+                                                <div>
+                                                    <div class="fw-bold">فاطمة علي</div>
+                                                    <small class="text-muted">98979002</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>منسق</td>
+                                        <td>دوام كامل</td>
+                                        <td><span class="badge bg-success">نشط</span></td>
+                                        <td>
+                                            <a href="{% url 'employees:detail' 2 %}" class="btn btn-outline-primary btn-sm">عرض</a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Schedules Tab -->
+                    <div class="tab-pane fade" id="schedules" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>الفترة</th>
+                                        <th>الحالة</th>
+                                        <th>عدد النوبات</th>
+                                        <th>المدة</th>
+                                        <th>الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>15-21 يناير 2024</td>
+                                        <td><span class="badge bg-success">نشط</span></td>
+                                        <td>45</td>
+                                        <td>7 أيام</td>
+                                        <td>
+                                            <a href="{% url 'schedules:detail' 1 %}" class="btn btn-outline-primary btn-sm">عرض</a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>22-28 يناير 2024</td>
+                                        <td><span class="badge bg-warning">معلق</span></td>
+                                        <td>42</td>
+                                        <td>7 أيام</td>
+                                        <td>
+                                            <a href="{% url 'schedules:detail' 2 %}" class="btn btn-outline-primary btn-sm">عرض</a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Settings Tab -->
+                    <div class="tab-pane fade" id="settings" role="tabpanel">
+                        <form>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">الحد الأدنى للموظفين في النوبة</label>
+                                        <p class="form-control-plaintext">{{ branch.min_staff_per_shift }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">الحد الأقصى للموظفين في النوبة</label>
+                                        <p class="form-control-plaintext">{{ branch.max_staff_per_shift }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">مدة النوبة الافتراضية</label>
+                                        <p class="form-control-plaintext">{{ branch.default_shift_length }} ساعة</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">المنطقة</label>
+                                        <p class="form-control-plaintext">{{ branch.region }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.day {
+    padding: 10px;
+    border-radius: 8px;
+    margin: 5px 0;
+    background-color: #f8f9fa;
+    border: 2px solid transparent;
+}
+
+.day.active {
+    background-color: var(--primary-50);
+    border-color: var(--primary-500);
+}
+
+.day-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+</style>
+{% endblock %}

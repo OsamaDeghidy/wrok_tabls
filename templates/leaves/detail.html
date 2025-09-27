@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تفاصيل طلب الإجازة - {{ leave.employee_name }}{% endblock %}
+
+{% block page_title %}تفاصيل طلب الإجازة{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <a href="{% url 'leaves:edit' leave.id %}" class="btn btn-warning">
+        <i class="fas fa-edit me-1"></i>تعديل
+    </a>
+    <a href="{% url 'leaves:list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Leave Information -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">{{ leave.employee_name }}</h5>
+                <p class="text-muted">{{ leave.leave_type_display }}</p>
+                <div class="mb-3">
+                    <span class="badge bg-{% if leave.status == 'approved' %}success{% elif leave.status == 'pending' %}warning{% elif leave.status == 'rejected' %}danger{% else %}secondary{% endif %} fs-6">
+                        {% if leave.status == 'approved' %}معتمد{% elif leave.status == 'pending' %}معلق{% elif leave.status == 'rejected' %}مرفوض{% else %}غير محدد{% endif %}
+                    </span>
+                </div>
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h6 class="text-primary">{{ leave.days_count }}</h6>
+                        <small class="text-muted">عدد الأيام</small>
+                    </div>
+                    <div class="col-6">
+                        <h6 class="text-success">{{ leave.start_date }}</h6>
+                        <small class="text-muted">تاريخ البداية</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leave Details -->
+        <div class="card shadow-sm mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>تفاصيل الطلب</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <strong>نوع الإجازة:</strong> {{ leave.leave_type_display }}
+                </div>
+                <div class="mb-2">
+                    <strong>تاريخ البداية:</strong> {{ leave.start_date }}
+                </div>
+                <div class="mb-2">
+                    <strong>تاريخ النهاية:</strong> {{ leave.end_date }}
+                </div>
+                <div class="mb-2">
+                    <strong>عدد الأيام:</strong> {{ leave.days_count }} يوم
+                </div>
+                <div class="mb-2">
+                    <strong>تاريخ التقديم:</strong> {{ leave.created_at }}
+                </div>
+                <div class="mb-2">
+                    <strong>رقم الطوارئ:</strong> {{ leave.emergency_contact|default:"غير محدد" }}
+                </div>
+                <div class="mb-2">
+                    <strong>المدير المباشر:</strong> {{ leave.manager_name|default:"غير محدد" }}
+                </div>
+                <div class="mb-2">
+                    <strong>تاريخ المراجعة:</strong> {{ leave.reviewed_at|default:"لم يتم المراجعة بعد" }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card shadow-sm mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-bolt me-2"></i>إجراءات سريعة</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'leaves:edit' leave.id %}" class="btn btn-warning btn-sm">
+                        <i class="fas fa-edit me-1"></i>تعديل الطلب
+                    </a>
+                    {% if leave.status == 'pending' %}
+                    <button type="button" class="btn btn-success btn-sm">
+                        <i class="fas fa-check me-1"></i>اعتماد الطلب
+                    </button>
+                    <button type="button" class="btn btn-danger btn-sm">
+                        <i class="fas fa-times me-1"></i>رفض الطلب
+                    </button>
+                    {% endif %}
+                    <button type="button" class="btn btn-info btn-sm">
+                        <i class="fas fa-print me-1"></i>طباعة الطلب
+                    </button>
+                    <button type="button" class="btn btn-primary btn-sm">
+                        <i class="fas fa-copy me-1"></i>نسخ الطلب
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leave Content -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="fas fa-file-alt me-2"></i>محتوى الطلب</h6>
+                <span class="badge bg-{% if leave.status == 'approved' %}success{% elif leave.status == 'pending' %}warning{% elif leave.status == 'rejected' %}danger{% else %}secondary{% endif %}">
+                    {% if leave.status == 'approved' %}معتمد{% elif leave.status == 'pending' %}معلق{% elif leave.status == 'rejected' %}مرفوض{% else %}غير محدد{% endif %}
+                </span>
+            </div>
+            <div class="card-body">
+                <!-- Reason -->
+                <div class="mb-4">
+                    <h6 class="text-primary">سبب الإجازة</h6>
+                    <p class="text-muted">{{ leave.reason|default:"لم يتم تحديد سبب الإجازة" }}</p>
+                </div>
+
+                <!-- Notes -->
+                {% if leave.notes %}
+                <div class="mb-4">
+                    <h6 class="text-primary">ملاحظات إضافية</h6>
+                    <p class="text-muted">{{ leave.notes }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Attachments -->
+                {% if leave.attachments %}
+                <div class="mb-4">
+                    <h6 class="text-primary">المرفقات</h6>
+                    <div class="list-group">
+                        {% for attachment in leave.attachments %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-paperclip me-2"></i>
+                                {{ attachment.name }}
+                            </div>
+                            <a href="{{ attachment.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                <i class="fas fa-download me-1"></i>تحميل
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Timeline -->
+                <div class="mb-4">
+                    <h6 class="text-primary">سجل الطلب</h6>
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content">
+                                <h6 class="timeline-title">تم تقديم الطلب</h6>
+                                <p class="timeline-text">{{ leave.created_at }} - {{ leave.employee_name }}</p>
+                            </div>
+                        </div>
+                        {% if leave.reviewed_at %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-{% if leave.status == 'approved' %}success{% elif leave.status == 'rejected' %}danger{% else %}warning{% endif %}"></div>
+                            <div class="timeline-content">
+                                <h6 class="timeline-title">
+                                    {% if leave.status == 'approved' %}تم اعتماد الطلب{% elif leave.status == 'rejected' %}تم رفض الطلب{% else %}تم مراجعة الطلب{% endif %}
+                                </h6>
+                                <p class="timeline-text">{{ leave.reviewed_at }} - {{ leave.manager_name|default:"المدير" }}</p>
+                                {% if leave.review_notes %}
+                                <p class="timeline-text">{{ leave.review_notes }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee Information -->
+        <div class="card shadow-sm mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-user me-2"></i>معلومات الموظف</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="{% static 'images/avatar-placeholder.png' %}" 
+                                 alt="صورة الموظف" 
+                                 class="rounded-circle me-3" 
+                                 width="50" 
+                                 height="50">
+                            <div>
+                                <h6 class="mb-0">{{ leave.employee_name }}</h6>
+                                <small class="text-muted">{{ leave.employee_position }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-2">
+                            <strong>القسم:</strong> {{ leave.employee_department }}
+                        </div>
+                        <div class="mb-2">
+                            <strong>رقم الهاتف:</strong> {{ leave.employee_phone }}
+                        </div>
+                        <div class="mb-2">
+                            <strong>البريد الإلكتروني:</strong> {{ leave.employee_email }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -30px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #dee2e6;
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 3px solid #dee2e6;
+}
+
+.timeline-title {
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.timeline-text {
+    margin-bottom: 0;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if leave %}تعديل طلب الإجازة - {{ leave.employee_name }}{% else %}طلب إجازة جديد{% endif %}
+{% endblock %}
+
+{% block page_title %}
+    {% if leave %}تعديل طلب الإجازة{% else %}طلب إجازة جديد{% endif %}
+{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <a href="{% url 'leaves:list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
+    </a>
+    {% if leave %}
+    <a href="{% url 'leaves:detail' leave.id %}" class="btn btn-info">
+        <i class="fas fa-eye me-1"></i>عرض التفاصيل
+    </a>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-calendar-plus me-2"></i>
+                    {% if leave %}تعديل بيانات طلب الإجازة{% else %}بيانات طلب الإجازة الجديد{% endif %}
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row">
+                        <!-- Basic Information -->
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">المعلومات الأساسية</h6>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_employee" class="form-label">الموظف <span class="text-danger">*</span></label>
+                                <select class="form-select" id="id_employee" name="employee" required>
+                                    <option value="">اختر الموظف</option>
+                                    <option value="1" {% if leave.employee == '1' %}selected{% endif %}>أحمد محمد - مطور برمجيات</option>
+                                    <option value="2" {% if leave.employee == '2' %}selected{% endif %}>فاطمة علي - مديرة الموارد البشرية</option>
+                                    <option value="3" {% if leave.employee == '3' %}selected{% endif %}>محمد حسن - محاسب</option>
+                                    <option value="4" {% if leave.employee == '4' %}selected{% endif %}>سارة أحمد - مديرة التسويق</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_leave_type" class="form-label">نوع الإجازة <span class="text-danger">*</span></label>
+                                <select class="form-select" id="id_leave_type" name="leave_type" required>
+                                    <option value="">اختر نوع الإجازة</option>
+                                    <option value="annual" {% if leave.leave_type == 'annual' %}selected{% endif %}>إجازة سنوية</option>
+                                    <option value="sick" {% if leave.leave_type == 'sick' %}selected{% endif %}>إجازة مرضية</option>
+                                    <option value="emergency" {% if leave.leave_type == 'emergency' %}selected{% endif %}>إجازة طارئة</option>
+                                    <option value="maternity" {% if leave.leave_type == 'maternity' %}selected{% endif %}>إجازة أمومة</option>
+                                    <option value="paternity" {% if leave.leave_type == 'paternity' %}selected{% endif %}>إجازة أبوة</option>
+                                    <option value="unpaid" {% if leave.leave_type == 'unpaid' %}selected{% endif %}>إجازة بدون راتب</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Date Range -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-primary mb-3">فترة الإجازة</h6>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_start_date" class="form-label">تاريخ البداية <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="id_start_date" name="start_date" 
+                                       value="{{ leave.start_date|default:'' }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_end_date" class="form-label">تاريخ النهاية <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="id_end_date" name="end_date" 
+                                       value="{{ leave.end_date|default:'' }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_days_count" class="form-label">عدد الأيام</label>
+                                <input type="number" class="form-control" id="id_days_count" name="days_count" 
+                                       value="{{ leave.days_count|default:'' }}" min="1" max="30" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_emergency_contact" class="form-label">رقم الطوارئ</label>
+                                <input type="tel" class="form-control" id="id_emergency_contact" name="emergency_contact" 
+                                       value="{{ leave.emergency_contact|default:'' }}" placeholder="+966501234567">
+                            </div>
+                        </div>
+
+                        <!-- Status (for editing) -->
+                        {% if leave %}
+                        <div class="col-12 mt-4">
+                            <h6 class="text-primary mb-3">حالة الطلب</h6>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_status" class="form-label">الحالة</label>
+                                <select class="form-select" id="id_status" name="status">
+                                    <option value="pending" {% if leave.status == 'pending' %}selected{% endif %}>معلق</option>
+                                    <option value="approved" {% if leave.status == 'approved' %}selected{% endif %}>معتمد</option>
+                                    <option value="rejected" {% if leave.status == 'rejected' %}selected{% endif %}>مرفوض</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_manager_notes" class="form-label">ملاحظات المدير</label>
+                                <textarea class="form-control" id="id_manager_notes" name="manager_notes" rows="2" 
+                                          placeholder="ملاحظات المدير...">{{ leave.manager_notes|default:'' }}</textarea>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Additional Information -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-primary mb-3">معلومات إضافية</h6>
+                        </div>
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="id_reason" class="form-label">سبب الإجازة <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="id_reason" name="reason" rows="3" 
+                                          placeholder="اكتب سبب طلب الإجازة..." required>{{ leave.reason|default:'' }}</textarea>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="id_notes" class="form-label">ملاحظات إضافية</label>
+                                <textarea class="form-control" id="id_notes" name="notes" rows="2" 
+                                          placeholder="أي ملاحظات إضافية...">{{ leave.notes|default:'' }}</textarea>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="id_attachments" class="form-label">مرفقات (اختياري)</label>
+                                <input type="file" class="form-control" id="id_attachments" name="attachments" 
+                                       multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+                                <div class="form-text">يمكن رفع ملفات PDF، صور، أو مستندات Word</div>
+                                
+                                <!-- Show existing attachments -->
+                                {% if leave.attachments %}
+                                <div class="mt-2">
+                                    <small class="text-muted">المرفقات الحالية:</small>
+                                    <div class="list-group list-group-flush">
+                                        {% for attachment in leave.attachments %}
+                                        <div class="list-group-item d-flex justify-content-between align-items-center py-1">
+                                            <small>{{ attachment.name }}</small>
+                                            <a href="{{ attachment.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a href="{% url 'leaves:list' %}" class="btn btn-secondary">إلغاء</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>
+                            {% if leave %}حفظ التغييرات{% else %}إرسال الطلب{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Leave Balance -->
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>رصيد الإجازات</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>الإجازة السنوية</span>
+                        <span class="fw-bold">21 / 30 يوم</span>
+                    </div>
+                    <div class="progress mt-1" style="height: 8px;">
+                        <div class="progress-bar bg-success" style="width: 70%"></div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>الإجازة المرضية</span>
+                        <span class="fw-bold">5 / 10 أيام</span>
+                    </div>
+                    <div class="progress mt-1" style="height: 8px;">
+                        <div class="progress-bar bg-warning" style="width: 50%"></div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>الإجازة الطارئة</span>
+                        <span class="fw-bold">2 / 5 أيام</span>
+                    </div>
+                    <div class="progress mt-1" style="height: 8px;">
+                        <div class="progress-bar bg-danger" style="width: 40%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leave Policies -->
+        <div class="card shadow-sm mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>سياسة الإجازات</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        يجب تقديم طلب الإجازة قبل 48 ساعة
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        الإجازة الطارئة تحتاج موافقة فورية
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        لا يمكن أخذ أكثر من 5 أيام متتالية
+                    </li>
+                    <li>
+                        <i class="fas fa-check text-success me-2"></i>
+                        يجب إرفاق تقرير طبي للإجازة المرضية
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card shadow-sm mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-bolt me-2"></i>إجراءات سريعة</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if leave %}
+                    <a href="{% url 'leaves:detail' leave.id %}" class="btn btn-outline-info">
+                        <i class="fas fa-eye me-1"></i>عرض التفاصيل
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'leaves:list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-list me-1"></i>عرض جميع الطلبات
+                    </a>
+                    <button type="button" class="btn btn-outline-success">
+                        <i class="fas fa-calendar me-1"></i>عرض التقويم
+                    </button>
+                    <button type="button" class="btn btn-outline-warning">
+                        <i class="fas fa-download me-1"></i>تحميل النماذج
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Calculate days between dates
+document.getElementById('id_start_date').addEventListener('change', calculateDays);
+document.getElementById('id_end_date').addEventListener('change', calculateDays);
+
+function calculateDays() {
+    const startDate = document.getElementById('id_start_date').value;
+    const endDate = document.getElementById('id_end_date').value;
+    
+    if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const diffTime = Math.abs(end - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        
+        if (diffDays > 0) {
+            document.getElementById('id_days_count').value = diffDays;
+        }
+    }
+}
+
+// Form submission
+document.querySelector('form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Show loading
+    const submitBtn = document.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>جاري الحفظ...';
+    submitBtn.disabled = true;
+    
+    // Simulate form submission
+    setTimeout(() => {
+        alert('تم حفظ طلب الإجازة بنجاح!');
+        window.location.href = '{% url "leaves:list" %}';
+    }, 2000);
+});
+</script>
+{% endblock %}

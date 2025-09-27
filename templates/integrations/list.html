@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}التكاملات والاستيراد/التصدير - نظام إدارة الجداول التشغيلية{% endblock %}
+
+{% block page_title %}التكاملات والاستيراد/التصدير{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <a href="{% url 'integrations:import' %}" class="btn btn-primary">
+        <i class="fas fa-upload me-1"></i>استيراد البيانات
+    </a>
+    <a href="{% url 'integrations:export' %}" class="btn btn-success">
+        <i class="fas fa-download me-1"></i>تصدير البيانات
+    </a>
+    <a href="{% url 'integrations:jobs' %}" class="btn btn-info">
+        <i class="fas fa-tasks me-1"></i>المهام المجدولة
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Statistics -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card bg-primary text-white shadow">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">إجمالي التكاملات</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ total_integrations }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-plug fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card bg-success text-white shadow">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">نشطة</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ active_integrations }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card bg-warning text-white shadow">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">معلقة</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ pending_integrations }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clock fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card bg-danger text-white shadow">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">فاشلة</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ failed_integrations }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Integration Types -->
+<div class="row mb-4">
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">أنظمة خارجية</h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for integration in external_integrations %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-{{ integration.icon }} me-3 text-{{ integration.color }}"></i>
+                            <div>
+                                <h6 class="mb-1">{{ integration.name }}</h6>
+                                <small class="text-muted">{{ integration.description }}</small>
+                            </div>
+                        </div>
+                        <span class="badge bg-{{ integration.status_color }}">{{ integration.status_display }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">خدمات API</h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for api in api_services %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-{{ api.icon }} me-3 text-{{ api.color }}"></i>
+                            <div>
+                                <h6 class="mb-1">{{ api.name }}</h6>
+                                <small class="text-muted">{{ api.description }}</small>
+                            </div>
+                        </div>
+                        <span class="badge bg-{{ api.status_color }}">{{ api.status_display }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activities -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">الأنشطة الأخيرة</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>النوع</th>
+                        <th>الوصف</th>
+                        <th>الحالة</th>
+                        <th>التاريخ</th>
+                        <th>المدة</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for activity in recent_activities %}
+                    <tr>
+                        <td>
+                            <i class="fas fa-{{ activity.icon }} text-{{ activity.color }} me-2"></i>
+                            {{ activity.type_display }}
+                        </td>
+                        <td>{{ activity.description }}</td>
+                        <td>
+                            <span class="badge bg-{{ activity.status_color }}">{{ activity.status_display }}</span>
+                        </td>
+                        <td>{{ activity.date }}</td>
+                        <td>{{ activity.duration }}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'integrations:job_detail' activity.id %}" class="btn btn-sm btn-outline-primary" title="عرض التفاصيل">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if activity.status == 'failed' %}
+                                <button type="button" class="btn btn-sm btn-outline-warning" title="إعادة المحاولة">
+                                    <i class="fas fa-redo"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="fas fa-history fa-3x mb-3"></i>
+                                <p>لا توجد أنشطة مسجلة</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row">
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">استيراد سريع</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" onclick="quickImport('employees')">
+                        <i class="fas fa-users me-1"></i>استيراد الموظفين
+                    </button>
+                    <button class="btn btn-outline-primary" onclick="quickImport('schedules')">
+                        <i class="fas fa-calendar me-1"></i>استيراد الجداول
+                    </button>
+                    <button class="btn btn-outline-primary" onclick="quickImport('leaves')">
+                        <i class="fas fa-calendar-times me-1"></i>استيراد الإجازات
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">تصدير سريع</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-success" onclick="quickExport('employees')">
+                        <i class="fas fa-file-excel me-1"></i>تصدير الموظفين
+                    </button>
+                    <button class="btn btn-outline-success" onclick="quickExport('reports')">
+                        <i class="fas fa-chart-bar me-1"></i>تصدير التقارير
+                    </button>
+                    <button class="btn btn-outline-success" onclick="quickExport('all')">
+                        <i class="fas fa-database me-1"></i>تصدير شامل
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">إعدادات التكامل</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-info" onclick="configureIntegration('hr_system')">
+                        <i class="fas fa-cog me-1"></i>إعداد نظام الموارد البشرية
+                    </button>
+                    <button class="btn btn-outline-info" onclick="configureIntegration('payroll')">
+                        <i class="fas fa-cog me-1"></i>إعداد نظام الرواتب
+                    </button>
+                    <button class="btn btn-outline-info" onclick="configureIntegration('attendance')">
+                        <i class="fas fa-cog me-1"></i>إعداد نظام الحضور
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function quickImport(type) {
+    alert('بدء استيراد ' + type);
+    // Add import functionality here
+}
+
+function quickExport(type) {
+    alert('بدء تصدير ' + type);
+    // Add export functionality here
+}
+
+function configureIntegration(system) {
+    alert('إعداد تكامل ' + system);
+    // Add configuration functionality here
+}
+</script>
+{% endblock %}

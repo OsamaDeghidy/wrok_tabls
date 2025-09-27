@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}إدارة المخالفات - نظام إدارة الجداول التشغيلية{% endblock %}
+
+{% block page_title %}إدارة المخالفات{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <a href="{% url 'violations:create' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>إضافة مخالفة
+    </a>
+    <button type="button" class="btn btn-outline-secondary">
+        <i class="fas fa-download me-1"></i>تصدير
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Filters -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">تطبيق المخالفات</h6>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="search" class="form-label">البحث</label>
+                <input type="text" class="form-control" id="search" name="search" placeholder="اسم الموظف أو نوع المخالفة">
+            </div>
+            <div class="col-md-3">
+                <label for="type" class="form-label">نوع المخالفة</label>
+                <select class="form-select" id="type" name="type">
+                    <option value="">جميع الأنواع</option>
+                    <option value="attendance">تأخير</option>
+                    <option value="absence">غياب</option>
+                    <option value="behavior">سلوك</option>
+                    <option value="performance">أداء</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="status" class="form-label">الحالة</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="">جميع الحالات</option>
+                    <option value="pending">معلقة</option>
+                    <option value="resolved">محلولة</option>
+                    <option value="escalated">مرفوعة</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>بحث
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card bg-primary text-white shadow">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">إجمالي المخالفات</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ total_violations }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card bg-warning text-white shadow">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">معلقة</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ pending_violations }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clock fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card bg-success text-white shadow">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">محلولة</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ resolved_violations }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card bg-danger text-white shadow">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">مرفوعة</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ escalated_violations }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-arrow-up fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Violations Table -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">قائمة المخالفات</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>رقم المخالفة</th>
+                        <th>الموظف</th>
+                        <th>نوع المخالفة</th>
+                        <th>التاريخ</th>
+                        <th>الوقت</th>
+                        <th>الوصف</th>
+                        <th>الحالة</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for violation in violations %}
+                    <tr>
+                        <td>{{ violation.id }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img class="rounded-circle me-2" src="{% static 'images/avatar-placeholder.png' %}" width="32" height="32" alt="">
+                                <div>
+                                    <div class="fw-bold">{{ violation.employee_name }}</div>
+                                    <small class="text-muted">{{ violation.employee_position }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ violation.type_color }}">{{ violation.type_display }}</span>
+                        </td>
+                        <td>{{ violation.date }}</td>
+                        <td>{{ violation.time }}</td>
+                        <td>{{ violation.description|truncatechars:50 }}</td>
+                        <td>
+                            <span class="badge bg-{{ violation.status_color }}">{{ violation.status_display }}</span>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'violations:detail' violation.id %}" class="btn btn-sm btn-outline-primary" title="عرض التفاصيل">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'violations:edit' violation.id %}" class="btn btn-sm btn-outline-warning" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger" title="حذف" onclick="confirmDelete({{ violation.id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                                <p>لا توجد مخالفات مسجلة</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if violations.has_other_pages %}
+<nav aria-label="صفحات المخالفات">
+    <ul class="pagination justify-content-center">
+        {% if violations.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ violations.previous_page_number }}">السابق</a>
+        </li>
+        {% endif %}
+        
+        {% for num in violations.paginator.page_range %}
+        <li class="page-item {% if violations.number == num %}active{% endif %}">
+            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+        </li>
+        {% endfor %}
+        
+        {% if violations.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ violations.next_page_number }}">التالي</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmDelete(violationId) {
+    if (confirm('هل أنت متأكد من حذف هذه المخالفة؟')) {
+        // Add delete functionality here
+        console.log('Delete violation:', violationId);
+    }
+}
+</script>
+{% endblock %}

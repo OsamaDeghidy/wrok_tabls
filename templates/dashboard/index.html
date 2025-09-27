@@ -1,0 +1,322 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}لوحة التحكم - نظام إدارة الجداول التشغيلية{% endblock %}
+
+{% block page_title %}لوحة التحكم{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <button type="button" class="btn btn-outline-primary">
+        <i class="fas fa-download me-1"></i>تصدير تقرير
+    </button>
+    <button type="button" class="btn btn-outline-secondary">
+        <i class="fas fa-cog me-1"></i>الإعدادات
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- KPIs Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            إجمالي الموظفين
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">156</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            الجداول النشطة
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">23</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            طلبات الموافقة المعلقة
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">8</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clock fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            الإجازات المعلقة
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">12</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-times fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row">
+    <!-- Coverage Chart -->
+    <div class="col-xl-8 col-lg-7">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">تغطية النوبات - آخر 7 أيام</h6>
+                <div class="dropdown no-arrow">
+                    <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right shadow">
+                        <a class="dropdown-item" href="#">عرض التفاصيل</a>
+                        <a class="dropdown-item" href="#">تصدير البيانات</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-area">
+                    <canvas id="coverageChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Violations Chart -->
+    <div class="col-xl-4 col-lg-5">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">المخالفات الشهرية</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-pie pt-4 pb-2">
+                    <canvas id="violationsChart"></canvas>
+                </div>
+                <div class="mt-4 text-center small">
+                    <span class="mr-2">
+                        <i class="fas fa-circle text-primary"></i> تأخير
+                    </span>
+                    <span class="mr-2">
+                        <i class="fas fa-circle text-success"></i> غياب
+                    </span>
+                    <span class="mr-2">
+                        <i class="fas fa-circle text-info"></i> سلوك
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">النشاط الأخير</h6>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-primary"></div>
+                        <div class="timeline-content">
+                            <h6 class="timeline-title">تم إنشاء جدول جديد</h6>
+                            <p class="timeline-text">فرع الرياض - الأسبوع القادم</p>
+                            <small class="text-muted">منذ ساعتين</small>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-success"></div>
+                        <div class="timeline-content">
+                            <h6 class="timeline-title">تم اعتماد طلب إجازة</h6>
+                            <p class="timeline-text">أحمد محمد - 3 أيام</p>
+                            <small class="text-muted">منذ 4 ساعات</small>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-warning"></div>
+                        <div class="timeline-content">
+                            <h6 class="timeline-title">تذكير بإنشاء جدول</h6>
+                            <p class="timeline-text">فرع جدة - الأسبوع القادم</p>
+                            <small class="text-muted">منذ 6 ساعات</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Approvals -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">الموافقات المعلقة</h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">جدول فرع الرياض</h6>
+                            <small class="text-muted">منذ يومين</small>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-success me-1">موافقة</button>
+                            <button class="btn btn-sm btn-danger">رفض</button>
+                        </div>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">طلب إجازة - فاطمة علي</h6>
+                            <small class="text-muted">منذ 3 أيام</small>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-success me-1">موافقة</button>
+                            <button class="btn btn-sm btn-danger">رفض</button>
+                        </div>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">تعديل ساعات العمل</h6>
+                            <small class="text-muted">منذ 5 أيام</small>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-success me-1">موافقة</button>
+                            <button class="btn btn-sm btn-danger">رفض</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">إجراءات سريعة</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'schedules:create' %}" class="btn btn-primary btn-block">
+                            <i class="fas fa-plus me-2"></i>إنشاء جدول جديد
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'employees:create' %}" class="btn btn-success btn-block">
+                            <i class="fas fa-user-plus me-2"></i>إضافة موظف
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'leaves:create' %}" class="btn btn-info btn-block">
+                            <i class="fas fa-calendar-times me-2"></i>طلب إجازة
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'reports:list' %}" class="btn btn-warning btn-block">
+                            <i class="fas fa-chart-bar me-2"></i>عرض التقارير
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Coverage Chart
+const coverageCtx = document.getElementById('coverageChart').getContext('2d');
+const coverageChart = new Chart(coverageCtx, {
+    type: 'line',
+    data: {
+        labels: ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'],
+        datasets: [{
+            label: 'التغطية %',
+            data: [85, 92, 78, 95, 88, 90, 87],
+            borderColor: 'rgb(127, 79, 184)',
+            backgroundColor: 'rgba(127, 79, 184, 0.1)',
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100
+            }
+        }
+    }
+});
+
+// Violations Chart
+const violationsCtx = document.getElementById('violationsChart').getContext('2d');
+const violationsChart = new Chart(violationsCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['تأخير', 'غياب', 'سلوك'],
+        datasets: [{
+            data: [45, 30, 25],
+            backgroundColor: [
+                'rgb(127, 79, 184)',
+                'rgb(42, 162, 126)',
+                'rgb(13, 202, 240)'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

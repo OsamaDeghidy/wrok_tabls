@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}إدارة الموظفين - نظام إدارة الجداول التشغيلية{% endblock %}
+
+{% block page_title %}إدارة الموظفين{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <a href="{% url 'employees:create' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>إضافة موظف
+    </a>
+    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importModal">
+        <i class="fas fa-upload me-1"></i>استيراد
+    </button>
+    <button type="button" class="btn btn-outline-secondary">
+        <i class="fas fa-download me-1"></i>تصدير
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Filters -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">تطبيق الموظفين</h6>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="search" class="form-label">البحث</label>
+                <input type="text" class="form-control" id="search" name="search" placeholder="اسم الموظف أو الرقم">
+            </div>
+            <div class="col-md-3">
+                <label for="branch" class="form-label">الفرع</label>
+                <select class="form-select" id="branch" name="branch">
+                    <option value="">جميع الفروع</option>
+                    <option value="1">فرع الرياض</option>
+                    <option value="2">فرع جدة</option>
+                    <option value="3">فرع الدمام</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="status" class="form-label">الحالة</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="">جميع الحالات</option>
+                    <option value="active">نشط</option>
+                    <option value="inactive">غير نشط</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">تطبيق</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Employees Table -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">قائمة الموظفين</h6>
+        <div class="text-muted">
+            إجمالي: <span class="badge bg-primary">156</span> موظف
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="employeesTable">
+                <thead>
+                    <tr>
+                        <th>الرقم</th>
+                        <th>الاسم</th>
+                        <th>الفرع</th>
+                        <th>المنصب</th>
+                        <th>تاريخ الانضمام</th>
+                        <th>الحالة</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>98979001</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="{% static 'images/avatar-placeholder.png' %}" class="rounded-circle me-2" width="32" height="32">
+                                <div>
+                                    <div class="fw-bold">أحمد محمد</div>
+                                    <small class="text-muted">ahmed@company.com</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>فرع الرياض</td>
+                        <td>مدير فرع</td>
+                        <td>2023-01-15</td>
+                        <td><span class="badge bg-success">نشط</span></td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{% url 'employees:detail' 1 %}" class="btn btn-outline-primary" title="عرض">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'employees:edit' 1 %}" class="btn btn-outline-warning" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn btn-outline-danger" title="حذف" data-confirm-delete>
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>98979002</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="{% static 'images/avatar-placeholder.png' %}" class="rounded-circle me-2" width="32" height="32">
+                                <div>
+                                    <div class="fw-bold">فاطمة علي</div>
+                                    <small class="text-muted">fatima@company.com</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>فرع الرياض</td>
+                        <td>منسق</td>
+                        <td>2023-02-20</td>
+                        <td><span class="badge bg-success">نشط</span></td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{% url 'employees:detail' 2 %}" class="btn btn-outline-primary" title="عرض">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'employees:edit' 2 %}" class="btn btn-outline-warning" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn btn-outline-danger" title="حذف" data-confirm-delete>
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>98979003</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="{% static 'images/avatar-placeholder.png' %}" class="rounded-circle me-2" width="32" height="32">
+                                <div>
+                                    <div class="fw-bold">خالد سعد</div>
+                                    <small class="text-muted">khalid@company.com</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>فرع جدة</td>
+                        <td>موظف</td>
+                        <td>2023-03-10</td>
+                        <td><span class="badge bg-warning">إجازة</span></td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{% url 'employees:detail' 3 %}" class="btn btn-outline-primary" title="عرض">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'employees:edit' 3 %}" class="btn btn-outline-warning" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn btn-outline-danger" title="حذف" data-confirm-delete>
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" tabindex="-1">السابق</a>
+                </li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item">
+                    <a class="page-link" href="#">التالي</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">استيراد الموظفين</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="importForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="importFile" class="form-label">اختر ملف Excel</label>
+                        <input type="file" class="form-control" id="importFile" accept=".xlsx,.xls,.csv" required>
+                        <div class="form-text">يدعم ملفات Excel و CSV</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">خيارات الاستيراد</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="skipDuplicates" checked>
+                            <label class="form-check-label" for="skipDuplicates">
+                                تجاهل الموظفين المكررين
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="updateExisting">
+                            <label class="form-check-label" for="updateExisting">
+                                تحديث البيانات الموجودة
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="startImport()">بدء الاستيراد</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Table search functionality
+document.getElementById('search').addEventListener('keyup', function() {
+    const searchTerm = this.value.toLowerCase();
+    const table = document.getElementById('employeesTable');
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const text = row.textContent.toLowerCase();
+        if (text.indexOf(searchTerm) > -1) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    }
+});
+
+// Import functionality
+function startImport() {
+    const fileInput = document.getElementById('importFile');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('يرجى اختيار ملف للاستيراد');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('skip_duplicates', document.getElementById('skipDuplicates').checked);
+    formData.append('update_existing', document.getElementById('updateExisting').checked);
+    
+    // Show loading
+    const importBtn = document.querySelector('#importModal .btn-primary');
+    const originalText = importBtn.innerHTML;
+    importBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>جاري الاستيراد...';
+    importBtn.disabled = true;
+    
+    // Simulate import process
+    setTimeout(() => {
+        alert('تم استيراد البيانات بنجاح!');
+        importBtn.innerHTML = originalText;
+        importBtn.disabled = false;
+        bootstrap.Modal.getInstance(document.getElementById('importModal')).hide();
+    }, 2000);
+}
+</script>
+{% endblock %}

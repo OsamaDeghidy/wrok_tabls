@@ -1,0 +1,392 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}الجداول التشغيلية - نظام إدارة الجداول التشغيلية{% endblock %}
+
+{% block page_title %}الجداول التشغيلية{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <a href="{% url 'schedules:create' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>إنشاء جدول جديد
+    </a>
+    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#templateModal">
+        <i class="fas fa-copy me-1"></i>من قالب
+    </button>
+    <button type="button" class="btn btn-outline-secondary">
+        <i class="fas fa-download me-1"></i>تصدير
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Filters -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">تطبيق الجداول</h6>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="branch" class="form-label">الفرع</label>
+                <select class="form-select" id="branch" name="branch">
+                    <option value="">جميع الفروع</option>
+                    <option value="1">فرع الرياض</option>
+                    <option value="2">فرع جدة</option>
+                    <option value="3">فرع الدمام</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="status" class="form-label">الحالة</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="">جميع الحالات</option>
+                    <option value="draft">مسودة</option>
+                    <option value="pending">معلق</option>
+                    <option value="approved">معتمد</option>
+                    <option value="rejected">مرفوض</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="schedule_type" class="form-label">نوع الجدول</label>
+                <select class="form-select" id="schedule_type" name="schedule_type">
+                    <option value="">جميع الأنواع</option>
+                    <option value="weekly">أسبوعي</option>
+                    <option value="monthly">شهري</option>
+                    <option value="quarterly">ربع سنوي</option>
+                    <option value="yearly">سنوي</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="date_from" class="form-label">من تاريخ</label>
+                <input type="date" class="form-control" id="date_from" name="date_from">
+            </div>
+            <div class="col-md-3">
+                <label for="date_to" class="form-label">إلى تاريخ</label>
+                <input type="date" class="form-control" id="date_to" name="date_to">
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">تطبيق</button>
+                <a href="{% url 'schedules:list' %}" class="btn btn-outline-secondary">مسح الفلاتر</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Schedules Table -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">قائمة الجداول</h6>
+        <div class="text-muted">
+            إجمالي: <span class="badge bg-primary">23</span> جدول
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="schedulesTable">
+                <thead>
+                    <tr>
+                        <th>الفرع</th>
+                        <th>نوع الجدول</th>
+                        <th>الفترة</th>
+                        <th>الموظفين</th>
+                        <th>التغطية</th>
+                        <th>الحالة</th>
+                        <th>تم الإنشاء</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-building me-2 text-primary"></i>
+                                <span>فرع الرياض</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-calendar-week me-2 text-info"></i>
+                                <span>أسبوعي</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <div class="fw-bold">15-21 يناير 2024</div>
+                                <small class="text-muted">7 أيام</small>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-users me-2 text-success"></i>
+                                <span>5 موظف</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="progress me-2" style="width: 60px; height: 8px;">
+                                    <div class="progress-bar bg-success" style="width: 100%"></div>
+                                </div>
+                                <span class="text-success fw-bold">100%</span>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-success">معتمد</span></td>
+                        <td>
+                            <div>
+                                <div>أحمد محمد</div>
+                                <small class="text-muted">2024-01-10</small>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{% url 'schedules:detail' 1 %}" class="btn btn-outline-primary" title="عرض">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'schedules:edit' 1 %}" class="btn btn-outline-warning" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn btn-outline-danger" title="حذف" data-confirm-delete>
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-building me-2 text-primary"></i>
+                                <span>فرع جدة</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-calendar-alt me-2 text-warning"></i>
+                                <span>شهري</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <div class="fw-bold">22-28 يناير 2024</div>
+                                <small class="text-muted">7 أيام</small>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-users me-2 text-success"></i>
+                                <span>4 موظف</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="progress me-2" style="width: 60px; height: 8px;">
+                                    <div class="progress-bar bg-warning" style="width: 75%"></div>
+                                </div>
+                                <span class="text-warning fw-bold">75%</span>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-warning">معلق</span></td>
+                        <td>
+                            <div>
+                                <div>فاطمة علي</div>
+                                <small class="text-muted">2024-01-15</small>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{% url 'schedules:detail' 2 %}" class="btn btn-outline-primary" title="عرض">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'schedules:edit' 2 %}" class="btn btn-outline-warning" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn btn-outline-danger" title="حذف" data-confirm-delete>
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-building me-2 text-primary"></i>
+                                <span>فرع الدمام</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-calendar-day me-2 text-danger"></i>
+                                <span>ربع سنوي</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <div class="fw-bold">29 يناير - 4 فبراير 2024</div>
+                                <small class="text-muted">7 أيام</small>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-users me-2 text-success"></i>
+                                <span>3 موظف</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="progress me-2" style="width: 60px; height: 8px;">
+                                    <div class="progress-bar bg-danger" style="width: 45%"></div>
+                                </div>
+                                <span class="text-danger fw-bold">45%</span>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-secondary">مسودة</span></td>
+                        <td>
+                            <div>
+                                <div>خالد سعد</div>
+                                <small class="text-muted">2024-01-20</small>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{% url 'schedules:detail' 3 %}" class="btn btn-outline-primary" title="عرض">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'schedules:edit' 3 %}" class="btn btn-outline-warning" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn btn-outline-danger" title="حذف" data-confirm-delete>
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" tabindex="-1">السابق</a>
+                </li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item">
+                    <a class="page-link" href="#">التالي</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Template Modal -->
+<div class="modal fade" id="templateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إنشاء جدول من قالب</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="templateForm">
+                    <div class="mb-3">
+                        <label for="templateSelect" class="form-label">اختر القالب</label>
+                        <select class="form-select" id="templateSelect" required>
+                            <option value="">اختر قالب</option>
+                            <option value="1">قالب فرع الرياض</option>
+                            <option value="2">قالب فرع جدة</option>
+                            <option value="3">قالب فرع الدمام</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="templateDateFrom" class="form-label">من تاريخ</label>
+                        <input type="date" class="form-control" id="templateDateFrom" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="templateDateTo" class="form-label">إلى تاريخ</label>
+                        <input type="date" class="form-control" id="templateDateTo" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="createFromTemplate()">إنشاء</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Table search functionality
+document.getElementById('branch').addEventListener('change', function() {
+    filterTable();
+});
+
+document.getElementById('status').addEventListener('change', function() {
+    filterTable();
+});
+
+document.getElementById('schedule_type').addEventListener('change', function() {
+    filterTable();
+});
+
+function filterTable() {
+    const branchFilter = document.getElementById('branch').value;
+    const statusFilter = document.getElementById('status').value;
+    const typeFilter = document.getElementById('schedule_type').value;
+    const table = document.getElementById('schedulesTable');
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const branchCell = row.cells[0].textContent.toLowerCase();
+        const typeCell = row.cells[1].textContent.toLowerCase();
+        const statusCell = row.cells[5].textContent.toLowerCase();
+        
+        let showRow = true;
+        
+        if (branchFilter && !branchCell.includes(branchFilter.toLowerCase())) {
+            showRow = false;
+        }
+        
+        if (typeFilter && !typeCell.includes(typeFilter.toLowerCase())) {
+            showRow = false;
+        }
+        
+        if (statusFilter && !statusCell.includes(statusFilter.toLowerCase())) {
+            showRow = false;
+        }
+        
+        row.style.display = showRow ? '' : 'none';
+    }
+}
+
+// Template functionality
+function createFromTemplate() {
+    const template = document.getElementById('templateSelect').value;
+    const dateFrom = document.getElementById('templateDateFrom').value;
+    const dateTo = document.getElementById('templateDateTo').value;
+    
+    if (!template || !dateFrom || !dateTo) {
+        alert('يرجى ملء جميع الحقول');
+        return;
+    }
+    
+    // Show loading
+    const createBtn = document.querySelector('#templateModal .btn-primary');
+    const originalText = createBtn.innerHTML;
+    createBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>جاري الإنشاء...';
+    createBtn.disabled = true;
+    
+    // Simulate creation
+    setTimeout(() => {
+        alert('تم إنشاء الجدول بنجاح!');
+        createBtn.innerHTML = originalText;
+        createBtn.disabled = false;
+        bootstrap.Modal.getInstance(document.getElementById('templateModal')).hide();
+    }, 2000);
+}
+</script>
+{% endblock %}
