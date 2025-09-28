@@ -149,6 +149,7 @@
                                     <th>البريد الإلكتروني</th>
                                     <th>المنصب</th>
                                     <th>القسم</th>
+                                    <th>الفرع</th>
                                     <th>الحالة</th>
                                     <th>آخر تسجيل دخول</th>
                                     <th>الإجراءات</th>
@@ -176,6 +177,13 @@
                                     <td>{{ user.user.email }}</td>
                                     <td>{{ user.position|default:"-" }}</td>
                                     <td>{{ user.department|default:"-" }}</td>
+                                    <td>
+                                        {% if user.branch %}
+                                            <span class="badge bg-info">{{ user.branch.name }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
                                     <td>
                                         <span class="badge bg-{% if user.status == 'active' %}success{% else %}danger{% endif %}">
                                             {{ user.get_status_display }}

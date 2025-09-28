@@ -1,0 +1,1676 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}إنشاء جدول تشغيلي - نظام إدارة الجداول التشغيلية{% endblock %}
+
+{% block page_title %}
+<div class="d-flex align-items-center">
+    <i class="fas fa-calendar-plus text-primary me-3"></i>
+    <div>
+        <h4 class="mb-0">إنشاء جدول تشغيلي</h4>
+        <small class="text-muted">نظام ذكي لضمان التغطية الكاملة وساعات العمل المطلوبة</small>
+    </div>
+</div>
+{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <a href="{% url 'schedules:list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
+    </a>
+    <button type="button" class="btn btn-outline-info" onclick="showHelp()">
+        <i class="fas fa-question-circle me-1"></i>مساعدة
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Messages -->
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'warning' %}warning{% elif message.tags == 'error' %}danger{% elif message.tags == 'success' %}success{% else %}info{% endif %} alert-dismissible fade show" role="alert">
+            <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' or message.tags == 'danger' %}exclamation-triangle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<!-- Progress Bar -->
+<div class="card shadow mb-4">
+    <div class="card-body">
+        <div class="progress mb-3" style="height: 8px;">
+            <div class="progress-bar bg-primary" role="progressbar" style="width: 25%" id="progress-bar"></div>
+        </div>
+        <div class="row text-center">
+            <div class="col-md-3">
+                <div class="step-circle active" id="step1-circle">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <h6 class="step-title">المعلومات الأساسية</h6>
+                <small class="text-muted">الفرع والفترة</small>
+            </div>
+            <div class="col-md-3">
+                <div class="step-circle" id="step2-circle">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h6 class="step-title">اختيار الموظفين</h6>
+                <small class="text-muted">اختيار فريق العمل</small>
+            </div>
+            <div class="col-md-3">
+                <div class="step-circle" id="step3-circle">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <h6 class="step-title">توزيع الشفتات</h6>
+                <small class="text-muted">جدولة الموظفين</small>
+            </div>
+            <div class="col-md-3">
+                <div class="step-circle" id="step4-circle">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h6 class="step-title">مراجعة وحفظ</h6>
+                <small class="text-muted">التأكيد النهائي</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Form -->
+<form id="scheduleForm" method="post">
+    {% csrf_token %}
+    
+    <!-- Step 1: Basic Information -->
+    <div class="card shadow mb-4" id="step1">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-info-circle me-2"></i>
+                المرحلة 1: المعلومات الأساسية
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="branch" class="form-label">الفرع <span class="text-danger">*</span></label>
+                        <select class="form-select" id="branch" name="branch" required>
+                            <option value="">اختر الفرع</option>
+                            {% for branch in branches %}
+                                <option value="{{ branch.id }}">{{ branch.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="schedule_type" class="form-label">نوع الجدول <span class="text-danger">*</span></label>
+                        <select class="form-select" id="schedule_type" name="schedule_type" required>
+                            <option value="">اختر نوع الجدول</option>
+                            <option value="daily">يومي</option>
+                            <option value="weekly">أسبوعي</option>
+                            <option value="monthly">شهري</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="start_date" class="form-label">تاريخ البداية <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="start_date" name="start_date" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="end_date" class="form-label">تاريخ النهاية <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="end_date" name="end_date" required>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">ملاحظات</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="أي ملاحظات إضافية..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2: Employee Selection -->
+    <div class="card shadow mb-4" id="step2" style="display: none;">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-users me-2"></i>
+                المرحلة 2: اختيار الموظفين
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>اختر الموظفين:</strong> يمكنك اختيار الموظفين الذين سيتم جدولتهم في هذا الجدول التشغيلي.
+            </div>
+            
+            <div id="employees-container">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">جاري التحميل...</span>
+                    </div>
+                    <p class="mt-2 text-muted">جاري تحميل الموظفين...</p>
+                </div>
+            </div>
+            
+            <div class="mt-3" id="employee-summary" style="display: none;">
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>تم اختيار <span id="selected-count">0</span> موظف</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 3: Shift Distribution -->
+    <div class="card shadow mb-4" id="step3" style="display: none;">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">
+                <i class="fas fa-calendar-alt me-2"></i>
+                المرحلة 3: توزيع الشفتات
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>توزيع الشفتات:</strong> قم بتوزيع الموظفين على الشفتات المختلفة لكل يوم.
+            </div>
+            
+            <div id="schedule-table-container">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">جاري التحميل...</span>
+                    </div>
+                    <p class="mt-2 text-muted">جاري تحميل جدول التوزيع...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 4: Review and Save -->
+    <div class="card shadow mb-4" id="step4" style="display: none;">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-check-circle me-2"></i>
+                المرحلة 4: مراجعة وحفظ
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle me-2"></i>
+                <strong>مراجعة نهائية:</strong> تأكد من صحة جميع البيانات قبل الحفظ.
+            </div>
+            
+            <div id="final-review">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">جاري التحميل...</span>
+                    </div>
+                    <p class="mt-2 text-muted">جاري تحضير المراجعة النهائية...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary" id="prev-btn" onclick="changeStep(-1)" style="display: none;">
+                    <i class="fas fa-arrow-right me-1"></i>السابق
+                </button>
+                <div class="ms-auto">
+                    <button type="button" class="btn btn-primary" id="next-btn" onclick="changeStep(1)">
+                        التالي <i class="fas fa-arrow-left ms-1"></i>
+                    </button>
+                    <button type="button" class="btn btn-success" id="save-btn" onclick="saveScheduleToDatabase()" style="display: none;">
+                        <i class="fas fa-save me-1"></i>حفظ الجدول
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block styles %}
+<style>
+.step-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 20px;
+    margin: 0 auto 10px;
+    transition: all 0.3s ease;
+    border: 3px solid transparent;
+}
+
+.step-circle.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #0056b3;
+    box-shadow: 0 4px 8px rgba(0,123,255,0.3);
+}
+
+.step-circle.completed {
+    background-color: #28a745;
+    color: white;
+    border-color: #1e7e34;
+    box-shadow: 0 4px 8px rgba(40,167,69,0.3);
+}
+
+.step-circle i {
+    font-size: 24px;
+}
+
+.step-title {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.employee-card {
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.employee-card:hover {
+    border-color: #007bff;
+    box-shadow: 0 4px 8px rgba(0,123,255,0.1);
+}
+
+.employee-card.selected {
+    border-color: #007bff;
+    background-color: #f8f9ff;
+}
+
+.employee-card input[type="checkbox"] {
+    transform: scale(1.2);
+}
+
+.schedule-table {
+    font-size: 14px;
+}
+
+.schedule-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.schedule-table td {
+    vertical-align: middle;
+    text-align: center;
+}
+
+.shift-cell {
+    min-height: 60px;
+    border: 1px solid #dee2e6;
+    position: relative;
+}
+
+.employee-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.employee-item {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 8px;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.employee-item .employee-info {
+    flex: 1;
+}
+
+.employee-item .employee-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.remove-btn {
+    background: none;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    padding: 2px 5px;
+    border-radius: 3px;
+}
+
+.remove-btn:hover {
+    background-color: #dc3545;
+    color: white;
+}
+
+.coverage-indicator {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 10px;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.coverage-good {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.coverage-warning {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.coverage-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Smooth transitions */
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+/* Step transitions */
+#step1, #step2, #step3, #step4 {
+    transition: all 0.3s ease;
+}
+
+/* Progress bar animation */
+.progress-bar {
+    transition: width 0.5s ease;
+}
+
+/* Button hover effects */
+.btn {
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* Employee card animations */
+.employee-card {
+    transition: all 0.3s ease;
+}
+
+.employee-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,123,255,0.15);
+}
+
+/* Schedule table animations */
+.schedule-table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.schedule-table tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.01);
+}
+
+/* Loading animations */
+.spinner-border {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Fade in animation */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Pulse animation for active elements */
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(0,123,255,0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(0,123,255,0); }
+    100% { box-shadow: 0 0 0 0 rgba(0,123,255,0); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .step-circle {
+        width: 50px;
+        height: 50px;
+        font-size: 18px;
+    }
+    
+    .step-circle i {
+        font-size: 20px;
+    }
+    
+    .schedule-table {
+        font-size: 12px;
+    }
+    
+    .shift-cell {
+        min-height: 50px;
+    }
+    
+    .employee-card {
+        margin-bottom: 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    .step-circle {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+    
+    .step-circle i {
+        font-size: 18px;
+    }
+    
+    .step-title {
+        font-size: 14px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Global variables
+let currentStep = 1;
+let scheduleData = {};
+let selectedEmployees = [];
+let employeesData = [];
+let branchShifts = [];
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== Initializing Create Schedule Page ===');
+    
+    // Set default dates
+    const today = new Date();
+    const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+    
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
+    
+    if (startDateInput) {
+        startDateInput.value = today.toISOString().split('T')[0];
+    }
+    if (endDateInput) {
+        endDateInput.value = nextWeek.toISOString().split('T')[0];
+    }
+    
+    // Load saved data if exists
+    loadScheduleDataFromStorage();
+    
+    // Initialize step data with delay to ensure DOM is ready
+    setTimeout(() => {
+        loadStepData();
+    }, 200);
+    
+    // Fix scroll issues
+    fixScrollIssues();
+    
+    // Add fade-in animation to first step
+    const step1 = document.getElementById('step1');
+    if (step1) {
+        step1.classList.add('fade-in');
+    }
+    
+    // Add event listeners for real-time validation
+    addRealTimeValidation();
+    
+    // Add keyboard navigation
+    addKeyboardNavigation();
+    
+    // Add branch change listener
+    const branchSelect = document.getElementById('branch');
+    if (branchSelect) {
+        branchSelect.addEventListener('change', function() {
+            console.log('Branch changed to:', this.value);
+            if (this.value && currentStep === 2) {
+                loadEmployees();
+            }
+        });
+    }
+});
+
+// Change step
+function changeStep(direction) {
+    const newStep = currentStep + direction;
+    
+    if (newStep < 1 || newStep > 4) return;
+    
+    // Validate current step before moving
+    if (direction > 0 && !validateCurrentStep()) {
+        return;
+    }
+    
+    // Add smooth transition
+    const currentStepElement = document.getElementById(`step${currentStep}`);
+    const newStepElement = document.getElementById(`step${newStep}`);
+    
+    // Hide current step with fade out
+    currentStepElement.style.opacity = '0';
+    currentStepElement.style.transform = 'translateX(-20px)';
+    
+    setTimeout(() => {
+        // Hide current step
+        currentStepElement.style.display = 'none';
+        document.getElementById(`step${currentStep}-circle`).classList.remove('active');
+        
+        // Mark previous step as completed
+        if (direction > 0) {
+            document.getElementById(`step${currentStep}-circle`).classList.add('completed');
+        }
+        
+        // Show new step
+        currentStep = newStep;
+        newStepElement.style.display = 'block';
+        newStepElement.style.opacity = '0';
+        newStepElement.style.transform = 'translateX(20px)';
+        
+        document.getElementById(`step${currentStep}-circle`).classList.add('active');
+        
+        // Fade in new step
+        setTimeout(() => {
+            newStepElement.style.opacity = '1';
+            newStepElement.style.transform = 'translateX(0)';
+        }, 50);
+        
+        // Update progress bar
+        updateProgressBar();
+        
+        // Update navigation buttons
+        updateNavigationButtons();
+        
+        // Load step data
+        loadStepData();
+        
+        // Save current state
+        saveScheduleDataToStorage();
+    }, 300);
+}
+
+// Validate current step
+function validateCurrentStep() {
+    switch(currentStep) {
+        case 1:
+            const branch = document.getElementById('branch').value;
+            const scheduleType = document.getElementById('schedule_type').value;
+            const startDate = document.getElementById('start_date').value;
+            const endDate = document.getElementById('end_date').value;
+            
+            if (!branch || !scheduleType || !startDate || !endDate) {
+                alert('يرجى ملء جميع الحقول المطلوبة');
+                return false;
+            }
+            
+            if (new Date(startDate) >= new Date(endDate)) {
+                alert('تاريخ البداية يجب أن يكون قبل تاريخ النهاية');
+                return false;
+            }
+            
+            return true;
+            
+        case 2:
+            if (selectedEmployees.length === 0) {
+                alert('يرجى اختيار موظف واحد على الأقل');
+                return false;
+            }
+            return true;
+            
+        case 3:
+            // Check if any shifts are assigned
+            let hasAssignments = false;
+            Object.values(scheduleData).forEach(dayData => {
+                if (dayData.shifts && Object.keys(dayData.shifts).length > 0) {
+                    hasAssignments = true;
+                }
+            });
+            
+            if (!hasAssignments) {
+                alert('يرجى توزيع الموظفين على الشفتات');
+                return false;
+            }
+            return true;
+            
+        case 4:
+            return true;
+            
+        default:
+            return true;
+    }
+}
+
+// Update progress bar
+function updateProgressBar() {
+    const progress = (currentStep / 4) * 100;
+    document.getElementById('progress-bar').style.width = progress + '%';
+}
+
+// Update navigation buttons
+function updateNavigationButtons() {
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const saveBtn = document.getElementById('save-btn');
+    
+    // Previous button
+    if (currentStep > 1) {
+        prevBtn.style.display = 'inline-block';
+    } else {
+        prevBtn.style.display = 'none';
+    }
+    
+    // Next/Save buttons
+    if (currentStep < 4) {
+        nextBtn.style.display = 'inline-block';
+        saveBtn.style.display = 'none';
+    } else {
+        nextBtn.style.display = 'none';
+        saveBtn.style.display = 'inline-block';
+    }
+}
+
+// Load step data
+function loadStepData() {
+    console.log('Loading step data for step:', currentStep);
+    
+    // Add a small delay to ensure DOM is ready
+    setTimeout(() => {
+        switch(currentStep) {
+            case 2:
+                console.log('Loading employees for step 2');
+                loadEmployees();
+                break;
+            case 3:
+                console.log('Loading schedule table for step 3');
+                loadScheduleTable();
+                break;
+            case 4:
+                console.log('Loading final review for step 4');
+                loadFinalReview();
+                break;
+        }
+    }, 100);
+}
+
+// Load employees
+async function loadEmployees() {
+    const branchId = document.getElementById('branch').value;
+    console.log('Loading employees for branch:', branchId);
+    
+    if (!branchId) {
+        const container = document.getElementById('employees-container');
+        if (container) {
+            container.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    يرجى اختيار الفرع أولاً
+                </div>
+            `;
+        }
+        return;
+    }
+    
+    try {
+        const url = `/schedules/api/employees/?branch=${branchId}`;
+        console.log('Fetching URL:', url);
+        
+        const response = await fetch(url);
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Response data:', data);
+        
+        if (data.success) {
+            employeesData = data.employees;
+            console.log('Loaded employees:', employeesData);
+            console.log('Number of employees loaded:', employeesData.length);
+            
+            // Clear selected employees when loading new branch
+            selectedEmployees = [];
+            console.log('Cleared selected employees for new branch');
+            
+            renderEmployees();
+        } else {
+            console.error('Error loading employees:', data.error);
+            const container = document.getElementById('employees-container');
+            if (container) {
+                container.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        ${data.error}
+                    </div>
+                `;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading employees:', error);
+        const container = document.getElementById('employees-container');
+        if (container) {
+            container.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    خطأ في تحميل الموظفين: ${error.message}
+                    <br><small>يرجى المحاولة مرة أخرى أو التأكد من اتصال الإنترنت</small>
+                </div>
+                <div class="text-center mt-3">
+                    <button type="button" class="btn btn-outline-primary" onclick="loadEmployees()">
+                        <i class="fas fa-refresh me-1"></i>إعادة المحاولة
+                    </button>
+                </div>
+            `;
+        }
+    }
+}
+
+// Render employees
+function renderEmployees() {
+    const container = document.getElementById('employees-container');
+    
+    console.log('Rendering employees:', employeesData);
+    console.log('Container found:', !!container);
+    
+    if (!container) {
+        console.error('Employees container not found');
+        return;
+    }
+    
+    if (!employeesData || employeesData.length === 0) {
+        console.log('No employees data available');
+        container.innerHTML = `
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                لا توجد موظفين في هذا الفرع
+            </div>
+        `;
+        return;
+    }
+    
+    console.log('Rendering', employeesData.length, 'employees');
+    
+    let html = '<div class="row">';
+    
+    employeesData.forEach((employee, index) => {
+        const isSelected = selectedEmployees.find(emp => emp.id === employee.id);
+        console.log(`Employee ${index + 1}:`, employee.full_name || employee.username, 'Selected:', !!isSelected);
+        
+        html += `
+            <div class="col-md-6 col-lg-4">
+                <div class="employee-card ${isSelected ? 'selected' : ''}" onclick="toggleEmployee(${employee.id})">
+                    <div class="form-check">
+                        <input class="form-check-input employee-checkbox" type="checkbox" value="${employee.id}" 
+                               ${isSelected ? 'checked' : ''} onchange="toggleEmployee(${employee.id})">
+                        <label class="form-check-label w-100">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar me-3">
+                                    <i class="fas fa-user-circle fa-2x text-primary"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">${employee.full_name || employee.username}</h6>
+                                    <small class="text-muted">${employee.position || employee.role_display || 'موظف'}</small>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+    
+    console.log('Employee cards rendered successfully');
+    
+    // Update employee summary after a short delay to ensure DOM is updated
+    setTimeout(() => {
+        updateEmployeeSummary();
+    }, 100);
+}
+
+// Toggle employee selection
+function toggleEmployee(employeeId) {
+    console.log('Toggling employee:', employeeId);
+    console.log('Current selectedEmployees:', selectedEmployees);
+    console.log('Available employeesData:', employeesData);
+    
+    const employee = employeesData.find(emp => emp.id === employeeId);
+    if (!employee) {
+        console.warn('Employee not found:', employeeId);
+        return;
+    }
+    
+    const index = selectedEmployees.findIndex(emp => emp.id === employeeId);
+    console.log('Employee index in selected:', index);
+    
+    if (index > -1) {
+        selectedEmployees.splice(index, 1);
+        console.log('Removed employee from selection');
+    } else {
+        selectedEmployees.push(employee);
+        console.log('Added employee to selection');
+    }
+    
+    console.log('Updated selectedEmployees:', selectedEmployees);
+    
+    // Update UI
+    const employeeCard = document.querySelector(`[onclick="toggleEmployee(${employeeId})"]`);
+    if (!employeeCard) {
+        console.warn('Employee card not found for ID:', employeeId);
+        return;
+    }
+    
+    const checkbox = employeeCard.querySelector('.employee-checkbox');
+    if (!checkbox) {
+        console.warn('Employee checkbox not found for ID:', employeeId);
+        return;
+    }
+    
+    if (index > -1) {
+        employeeCard.classList.remove('selected');
+        checkbox.checked = false;
+        console.log('Deselected employee');
+    } else {
+        employeeCard.classList.add('selected');
+        checkbox.checked = true;
+        console.log('Selected employee');
+    }
+    
+    // Update employee summary with delay to ensure DOM is ready
+    setTimeout(() => {
+        updateEmployeeSummary();
+    }, 50);
+    
+    saveScheduleDataToStorage();
+}
+
+// Update employee summary
+function updateEmployeeSummary() {
+    const summary = document.getElementById('employee-summary');
+    const count = document.getElementById('selected-count');
+    
+    console.log('Updating employee summary:', {
+        summary: !!summary,
+        count: !!count,
+        selectedCount: selectedEmployees.length
+    });
+    
+    // Check if elements exist before accessing them
+    if (!summary || !count) {
+        console.warn('Employee summary elements not found');
+        return;
+    }
+    
+    if (selectedEmployees.length > 0) {
+        summary.style.display = 'block';
+        count.textContent = selectedEmployees.length;
+        console.log('Updated summary to show', selectedEmployees.length, 'employees');
+    } else {
+        summary.style.display = 'none';
+        console.log('Hiding summary - no employees selected');
+    }
+}
+
+// Load schedule table
+async function loadScheduleTable() {
+    const branchId = document.getElementById('branch').value;
+    const startDate = document.getElementById('start_date').value;
+    const endDate = document.getElementById('end_date').value;
+    
+    if (!branchId || !startDate || !endDate) {
+        document.getElementById('schedule-table-container').innerHTML = `
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                يرجى ملء المعلومات الأساسية أولاً
+            </div>
+        `;
+        return;
+    }
+    
+    try {
+        console.log('Loading schedule table for branch:', branchId);
+        console.log('Date range:', startDate, 'to', endDate);
+        
+        // Load shifts
+        const shiftsUrl = `/schedules/api/branches/${branchId}/shifts/`;
+        console.log('Fetching shifts from:', shiftsUrl);
+        
+        const shiftsResponse = await fetch(shiftsUrl);
+        console.log('Shifts response status:', shiftsResponse.status);
+        
+        if (!shiftsResponse.ok) {
+            throw new Error(`HTTP error! status: ${shiftsResponse.status}`);
+        }
+        
+        const shiftsData = await shiftsResponse.json();
+        console.log('Shifts response data:', shiftsData);
+        
+        if (shiftsData.success) {
+            branchShifts = shiftsData.shifts;
+            console.log('Loaded shifts:', branchShifts);
+        } else {
+            console.error('Error loading shifts:', shiftsData.error);
+            throw new Error(shiftsData.error);
+        }
+        
+        // Generate schedule table
+        generateScheduleTable(startDate, endDate);
+        
+    } catch (error) {
+        console.error('Error loading schedule table:', error);
+        document.getElementById('schedule-table-container').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                خطأ في تحميل جدول التوزيع: ${error.message}
+                <br><small>يرجى المحاولة مرة أخرى أو التأكد من اتصال الإنترنت</small>
+            </div>
+            <div class="text-center mt-3">
+                <button type="button" class="btn btn-outline-primary" onclick="loadScheduleTable()">
+                    <i class="fas fa-refresh me-1"></i>إعادة المحاولة
+                </button>
+            </div>
+        `;
+    }
+}
+
+// Generate schedule table
+function generateScheduleTable(startDate, endDate) {
+    console.log('Generating schedule table for:', startDate, 'to', endDate);
+    console.log('Available shifts:', branchShifts);
+    
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const days = [];
+    
+    // Generate days
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        days.push(new Date(d));
+    }
+    
+    console.log('Generated days:', days.length);
+    
+    if (!branchShifts || branchShifts.length === 0) {
+        document.getElementById('schedule-table-container').innerHTML = `
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                لا توجد شفتات نشطة في هذا الفرع
+            </div>
+        `;
+        return;
+    }
+    
+    let html = `
+        <div class="table-responsive">
+            <table class="table table-bordered schedule-table">
+                <thead>
+                    <tr>
+                        <th style="width: 120px;">التاريخ</th>
+                        ${branchShifts.map(shift => `
+                            <th style="min-width: 150px;">
+                                <div class="text-center">
+                                    <div class="fw-bold">${shift.name}</div>
+                                    <small class="text-muted">${shift.start_time} - ${shift.end_time}</small>
+                                </div>
+                            </th>
+                        `).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    days.forEach(day => {
+        const dateStr = day.toISOString().split('T')[0];
+        const dayName = day.toLocaleDateString('ar-SA', { weekday: 'long' });
+        
+        html += `
+            <tr>
+                <td class="fw-bold">
+                    <div>${dayName}</div>
+                    <small class="text-muted">${dateStr}</small>
+                </td>
+        `;
+        
+        branchShifts.forEach(shift => {
+            const shiftId = shift.id.toString();
+            const employees = scheduleData[dateStr]?.shifts?.[shiftId] || [];
+            
+            html += `
+                <td class="shift-cell">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-muted">${employees.length} موظف</small>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="openEmployeeModal('${dateStr}', ${shiftId})" title="إضافة موظفين">
+                            <i class="fas fa-plus me-1"></i>إضافة
+                        </button>
+                    </div>
+                    <div class="employee-list" id="employees-${dateStr}-${shiftId}">
+                        ${employees.map(empId => {
+                            const emp = selectedEmployees.find(e => e.id == empId);
+                            return emp ? `
+                                <div class="employee-item">
+                                    <div class="employee-info">
+                                        <div class="fw-bold">${emp.full_name || emp.username}</div>
+                                        <small class="text-muted">${emp.position || emp.role_display || 'موظف'}</small>
+                                    </div>
+                                    <button type="button" class="remove-btn" onclick="removeEmployeeFromShift('${dateStr}', ${shiftId}, ${empId})" title="إزالة الموظف">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            ` : '';
+                        }).join('')}
+                    </div>
+                </td>
+            `;
+        });
+        
+        html += '</tr>';
+    });
+    
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
+    
+    document.getElementById('schedule-table-container').innerHTML = html;
+}
+
+// Open employee modal
+function openEmployeeModal(dateStr, shiftId) {
+    console.log('Opening employee modal for:', dateStr, shiftId);
+    console.log('Available employees:', selectedEmployees);
+    
+    if (!selectedEmployees || selectedEmployees.length === 0) {
+        alert('يرجى اختيار الموظفين أولاً في المرحلة الثانية');
+        return;
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.id = `employee-modal-${dateStr}-${shiftId}`;
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-users me-2"></i>
+                        اختيار الموظفين للشفتة
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        اختر الموظفين الذين سيتم توزيعهم على هذه الشفتة
+                    </div>
+                    <div class="row">
+                        ${selectedEmployees.map(emp => `
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input employee-modal-checkbox" type="checkbox" value="${emp.id}" id="emp-${emp.id}">
+                                    <label class="form-check-label" for="emp-${emp.id}">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-user-circle me-2 text-primary"></i>
+                                            <div>
+                                                <div class="fw-bold">${emp.full_name || emp.username}</div>
+                                                <small class="text-muted">${emp.position || emp.role_display || 'موظف'}</small>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>إلغاء
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="assignSelectedEmployees('${dateStr}', ${shiftId})">
+                        <i class="fas fa-check me-1"></i>تأكيد الاختيار
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+    
+    modal.addEventListener('hidden.bs.modal', () => {
+        document.body.removeChild(modal);
+    });
+}
+
+// Assign selected employees
+function assignSelectedEmployees(dateStr, shiftId) {
+    console.log('Assigning employees for:', dateStr, shiftId);
+    
+    // Get all checked checkboxes in the modal
+    const checkboxes = document.querySelectorAll('.employee-modal-checkbox:checked');
+    const employeeIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+    
+    console.log('Selected employee IDs:', employeeIds);
+    
+    if (employeeIds.length === 0) {
+        alert('يرجى اختيار موظف واحد على الأقل');
+        return;
+    }
+    
+    // Update schedule data
+    if (!scheduleData[dateStr]) {
+        scheduleData[dateStr] = { employees: [], shifts: {}, coverage: 0 };
+    }
+    
+    scheduleData[dateStr].shifts[shiftId] = employeeIds;
+    
+    console.log('Updated schedule data:', scheduleData);
+    
+    // Close modal
+    const modal = document.querySelector('.modal.show');
+    if (modal) {
+        const bsModal = bootstrap.Modal.getInstance(modal);
+        if (bsModal) {
+            bsModal.hide();
+        }
+    }
+    
+    // Update table
+    generateScheduleTable(document.getElementById('start_date').value, document.getElementById('end_date').value);
+    
+    // Save to storage
+    saveScheduleDataToStorage();
+    
+    // Show success message
+    alert(`تم توزيع ${employeeIds.length} موظف على الشفتة بنجاح`);
+}
+
+// Remove employee from shift
+function removeEmployeeFromShift(dateStr, shiftId, employeeId) {
+    console.log('Removing employee from shift:', dateStr, shiftId, employeeId);
+    
+    if (scheduleData[dateStr] && scheduleData[dateStr].shifts[shiftId]) {
+        const index = scheduleData[dateStr].shifts[shiftId].indexOf(employeeId);
+        if (index > -1) {
+            scheduleData[dateStr].shifts[shiftId].splice(index, 1);
+            console.log('Employee removed from shift');
+        }
+    }
+    
+    // Update table
+    generateScheduleTable(document.getElementById('start_date').value, document.getElementById('end_date').value);
+    
+    // Save to storage
+    saveScheduleDataToStorage();
+    
+    // Show success message
+    alert('تم إزالة الموظف من الشفتة');
+}
+
+// Load final review
+function loadFinalReview() {
+    const container = document.getElementById('final-review');
+    
+    let html = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="text-primary mb-3">معلومات الجدول</h6>
+                <div class="card">
+                    <div class="card-body">
+                        <p><strong>الفرع:</strong> ${document.getElementById('branch').selectedOptions[0]?.text || 'غير محدد'}</p>
+                        <p><strong>نوع الجدول:</strong> ${document.getElementById('schedule_type').selectedOptions[0]?.text || 'غير محدد'}</p>
+                        <p><strong>تاريخ البداية:</strong> ${document.getElementById('start_date').value}</p>
+                        <p><strong>تاريخ النهاية:</strong> ${document.getElementById('end_date').value}</p>
+                        <p><strong>الملاحظات:</strong> ${document.getElementById('notes').value || 'لا توجد'}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-primary mb-3">إحصائيات</h6>
+                <div class="card">
+                    <div class="card-body">
+                        <p><strong>عدد الموظفين:</strong> ${selectedEmployees.length}</p>
+                        <p><strong>عدد الأيام:</strong> ${Object.keys(scheduleData).length}</p>
+                        <p><strong>إجمالي التوزيعات:</strong> ${calculateTotalAssignments()}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <h6 class="text-primary mb-3">التوزيعات التفصيلية</h6>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>التاريخ</th>
+                            <th>الشفتة</th>
+                            <th>الموظفين</th>
+                            <th>الساعات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${generateDetailedAssignments()}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+// Calculate total assignments
+function calculateTotalAssignments() {
+    let total = 0;
+    Object.values(scheduleData).forEach(dayData => {
+        if (dayData.shifts) {
+            Object.values(dayData.shifts).forEach(employees => {
+                total += employees.length;
+            });
+        }
+    });
+    return total;
+}
+
+// Generate detailed assignments
+function generateDetailedAssignments() {
+    let html = '';
+    
+    Object.keys(scheduleData).forEach(dateStr => {
+        const dayData = scheduleData[dateStr];
+        const shifts = dayData.shifts;
+        
+        if (Object.keys(shifts).length === 0) {
+            html += `
+                <tr>
+                    <td>${dateStr}</td>
+                    <td colspan="3" class="text-muted text-center">لا توجد توزيعات</td>
+                </tr>
+            `;
+            return;
+        }
+        
+        let isFirstRow = true;
+        Object.keys(shifts).forEach(shiftId => {
+            const employees = shifts[shiftId];
+            const shift = branchShifts.find(s => s.id == shiftId);
+            
+            if (shift && employees.length > 0) {
+                html += `
+                    <tr>
+                        <td>${isFirstRow ? dateStr : ''}</td>
+                        <td>
+                            <span class="badge bg-primary">${shift.name}</span>
+                            <br><small class="text-muted">${shift.start_time} - ${shift.end_time}</small>
+                        </td>
+                        <td>
+                            ${employees.map(empId => {
+                                const emp = selectedEmployees.find(e => e.id == empId);
+                                return `<span class="badge bg-info me-1">${emp ? emp.full_name : `موظف ${empId}`}</span>`;
+                            }).join('')}
+                        </td>
+                        <td>
+                            <span class="badge bg-success">${shift.duration} ساعة</span>
+                            <br><small class="text-muted">${employees.length} موظف</small>
+                        </td>
+                    </tr>
+                `;
+                isFirstRow = false;
+            }
+        });
+    });
+    
+    if (html === '') {
+        html = `
+            <tr>
+                <td colspan="4" class="text-center text-muted">
+                    <i class="fas fa-calendar-times fa-2x mb-2"></i>
+                    <br>لا توجد توزيعات محفوظة
+                </td>
+            </tr>
+        `;
+    }
+    
+    return html;
+}
+
+// Save schedule to database
+async function saveScheduleToDatabase() {
+    try {
+        console.log('=== Starting to save schedule ===');
+        
+        // Collect all data
+        const scheduleDataToSave = collectAllScheduleData();
+        
+        console.log('=== Data to be saved ===');
+        console.log('Schedule basic info:', {
+            branch: scheduleDataToSave.branch,
+            schedule_type: scheduleDataToSave.schedule_type,
+            start_date: scheduleDataToSave.start_date,
+            end_date: scheduleDataToSave.end_date,
+            notes: scheduleDataToSave.notes
+        });
+        console.log('Entries count:', scheduleDataToSave.entries.length);
+        console.log('Entries details:', scheduleDataToSave.entries);
+        
+        // Send to server
+        console.log('=== Sending to server ===');
+        const response = await fetch('{% url "schedules:create_schedule_api" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(scheduleDataToSave)
+        });
+        
+        console.log('Response status:', response.status);
+        const result = await response.json();
+        console.log('Server response:', result);
+        
+        if (result.success) {
+            alert(`تم حفظ الجدول بنجاح!\n\nرقم الجدول: ${result.schedule_id}\nعدد التوزيعات المحفوظة: ${result.entries_created}`);
+            
+            // Clear saved data
+            clearScheduleDataFromStorage();
+            
+            // Redirect to schedule detail
+            window.location.href = `/schedules/${result.schedule_id}/`;
+        } else {
+            alert(`خطأ في حفظ الجدول: ${result.error}`);
+        }
+    } catch (error) {
+        console.error('Error saving schedule:', error);
+        alert('حدث خطأ في حفظ الجدول. يرجى المحاولة مرة أخرى.');
+    }
+}
+
+// Collect all schedule data
+function collectAllScheduleData() {
+    const data = {
+        branch: document.getElementById('branch').value,
+        schedule_type: document.getElementById('schedule_type').value,
+        start_date: document.getElementById('start_date').value,
+        end_date: document.getElementById('end_date').value,
+        notes: document.getElementById('notes').value || '',
+        entries: []
+    };
+    
+    console.log('Collecting schedule data...');
+    console.log('Schedule data object:', scheduleData);
+    
+    // Collect all assignments
+    let totalEntries = 0;
+    Object.keys(scheduleData).forEach(dateStr => {
+        const dayData = scheduleData[dateStr];
+        console.log(`Processing date ${dateStr}:`, dayData);
+        
+        if (dayData.shifts) {
+            Object.keys(dayData.shifts).forEach(shiftId => {
+                const employees = dayData.shifts[shiftId];
+                console.log(`Processing shift ${shiftId} with employees:`, employees);
+                
+                employees.forEach(employeeId => {
+                    const employee = selectedEmployees.find(emp => emp.id == employeeId);
+                    const shift = branchShifts.find(s => s.id == shiftId);
+                    
+                    if (employee && shift) {
+                        const entry = {
+                            employee_id: parseInt(employeeId),
+                            date: dateStr,
+                            shift_id: parseInt(shiftId),
+                            start_time: shift.start_time,
+                            end_time: shift.end_time,
+                            hours: shift.duration,
+                            is_cover: false,
+                            notes: ''
+                        };
+                        
+                        data.entries.push(entry);
+                        totalEntries++;
+                        console.log(`Added entry:`, entry);
+                    } else {
+                        console.warn(`Missing employee or shift: employee=${employee}, shift=${shift}`);
+                    }
+                });
+            });
+        }
+    });
+    
+    console.log(`Total entries collected: ${totalEntries}`);
+    console.log('Final data to send:', data);
+    
+    return data;
+}
+
+// Storage functions
+function saveScheduleDataToStorage() {
+    const data = {
+        scheduleData: scheduleData,
+        selectedEmployees: selectedEmployees,
+        branchShifts: branchShifts
+    };
+    localStorage.setItem('scheduleData', JSON.stringify(data));
+}
+
+function loadScheduleDataFromStorage() {
+    const data = localStorage.getItem('scheduleData');
+    if (data) {
+        try {
+            const parsed = JSON.parse(data);
+            scheduleData = parsed.scheduleData || {};
+            selectedEmployees = parsed.selectedEmployees || [];
+            branchShifts = parsed.branchShifts || [];
+        } catch (e) {
+            console.error('Error loading from storage:', e);
+        }
+    }
+}
+
+function clearScheduleDataFromStorage() {
+    localStorage.removeItem('scheduleData');
+}
+
+// Fix scroll issues
+function fixScrollIssues() {
+    // Add smooth scrolling
+    document.documentElement.style.scrollBehavior = 'smooth';
+    
+    // Fix modal scroll
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        modal.addEventListener('shown.bs.modal', function() {
+            const modalBody = this.querySelector('.modal-body');
+            if (modalBody) {
+                modalBody.style.maxHeight = '70vh';
+                modalBody.style.overflowY = 'auto';
+            }
+        });
+    });
+}
+
+// Add real-time validation
+function addRealTimeValidation() {
+    // Validate branch selection
+    const branchSelect = document.getElementById('branch');
+    if (branchSelect) {
+        branchSelect.addEventListener('change', function() {
+            const branch = this.value;
+            console.log('Branch changed to:', branch);
+            if (branch) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            } else {
+                this.classList.remove('is-valid');
+                this.classList.add('is-invalid');
+            }
+        });
+    }
+    
+    // Validate schedule type
+    const scheduleTypeSelect = document.getElementById('schedule_type');
+    if (scheduleTypeSelect) {
+        scheduleTypeSelect.addEventListener('change', function() {
+            const type = this.value;
+            console.log('Schedule type changed to:', type);
+            if (type) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            } else {
+                this.classList.remove('is-valid');
+                this.classList.add('is-invalid');
+            }
+        });
+    }
+    
+    // Validate dates
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
+    
+    if (startDateInput) {
+        startDateInput.addEventListener('change', validateDates);
+    }
+    if (endDateInput) {
+        endDateInput.addEventListener('change', validateDates);
+    }
+}
+
+// Validate dates
+function validateDates() {
+    const startDate = document.getElementById('start_date').value;
+    const endDate = document.getElementById('end_date').value;
+    
+    if (startDate && endDate) {
+        if (new Date(startDate) >= new Date(endDate)) {
+            document.getElementById('end_date').classList.add('is-invalid');
+            document.getElementById('end_date').classList.remove('is-valid');
+        } else {
+            document.getElementById('start_date').classList.remove('is-invalid');
+            document.getElementById('start_date').classList.add('is-valid');
+            document.getElementById('end_date').classList.remove('is-invalid');
+            document.getElementById('end_date').classList.add('is-valid');
+        }
+    }
+}
+
+// Add keyboard navigation
+function addKeyboardNavigation() {
+    document.addEventListener('keydown', function(e) {
+        // Ctrl + Right Arrow: Next step
+        if (e.ctrlKey && e.key === 'ArrowRight') {
+            e.preventDefault();
+            changeStep(1);
+        }
+        
+        // Ctrl + Left Arrow: Previous step
+        if (e.ctrlKey && e.key === 'ArrowLeft') {
+            e.preventDefault();
+            changeStep(-1);
+        }
+        
+        // Enter: Next step (if in form fields)
+        if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') {
+            e.preventDefault();
+            if (currentStep < 4) {
+                changeStep(1);
+            }
+        }
+    });
+}
+
+// Show help
+function showHelp() {
+    const helpContent = `
+        <div class="help-content">
+            <h5>دليل الاستخدام</h5>
+            <ul>
+                <li><strong>المرحلة 1:</strong> املأ المعلومات الأساسية (الفرع، النوع، التواريخ)</li>
+                <li><strong>المرحلة 2:</strong> اختر الموظفين الذين سيتم جدولتهم</li>
+                <li><strong>المرحلة 3:</strong> وزع الموظفين على الشفتات المختلفة</li>
+                <li><strong>المرحلة 4:</strong> راجع البيانات واحفظ الجدول</li>
+            </ul>
+            <h6>اختصارات لوحة المفاتيح:</h6>
+            <ul>
+                <li><kbd>Ctrl</kbd> + <kbd>→</kbd> للانتقال للمرحلة التالية</li>
+                <li><kbd>Ctrl</kbd> + <kbd>←</kbd> للانتقال للمرحلة السابقة</li>
+                <li><kbd>Enter</kbd> للانتقال للمرحلة التالية</li>
+            </ul>
+        </div>
+    `;
+    
+    // Create modal
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-question-circle me-2"></i>
+                        دليل الاستخدام
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    ${helpContent}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">فهمت</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+    
+    modal.addEventListener('hidden.bs.modal', () => {
+        document.body.removeChild(modal);
+    });
+}
+</script>
+{% endblock %}

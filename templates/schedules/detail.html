@@ -7,9 +7,16 @@
 
 {% block page_actions %}
 <div class="btn-group" role="group">
-    <a href="{% url 'schedules:edit' 1 %}" class="btn btn-warning">
+    {% if schedule.status == 'draft' or 'pending' in schedule.status %}
+    <a href="{% url 'schedules:edit' schedule.id %}" class="btn btn-warning">
         <i class="fas fa-edit me-1"></i>تعديل
     </a>
+    {% endif %}
+    {% if schedule.status == 'approved' %}
+    <a href="{% url 'schedules:activate' schedule.id %}" class="btn btn-success" onclick="return confirm('هل أنت متأكد من تفعيل هذا الجدول؟')">
+        <i class="fas fa-play me-1"></i>تفعيل
+    </a>
+    {% endif %}
     <button type="button" class="btn btn-outline-primary" onclick="printSchedule()">
         <i class="fas fa-print me-1"></i>طباعة
     </button>
@@ -30,7 +37,7 @@
             <div class="card-body text-center">
                 <i class="fas fa-building text-primary fs-2 mb-2"></i>
                 <h6 class="card-title">الفرع</h6>
-                <p class="card-text text-muted">فرع الرياض - المعرض الرئيسي</p>
+                <p class="card-text text-muted">{{ schedule.branch.name }}</p>
             </div>
         </div>
     </div>
@@ -39,7 +46,7 @@
             <div class="card-body text-center">
                 <i class="fas fa-calendar-week text-info fs-2 mb-2"></i>
                 <h6 class="card-title">نوع الجدول</h6>
-                <p class="card-text text-muted">أسبوعي</p>
+                <p class="card-text text-muted">{{ schedule.get_schedule_type_display }}</p>
             </div>
         </div>
     </div>
@@ -48,7 +55,7 @@
             <div class="card-body text-center">
                 <i class="fas fa-users text-success fs-2 mb-2"></i>
                 <h6 class="card-title">الموظفين</h6>
-                <p class="card-text text-muted">5 موظف</p>
+                <p class="card-text text-muted">{{ stats.unique_employees }} موظف</p>
             </div>
         </div>
     </div>
@@ -57,7 +64,7 @@
             <div class="card-body text-center">
                 <i class="fas fa-chart-pie text-warning fs-2 mb-2"></i>
                 <h6 class="card-title">التغطية</h6>
-                <p class="card-text text-muted">100%</p>
+                <p class="card-text text-muted">{{ stats.coverage_percentage|floatformat:0 }}%</p>
             </div>
         </div>
     </div>
@@ -76,21 +83,29 @@
                 <div class="row">
                     <div class="col-6">
                         <strong>تاريخ البداية:</strong><br>
-                        <span class="text-muted">15 يناير 2024</span>
+                        <span class="text-muted">{{ schedule.start_date|date:"Y-m-d" }}</span>
                     </div>
                     <div class="col-6">
                         <strong>تاريخ النهاية:</strong><br>
-                        <span class="text-muted">21 يناير 2024</span>
+                        <span class="text-muted">{{ schedule.end_date|date:"Y-m-d" }}</span>
                     </div>
                     <div class="col-6 mt-3">
                         <strong>المدة:</strong><br>
-                        <span class="text-muted">7 أيام</span>
+                        <span class="text-muted">{{ schedule.get_duration_display }}</span>
                     </div>
                     <div class="col-6 mt-3">
                         <strong>إجمالي الساعات:</strong><br>
-                        <span class="text-muted">840 ساعة</span>
+                        <span class="text-muted">{{ stats.total_hours|floatformat:0 }} ساعة</span>
                     </div>
                 </div>
+                {% if schedule.notes %}
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <strong>ملاحظات:</strong><br>
+                        <span class="text-muted">{{ schedule.notes }}</span>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -103,17 +118,25 @@
             </div>
             <div class="card-body">
                 <div class="d-flex align-items-center mb-3">
-                    <span class="badge bg-success fs-6 me-3">معتمد</span>
-                    <span class="text-muted">تم اعتماد الجدول بنجاح</span>
+                    <span class="badge bg-{% if schedule.status == 'approved' %}success{% elif schedule.status == 'active' %}success{% elif 'pending' in schedule.status %}warning{% elif schedule.status == 'rejected' %}danger{% else %}secondary{% endif %} fs-6 me-3">
+                        {{ schedule.get_status_display }}
+                    </span>
+                    <span class="text-muted">
+                        {% if schedule.status == 'approved' %}تم اعتماد الجدول بنجاح
+                        {% elif schedule.status == 'active' %}الجدول نشط ومفعل
+                        {% elif 'pending' in schedule.status %}في انتظار الاعتماد
+                        {% elif schedule.status == 'rejected' %}تم رفض الجدول
+                        {% else %}مسودة غير مكتملة{% endif %}
+                    </span>
                 </div>
                 <div class="row">
                     <div class="col-6">
                         <strong>تم الإنشاء:</strong><br>
-                        <span class="text-muted">10 يناير 2024</span>
+                        <span class="text-muted">{{ schedule.created_at|date:"Y-m-d H:i" }}</span>
                     </div>
                     <div class="col-6">
                         <strong>بواسطة:</strong><br>
-                        <span class="text-muted">أحمد محمد</span>
+                        <span class="text-muted">{{ schedule.created_by.get_full_name|default:schedule.created_by.username }}</span>
                     </div>
                 </div>
             </div>
@@ -146,141 +169,138 @@
                         <th class="text-center" style="width: 12%;">
                             <i class="fas fa-calendar me-1"></i>اليوم
                         </th>
+                        {% for shift in schedule.branch.shifts.all %}
                         <th class="text-center" style="width: 22%;">
                             <div class="d-flex flex-column align-items-center">
-                                <span class="fw-bold">الشفت الأول</span>
-                                <small class="text-muted">08:00 - 16:00</small>
-                                <span class="badge bg-primary">8 ساعات</span>
+                                <span class="fw-bold">{{ shift.name }}</span>
+                                <small class="text-muted">{{ shift.start_time }} - {{ shift.end_time }}</small>
+                                <span class="badge bg-primary">{{ shift.get_duration }} ساعة</span>
                             </div>
                         </th>
-                        <th class="text-center" style="width: 22%;">
+                        {% empty %}
+                        <th class="text-center" style="width: 44%;">
                             <div class="d-flex flex-column align-items-center">
-                                <span class="fw-bold">الشفت الثاني</span>
-                                <small class="text-muted">16:00 - 00:00</small>
-                                <span class="badge bg-success">8 ساعات</span>
+                                <span class="fw-bold">لا توجد شفتات</span>
+                                <small class="text-muted">لم يتم إعداد شفتات للفرع</small>
                             </div>
                         </th>
-                        <th class="text-center" style="width: 22%;">
-                            <div class="d-flex flex-column align-items-center">
-                                <span class="fw-bold">الشفت الثالث</span>
-                                <small class="text-muted">00:00 - 08:00</small>
-                                <span class="badge bg-warning">8 ساعات</span>
-                            </div>
-                        </th>
+                        {% endfor %}
                         <th class="text-center" style="width: 12%;">
                             <i class="fas fa-shield-alt me-1"></i>التغطية
                         </th>
                         <th class="text-center" style="width: 10%;">
-                            <i class="fas fa-chart-line me-1"></i>الإحصائيات
+                            <i class="fas fa-cogs me-1"></i>الإجراءات
                         </th>
                     </tr>
                 </thead>
                 <tbody>
+                    {% for date_str, entries in entries_by_date.items %}
                     <tr>
                         <td class="text-center fw-bold">
                             <div class="d-flex flex-column align-items-center">
-                                <span class="fs-6">السبت</span>
-                                <small class="text-muted">15/01/2024</small>
-                                <span class="badge bg-secondary">يوم 1</span>
+                                <span class="fs-6">{{ entries.0.date|date:"l" }}</span>
+                                <small class="text-muted">{{ entries.0.date|date:"Y-m-d" }}</small>
+                                <span class="badge bg-secondary">يوم {{ forloop.counter }}</span>
                             </div>
                         </td>
+                        
+                        {% for shift in schedule.branch.shifts.all %}
+                        <td class="text-center">
+                            {% with shift_entries=entries|dictsort:"shift.id" %}
+                                {% for entry in entries %}
+                                    {% if entry.shift.id == shift.id %}
+                                    <div class="mb-2">
+                                        <span class="review-employee-item assigned">
+                                            {{ entry.employee.get_full_name|default:entry.employee.username }} 
+                                            ({{ entry.hours|floatformat:1 }}س)
+                                        </span>
+                                    </div>
+                                    {% endif %}
+                                {% empty %}
+                                    <div class="mb-2">
+                                        <span class="text-muted">لا يوجد موظفين</span>
+                                    </div>
+                                {% endfor %}
+                            {% endwith %}
+                            
+                            <div class="d-flex justify-content-center">
+                                {% with shift_count=entries|length %}
+                                    {% if shift_count > 0 %}
+                                        <span class="badge bg-success">{{ shift_count }} موظف</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">0 موظف</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+                        </td>
+                        {% empty %}
                         <td class="text-center">
                             <div class="mb-2">
-                                <span class="review-employee-item assigned">أحمد محمد (8/8س)</span>
-                                <span class="review-employee-item assigned">فاطمة علي (8/9س)</span>
-                            </div>
-                            <div class="d-flex justify-content-center">
-                                <span class="badge bg-primary">16/8 ساعة</span>
-                            </div>
-                            <small class="text-warning">(1 متبقية)</small>
-                        </td>
-                        <td class="text-center">
-                            <div class="mb-2">
-                                <span class="review-employee-item assigned">خالد سعد (8/8س)</span>
-                                <span class="review-employee-item partial">فاطمة علي (1/9س)</span>
-                            </div>
-                            <div class="d-flex justify-content-center">
-                                <span class="badge bg-success">9/8 ساعة</span>
+                                <span class="text-muted">لا توجد شفتات</span>
                             </div>
                         </td>
-                        <td class="text-center">
-                            <div class="mb-2">
-                                <span class="review-employee-item assigned">سارة أحمد (8/8س)</span>
-                            </div>
-                            <div class="d-flex justify-content-center">
-                                <span class="badge bg-warning">8/8 ساعة</span>
-                            </div>
-                        </td>
+                        {% endfor %}
+                        
                         <td class="text-center">
                             <div class="d-flex flex-column align-items-center">
-                                <span class="badge bg-success fs-6">
-                                    <i class="fas fa-check me-1"></i>مغطى بالكامل
+                                {% if entries %}
+                                    {% with total_shift_hours=0 %}
+                                        {% for entry in entries %}
+                                            {% with total_shift_hours=total_shift_hours|add:entry.hours %}{% endwith %}
+                                        {% endfor %}
+                                        {% if total_shift_hours >= 8 %}
+                                        <span class="badge bg-success fs-6">
+                                            <i class="fas fa-check me-1"></i>مغطى
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-warning fs-6">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>ناقص
+                                        </span>
+                                        {% endif %}
+                                    {% endwith %}
+                                <small class="text-muted mt-1">{{ entries|length }} موظف</small>
+                                {% else %}
+                                <span class="badge bg-danger fs-6">
+                                    <i class="fas fa-times me-1"></i>غير مغطى
                                 </span>
-                                <small class="text-muted mt-1">33/24 ساعة</small>
+                                <small class="text-muted mt-1">لا يوجد موظفين</small>
+                                {% endif %}
                             </div>
                         </td>
+                        
                         <td class="text-center">
-                            <div class="d-flex flex-column align-items-center">
-                                <div class="progress" style="width: 60px; height: 8px;">
-                                    <div class="progress-bar bg-success" style="width: 100%"></div>
-                                </div>
-                                <small class="text-muted">138%</small>
+                            <div class="btn-group-vertical btn-group-sm" role="group">
+                                {% if entries %}
+                                    <button type="button" class="btn btn-outline-primary btn-sm mb-1" onclick="editDayEntries('{{ date_str }}')" title="تعديل توزيعات اليوم">
+                                        <i class="fas fa-edit me-1"></i>تعديل
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteDayEntries('{{ date_str }}')" title="حذف جميع توزيعات اليوم">
+                                        <i class="fas fa-trash me-1"></i>حذف
+                                    </button>
+                                {% else %}
+                                    <button type="button" class="btn btn-outline-success btn-sm" onclick="addDayEntries('{{ date_str }}')" title="إضافة توزيعات لليوم">
+                                        <i class="fas fa-plus me-1"></i>إضافة
+                                    </button>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>
+                    {% empty %}
                     <tr>
-                        <td class="text-center fw-bold">
-                            <div class="d-flex flex-column align-items-center">
-                                <span class="fs-6">الأحد</span>
-                                <small class="text-muted">16/01/2024</small>
-                                <span class="badge bg-secondary">يوم 2</span>
-                            </div>
-                        </td>
-                        <td class="text-center">
-                            <div class="mb-2">
-                                <span class="review-employee-item assigned">محمد حسن (8/9س)</span>
-                                <span class="review-employee-item assigned">أحمد محمد (8/8س)</span>
-                            </div>
-                            <div class="d-flex justify-content-center">
-                                <span class="badge bg-primary">16/8 ساعة</span>
-                            </div>
-                            <small class="text-warning">(1 متبقية)</small>
-                        </td>
-                        <td class="text-center">
-                            <div class="mb-2">
-                                <span class="review-employee-item assigned">فاطمة علي (8/9س)</span>
-                                <span class="review-employee-item partial">محمد حسن (1/9س)</span>
-                            </div>
-                            <div class="d-flex justify-content-center">
-                                <span class="badge bg-success">9/8 ساعة</span>
-                            </div>
-                        </td>
-                        <td class="text-center">
-                            <div class="mb-2">
-                                <span class="review-employee-item assigned">خالد سعد (8/8س)</span>
-                            </div>
-                            <div class="d-flex justify-content-center">
-                                <span class="badge bg-warning">8/8 ساعة</span>
-                            </div>
-                        </td>
-                        <td class="text-center">
-                            <div class="d-flex flex-column align-items-center">
-                                <span class="badge bg-success fs-6">
-                                    <i class="fas fa-check me-1"></i>مغطى بالكامل
-                                </span>
-                                <small class="text-muted mt-1">33/24 ساعة</small>
-                            </div>
-                        </td>
-                        <td class="text-center">
-                            <div class="d-flex flex-column align-items-center">
-                                <div class="progress" style="width: 60px; height: 8px;">
-                                    <div class="progress-bar bg-success" style="width: 100%"></div>
-                                </div>
-                                <small class="text-muted">138%</small>
+                        <td colspan="6" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                                <h5>لا توجد إدخالات في الجدول</h5>
+                                <p class="mb-3">هذا الجدول لا يحتوي على أي موظفين معينين للشفتات</p>
+                                {% if schedule.status == 'draft' %}
+                                <a href="{% url 'schedules:edit' schedule.id %}" class="btn btn-primary">
+                                    <i class="fas fa-edit me-1"></i>إضافة الموظفين والشفتات
+                                </a>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>
-                    <!-- Add more rows for other days -->
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
@@ -296,91 +316,39 @@
     </div>
     <div class="card-body">
         <div class="row">
+            {% for emp_id, emp_data in employee_stats.items %}
             <div class="col-md-6 col-lg-4 mb-3">
                 <div class="employee-summary-card">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <div class="employee-name">أحمد محمد</div>
-                            <div class="employee-hours">مدير فرع • 8 ساعة</div>
+                            <div class="employee-name">{{ emp_data.employee.get_full_name|default:emp_data.employee.username }}</div>
+                            <div class="employee-hours">{{ emp_data.employee.profile.get_role_display|default:"موظف" }} • {{ emp_data.hours_per_day }} ساعة/يوم</div>
                         </div>
-                        <span class="badge bg-success">100%</span>
+                        {% widthratio emp_data.total_hours emp_data.required_hours 100 as percentage %}
+                        {% if percentage >= 100 %}
+                        <span class="badge bg-success">{{ percentage }}%</span>
+                        {% elif percentage >= 50 %}
+                        <span class="badge bg-warning">{{ percentage }}%</span>
+                        {% else %}
+                        <span class="badge bg-danger">{{ percentage }}%</span>
+                        {% endif %}
                     </div>
                     <div class="hours-progress">
-                        <div class="hours-progress-bar" style="width: 100%"></div>
+                        <div class="hours-progress-bar" style="width: {% widthratio emp_data.total_hours emp_data.required_hours 100 %}%"></div>
                     </div>
                     <div class="mt-2 text-center">
-                        <small class="text-muted">56/56 ساعة مخصصة</small>
+                        <small class="text-muted">{{ emp_data.total_hours|floatformat:0 }}/{{ emp_data.required_hours|floatformat:0 }} ساعة مخصصة</small>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 col-lg-4 mb-3">
-                <div class="employee-summary-card">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <div class="employee-name">فاطمة علي</div>
-                            <div class="employee-hours">منسق • 9 ساعة</div>
-                        </div>
-                        <span class="badge bg-success">100%</span>
-                    </div>
-                    <div class="hours-progress">
-                        <div class="hours-progress-bar" style="width: 100%"></div>
-                    </div>
-                    <div class="mt-2 text-center">
-                        <small class="text-muted">63/63 ساعة مخصصة</small>
-                    </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="text-center py-4">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">لا توجد بيانات موظفين</p>
                 </div>
             </div>
-            <div class="col-md-6 col-lg-4 mb-3">
-                <div class="employee-summary-card">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <div class="employee-name">خالد سعد</div>
-                            <div class="employee-hours">موظف • 8 ساعة</div>
-                        </div>
-                        <span class="badge bg-success">100%</span>
-                    </div>
-                    <div class="hours-progress">
-                        <div class="hours-progress-bar" style="width: 100%"></div>
-                    </div>
-                    <div class="mt-2 text-center">
-                        <small class="text-muted">56/56 ساعة مخصصة</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-4 mb-3">
-                <div class="employee-summary-card">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <div class="employee-name">سارة أحمد</div>
-                            <div class="employee-hours">موظف • 8 ساعة</div>
-                        </div>
-                        <span class="badge bg-success">100%</span>
-                    </div>
-                    <div class="hours-progress">
-                        <div class="hours-progress-bar" style="width: 100%"></div>
-                    </div>
-                    <div class="mt-2 text-center">
-                        <small class="text-muted">56/56 ساعة مخصصة</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-4 mb-3">
-                <div class="employee-summary-card">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <div class="employee-name">محمد حسن</div>
-                            <div class="employee-hours">موظف • 9 ساعة</div>
-                        </div>
-                        <span class="badge bg-success">100%</span>
-                    </div>
-                    <div class="hours-progress">
-                        <div class="hours-progress-bar" style="width: 100%"></div>
-                    </div>
-                    <div class="mt-2 text-center">
-                        <small class="text-muted">63/63 ساعة مخصصة</small>
-                    </div>
-                </div>
-            </div>
+            {% endfor %}
         </div>
     </div>
 </div>
@@ -398,25 +366,25 @@
                 <div class="row text-center">
                     <div class="col-4">
                         <div class="border-end">
-                            <h4 class="text-success mb-1">7</h4>
+                            <h4 class="text-success mb-1">{{ entries_by_date|length }}</h4>
                             <small class="text-muted">إجمالي الأيام</small>
                         </div>
                     </div>
                     <div class="col-4">
                         <div class="border-end">
-                            <h4 class="text-primary mb-1">7</h4>
-                            <small class="text-muted">أيام مغطاة</small>
+                            <h4 class="text-primary mb-1">{{ stats.unique_employees }}</h4>
+                            <small class="text-muted">الموظفين المعينين</small>
                         </div>
                     </div>
                     <div class="col-4">
-                        <h4 class="text-warning mb-1">0</h4>
-                        <small class="text-muted">أيام غير مغطاة</small>
+                        <h4 class="text-warning mb-1">{{ stats.total_entries|floatformat:0 }}</h4>
+                        <small class="text-muted">إجمالي الإدخالات</small>
                     </div>
                 </div>
                 <div class="mt-3">
                     <div class="progress" style="height: 20px;">
-                        <div class="progress-bar bg-gradient-success" role="progressbar" style="width: 100%">
-                            <span class="fw-bold">100%</span>
+                        <div class="progress-bar bg-gradient-success" role="progressbar" style="width: {{ stats.coverage_percentage }}%">
+                            <span class="fw-bold">{{ stats.coverage_percentage|floatformat:0 }}%</span>
                         </div>
                     </div>
                 </div>
@@ -431,18 +399,64 @@
                 </h6>
             </div>
             <div class="card-body">
+                {% if schedule.status == 'approved' or schedule.status == 'active' %}
                 <div class="d-flex align-items-center text-success mb-2">
                     <i class="fas fa-check-circle me-2"></i>
-                    <span>الجدول مكتمل ومغطى بالكامل</span>
+                    <span>الجدول معتمد ونشط</span>
                 </div>
+                {% elif 'pending' in schedule.status %}
+                <div class="d-flex align-items-center text-warning mb-2">
+                    <i class="fas fa-hourglass-half me-2"></i>
+                    <span>الجدول في انتظار الاعتماد</span>
+                </div>
+                {% elif schedule.status == 'rejected' %}
+                <div class="d-flex align-items-center text-danger mb-2">
+                    <i class="fas fa-times-circle me-2"></i>
+                    <span>الجدول مرفوض</span>
+                </div>
+                {% else %}
+                <div class="d-flex align-items-center text-info mb-2">
+                    <i class="fas fa-edit me-2"></i>
+                    <span>الجدول في مرحلة المسودة</span>
+                </div>
+                {% endif %}
+                
                 <div class="d-flex align-items-center text-info mb-2">
                     <i class="fas fa-info-circle me-2"></i>
-                    <span>جميع الموظفين أكملوا ساعاتهم المطلوبة</span>
+                    <span>إجمالي الساعات: {{ stats.total_hours|floatformat:0 }} ساعة</span>
                 </div>
+                
                 <div class="d-flex align-items-center text-primary mb-2">
                     <i class="fas fa-calendar-check me-2"></i>
-                    <span>التغطية تتجاوز المطلوب بنسبة 38%</span>
+                    <span>التغطية: {{ stats.coverage_percentage|floatformat:1 }}%</span>
                 </div>
+                
+                <div class="d-flex align-items-center text-info mb-2">
+                    <i class="fas fa-clock me-2"></i>
+                    <span>الساعات المطلوبة: {{ stats.required_hours|floatformat:0 }} ساعة</span>
+                </div>
+                
+                <div class="d-flex align-items-center text-success mb-2">
+                    <i class="fas fa-chart-line me-2"></i>
+                    <span>الساعات الفعلية: {{ stats.total_hours|floatformat:0 }} ساعة</span>
+                </div>
+                
+                <div class="d-flex align-items-center text-warning mb-2">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    <span>عدد الأيام: {{ stats.duration_days }} يوم</span>
+                </div>
+                
+                <div class="d-flex align-items-center text-secondary mb-2">
+                    <i class="fas fa-users me-2"></i>
+                    <span>عدد الموظفين: {{ stats.unique_employees }} موظف</span>
+                </div>
+                
+                {% if schedule.notes %}
+                <div class="d-flex align-items-center text-secondary mb-2">
+                    <i class="fas fa-sticky-note me-2"></i>
+                    <span>ملاحظات: {{ schedule.notes|truncatechars:50 }}</span>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -534,6 +548,9 @@
 </style>
 
 <script>
+// Schedule ID for API calls
+const SCHEDULE_ID = {{ schedule.id }};
+
 function printSchedule() {
     window.print();
 }
@@ -542,5 +559,228 @@ function exportSchedule() {
     alert('تم تصدير الجدول بنجاح');
     // TODO: Implement actual export functionality
 }
+
+// إجراءات التعديل والحذف
+function editDayEntries(dateStr) {
+    console.log('تعديل توزيعات اليوم:', dateStr);
+    
+    // إنشاء مودال للتعديل
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-edit me-2"></i>تعديل توزيعات ${dateStr}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        يمكنك تعديل أو حذف التوزيعات لهذا اليوم
+                    </div>
+                    <div id="dayEntriesList">
+                        <!-- سيتم تحميل التوزيعات هنا -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                    <button type="button" class="btn btn-primary" onclick="saveDayEntries('${dateStr}')">حفظ التعديلات</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+    
+    // تحميل التوزيعات الحالية
+    loadDayEntries(dateStr);
+    
+    modal.addEventListener('hidden.bs.modal', () => {
+        document.body.removeChild(modal);
+    });
+}
+
+function deleteDayEntries(dateStr) {
+    if (confirm(`هل أنت متأكد من حذف جميع توزيعات ${dateStr}؟`)) {
+        console.log('حذف توزيعات اليوم:', dateStr);
+        
+        // إرسال طلب حذف إلى الخادم
+        fetch(`/schedules/api/${SCHEDULE_ID}/delete-day-entries/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                date: dateStr
+            })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert('تم حذف توزيعات اليوم بنجاح');
+                location.reload();
+            } else {
+                alert(`خطأ في حذف التوزيعات: ${result.error}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting day entries:', error);
+            alert('حدث خطأ في حذف التوزيعات');
+        });
+    }
+}
+
+function addDayEntries(dateStr) {
+    console.log('إضافة توزيعات لليوم:', dateStr);
+    
+    // الانتقال إلى صفحة التعديل مع التركيز على التاريخ المحدد
+    window.location.href = `/schedules/${SCHEDULE_ID}/edit/?focus_date=${dateStr}`;
+}
+
+function loadDayEntries(dateStr) {
+    // تحميل التوزيعات الحالية لهذا اليوم
+    const entriesList = document.getElementById('dayEntriesList');
+    entriesList.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>';
+    
+    // جلب التوزيعات الفعلية من الخادم
+    fetch(`/schedules/api/${SCHEDULE_ID}/get-day-entries/?date=${dateStr}`)
+        .then(response => response.json())
+        .then(result => {
+            console.log('Day entries result:', result);
+            
+            if (result.success && result.entries.length > 0) {
+                // عرض التوزيعات الموجودة
+                entriesList.innerHTML = `
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>الموظف</th>
+                                    <th>الشفتة</th>
+                                    <th>الوقت</th>
+                                    <th>الساعات</th>
+                                    <th>نوع التغطية</th>
+                                    <th>ملاحظات</th>
+                                    <th>إجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${result.entries.map(entry => `
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-user-circle me-2 text-primary"></i>
+                                                <div>
+                                                    <div class="fw-bold">${entry.employee_name}</div>
+                                                    <small class="text-muted">ID: ${entry.employee_id}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-clock me-2 text-info"></i>
+                                                <div>
+                                                    <div class="fw-bold">${entry.shift_name}</div>
+                                                    <small class="text-muted">ID: ${entry.shift_id}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary">${entry.start_time} - ${entry.end_time}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success">${entry.hours} ساعة</span>
+                                        </td>
+                                        <td>
+                                            ${entry.is_cover ? 
+                                                '<span class="badge bg-warning"><i class="fas fa-user-plus me-1"></i>تغطية</span>' : 
+                                                '<span class="badge bg-info"><i class="fas fa-user me-1"></i>عادي</span>'
+                                            }
+                                        </td>
+                                        <td>
+                                            ${entry.notes ? `<span class="text-muted">${entry.notes}</span>` : '<span class="text-muted">-</span>'}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="editEntry(${entry.id})" title="تعديل">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteEntry(${entry.id})" title="حذف">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-success btn-sm" onclick="addNewEntry('${dateStr}')">
+                            <i class="fas fa-plus me-1"></i>إضافة توزيعة جديدة
+                        </button>
+                    </div>
+                `;
+            } else {
+                // لا توجد توزيعات
+                entriesList.innerHTML = `
+                    <div class="text-muted text-center">
+                        <i class="fas fa-calendar-times fa-2x mb-2"></i>
+                        <p>لا توجد توزيعات لهذا اليوم</p>
+                        <button type="button" class="btn btn-success" onclick="addNewEntry('${dateStr}')">
+                            <i class="fas fa-plus me-1"></i>إضافة توزيعة جديدة
+                        </button>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading day entries:', error);
+            entriesList.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    خطأ في تحميل التوزيعات: ${error.message}
+                </div>
+            `;
+        });
+}
+
+function saveDayEntries(dateStr) {
+    console.log('حفظ توزيعات اليوم:', dateStr);
+    alert('تم حفظ التعديلات بنجاح');
+    // TODO: تنفيذ حفظ التعديلات
+}
+
+// إضافة توزيعة جديدة
+function addNewEntry(dateStr) {
+    console.log('إضافة توزيعة جديدة لليوم:', dateStr);
+    // الانتقال إلى صفحة التعديل مع التركيز على التاريخ المحدد
+    window.location.href = `/schedules/${SCHEDULE_ID}/edit/?focus_date=${dateStr}`;
+}
+
+// تعديل توزيعة موجودة
+function editEntry(entryId) {
+    console.log('تعديل التوزيعة:', entryId);
+    alert('سيتم تنفيذ تعديل التوزيعة قريباً');
+    // TODO: تنفيذ تعديل التوزيعة
+}
+
+// حذف توزيعة موجودة
+function deleteEntry(entryId) {
+    if (confirm('هل أنت متأكد من حذف هذه التوزيعة؟')) {
+        console.log('حذف التوزيعة:', entryId);
+        alert('سيتم تنفيذ حذف التوزيعة قريباً');
+        // TODO: تنفيذ حذف التوزيعة
+    }
+}
 </script>
 {% endblock %}
+
+
+

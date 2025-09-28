@@ -1,20 +1,17 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}تعديل الجدول التشغيلي - نظام إدارة الجداول التشغيلية{% endblock %}
+{% block title %}تعديل الجدول التشغيلي - {{ schedule.branch.name }}{% endblock %}
 
 {% block page_title %}تعديل الجدول التشغيلي{% endblock %}
 
 {% block page_actions %}
 <div class="btn-group" role="group">
-    <a href="{% url 'schedules:detail' 1 %}" class="btn btn-outline-primary">
-        <i class="fas fa-eye me-1"></i>عرض
+    <a href="{% url 'schedules:detail' schedule.id %}" class="btn btn-outline-primary">
+        <i class="fas fa-eye me-1"></i>عرض التفاصيل
     </a>
-    <button type="button" class="btn btn-outline-info" onclick="saveDraft()">
-        <i class="fas fa-save me-1"></i>حفظ كمسودة
-    </button>
-    <button type="submit" form="scheduleForm" class="btn btn-success">
-        <i class="fas fa-check me-1"></i>حفظ التعديلات
+    <button type="button" class="btn btn-success" onclick="saveScheduleToDatabase()">
+        <i class="fas fa-save me-1"></i>حفظ التعديلات
     </button>
     <a href="{% url 'schedules:list' %}" class="btn btn-outline-secondary">
         <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
@@ -23,127 +20,801 @@
 {% endblock %}
 
 {% block content %}
-<!-- This page will use the same create.html template but with pre-filled data -->
+<!-- CSRF for fetch -->
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+<!-- Schedule Info -->
 <div class="alert alert-info">
-    <i class="fas fa-info-circle me-2"></i>
-    <strong>تعديل الجدول:</strong> يمكنك تعديل جميع تفاصيل الجدول التشغيلي باستخدام نفس النموذج المستخدم في الإنشاء.
+    <div class="row">
+        <div class="col-md-8">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>تعديل الجدول:</strong> {{ schedule.branch.name }} - {{ schedule.get_schedule_type_display }} ({{ schedule.start_date }} إلى {{ schedule.end_date }})
+            <br>
+            <small class="text-muted">
+                <i class="fas fa-calendar-check me-1"></i>
+                عدد التوزيعات الموجودة: {{ stats.total_entries }} توزيعة
+                {% if stats.total_entries > 0 %}
+                    <span class="badge bg-success ms-2">{{ stats.coverage_percentage|floatformat:1 }}% تغطية</span>
+                {% endif %}
+            </small>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="btn btn-outline-primary" onclick="showCurrentEntriesModal()">
+                    <i class="fas fa-eye me-1"></i>عرض التوزيعات
+                </button>
+                <button type="button" class="btn btn-outline-success" onclick="reloadBranchData()">
+                    <i class="fas fa-sync me-1"></i>تحديث بيانات الفرع
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
-<!-- Include the create form with edit mode -->
-{% include 'schedules/create.html' with edit_mode=True schedule_id=1 %}
+<!-- Warning for approved schedules -->
+{% if schedule.status == 'approved' %}
+<div class="alert alert-warning">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    <strong>تحذير:</strong> هذا الجدول معتمد حالياً. أي تعديلات قد تحتاج إلى اعتماد جديد.
+</div>
+{% endif %}
+
+<!-- Edit Form (HTML with Django data) -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-primary text-white">
+        <h6 class="mb-0">
+            <i class="fas fa-edit me-2"></i>البيانات الأساسية
+        </h6>
+    </div>
+    <div class="card-body">
+        <form id="scheduleEditForm">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label for="branch" class="form-label">الفرع</label>
+                    <select id="branch" name="branch" class="form-select" required>
+                        <option value="">اختر الفرع</option>
+                        {% for branch in branches %}
+                        <option value="{{ branch.id }}" {% if branch.id == schedule.branch.id %}selected{% endif %}>{{ branch.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="schedule_type" class="form-label">نوع الجدول</label>
+                    <select id="schedule_type" name="schedule_type" class="form-select" required>
+                        <option value="">اختر نوع الجدول</option>
+                        {% for value, label in schedule_types %}
+                        <option value="{{ value }}" {% if value == schedule.schedule_type %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="start_date" class="form-label">تاريخ البداية</label>
+                    <input type="date" id="start_date" name="start_date" class="form-control" value="{{ schedule.start_date|date:'Y-m-d' }}" required>
+                </div>
+                <div class="col-md-2">
+                    <label for="end_date" class="form-label">تاريخ النهاية</label>
+                    <input type="date" id="end_date" name="end_date" class="form-control" value="{{ schedule.end_date|date:'Y-m-d' }}" required>
+                </div>
+                <div class="col-12">
+                    <label for="notes" class="form-label">ملاحظات</label>
+                    <textarea id="notes" name="notes" class="form-control" rows="3" placeholder="ملاحظات...">{{ schedule.notes|default:'' }}</textarea>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Inline Entries Editor -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-gradient-info text-white d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">
+            <i class="fas fa-table me-2"></i>التوزيعات
+            <span class="badge bg-light text-dark ms-2" id="entriesStats">0 صف</span>
+        </h6>
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-light btn-sm" onclick="addEntryRow()">
+                <i class="fas fa-plus me-1"></i>إضافة صف
+            </button>
+            <button type="button" class="btn btn-light btn-sm" onclick="duplicateSelectedRows()">
+                <i class="fas fa-copy me-1"></i>تكرار المحدد
+            </button>
+            <button type="button" class="btn btn-light btn-sm" onclick="deleteSelectedRows()">
+                <i class="fas fa-trash me-1"></i>حذف المحدد
+            </button>
+            <button type="button" class="btn btn-light btn-sm" onclick="selectAllRows()">
+                <i class="fas fa-check-square me-1"></i>تحديد الكل
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="entriesEditorTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="text-center" style="width: 40px;">
+                            <input type="checkbox" id="selectAllCheckbox" onchange="toggleAllRows(this.checked)">
+                        </th>
+                        <th class="text-center">التاريخ</th>
+                        <th class="text-center">الموظف</th>
+                        <th class="text-center">الشفتة</th>
+                        <th class="text-center">من</th>
+                        <th class="text-center">إلى</th>
+                        <th class="text-center">الساعات</th>
+                        <th class="text-center">تغطية؟</th>
+                        <th class="text-center">ملاحظات</th>
+                        <th class="text-center">إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="entriesEditorBody">
+                    {% for entry in entries %}
+                    <tr class="entry-row" data-entry-id="{{ entry.id }}">
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input row-select" onchange="updateSelectAllState()">
+                        </td>
+                        <td class="text-center" style="min-width: 130px;">
+                            <input type="date" class="form-control form-control-sm entry-date" value="{{ entry.date|date:'Y-m-d' }}">
+                        </td>
+                        <td class="text-center" style="min-width: 220px;">
+                            <select class="form-select form-select-sm entry-employee">
+                                <option value="{{ entry.employee.id }}" selected>{{ entry.employee.get_full_name|default:entry.employee.username }}</option>
+                            </select>
+                        </td>
+                        <td class="text-center" style="min-width: 200px;">
+                            <select class="form-select form-select-sm entry-shift">
+                                <option value="{{ entry.shift.id }}" selected>{{ entry.shift.name }}</option>
+                            </select>
+                        </td>
+                        <td class="text-center" style="min-width: 110px;">
+                            <input type="time" class="form-control form-control-sm entry-start" value="{{ entry.start_time|time:'H:i' }}">
+                        </td>
+                        <td class="text-center" style="min-width: 110px;">
+                            <input type="time" class="form-control form-control-sm entry-end" value="{{ entry.end_time|time:'H:i' }}">
+                        </td>
+                        <td class="text-center" style="min-width: 90px;">
+                            <span class="badge bg-primary entry-hours">{{ entry.hours|floatformat:1 }}</span>
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input entry-cover" {% if entry.is_cover %}checked{% endif %}>
+                        </td>
+                        <td class="text-center" style="min-width: 180px;">
+                            <input type="text" class="form-control form-control-sm entry-notes" value="{{ entry.notes|default:'' }}">
+                        </td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeEntryRow(this)"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                                <h5>لا توجد توزيعات حالية</h5>
+                                <p class="mb-3">اضغط "إضافة صف" لبدء إضافة التوزيعات</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Current Entries Modal -->
+<div class="modal fade" id="currentEntriesModal" tabindex="-1" aria-labelledby="currentEntriesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="currentEntriesModalLabel">
+                    <i class="fas fa-list me-2"></i>التوزيعات الحالية ({{ stats.total_entries }} توزيعة)
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>الموظف</th>
+                                <th>الشفتة</th>
+                                <th>الوقت</th>
+                                <th>الساعات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in entries %}
+                            <tr>
+                                <td>{{ entry.date|date:'Y-m-d' }}</td>
+                                <td>{{ entry.employee.get_full_name|default:entry.employee.username }}</td>
+                                <td>{{ entry.shift.name }}</td>
+                                <td>{{ entry.start_time|time:'H:i' }} - {{ entry.end_time|time:'H:i' }}</td>
+                                <td>{{ entry.hours|floatformat:1 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center text-muted">لا توجد توزيعات حالية</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add New Entry Form -->
+<div class="card border-0 shadow-sm mt-4">
+    <div class="card-header bg-success text-white">
+        <h6 class="mb-0">
+            <i class="fas fa-plus me-2"></i>إضافة توزيعة جديدة
+        </h6>
+    </div>
+    <div class="card-body">
+        <form id="addEntryForm">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-2">
+                    <label for="new_entry_date" class="form-label">التاريخ</label>
+                    <input type="date" id="new_entry_date" name="date" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="new_entry_employee" class="form-label">الموظف</label>
+                    <select id="new_entry_employee" name="employee" class="form-select" required>
+                        <option value="">اختر موظف</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="new_entry_shift" class="form-label">الشفتة</label>
+                    <select id="new_entry_shift" name="shift" class="form-select" required>
+                        <option value="">اختر شفتة</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <label for="new_entry_start_time" class="form-label">من</label>
+                    <input type="time" id="new_entry_start_time" name="start_time" class="form-control" required>
+                </div>
+                <div class="col-md-1">
+                    <label for="new_entry_end_time" class="form-label">إلى</label>
+                    <input type="time" id="new_entry_end_time" name="end_time" class="form-control" required>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">تغطية</label>
+                    <div class="form-check form-switch d-flex justify-content-center">
+                        <input type="checkbox" id="new_entry_is_cover" name="is_cover" class="form-check-input">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label for="new_entry_notes" class="form-label">ملاحظات</label>
+                    <input type="text" id="new_entry_notes" name="notes" class="form-control" placeholder="ملاحظات...">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12 text-end">
+                    <button type="button" class="btn btn-success" onclick="addNewEntry()">
+                        <i class="fas fa-plus me-1"></i>إضافة التوزيعة
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-// Override the form action for edit mode
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('scheduleForm');
-    if (form) {
-        form.action = '{% url "schedules:edit" 1 %}';
-        form.method = 'POST';
-    }
-    
-    // Pre-fill form with existing data
-    prefillEditForm();
-});
+// ---- Config ----
+const EDIT_MODE = true;
+const SCHEDULE_ID = {{ schedule.id }};
+let employeesData = [];
+let shiftsData = [];
+let prefilledRows = false;
 
-function prefillEditForm() {
-    // Pre-fill branch
-    const branchSelect = document.getElementById('id_branch');
-    if (branchSelect) {
-        branchSelect.value = '1'; // فرع الرياض
+// ---- Add New Entry ----
+function addNewEntry() {
+    const form = document.getElementById('addEntryForm');
+    const formData = new FormData(form);
+    
+    // Validate form
+    const date = formData.get('date');
+    const employee = formData.get('employee');
+    const shift = formData.get('shift');
+    const startTime = formData.get('start_time');
+    const endTime = formData.get('end_time');
+    
+    if (!date || !employee || !shift || !startTime || !endTime) {
+        alert('يرجى ملء جميع الحقول المطلوبة');
+        return;
     }
     
-    // Pre-fill schedule type
-    const scheduleTypeSelect = document.getElementById('id_schedule_type');
-    if (scheduleTypeSelect) {
-        scheduleTypeSelect.value = 'weekly'; // أسبوعي
-    }
+    // Calculate hours
+    const hours = computeHours(startTime, endTime);
     
-    // Pre-fill dates
-    const startDateInput = document.getElementById('id_start_date');
-    if (startDateInput) {
-        startDateInput.value = '2024-01-15';
-    }
+    // Add to table
+    addEntryRow({
+        date: date,
+        employee_id: employee,
+        shift_id: shift,
+        start_time: startTime,
+        end_time: endTime,
+        hours: hours,
+        is_cover: formData.get('is_cover') === 'on',
+        notes: formData.get('notes') || ''
+    });
     
-    const endDateInput = document.getElementById('id_end_date');
-    if (endDateInput) {
-        endDateInput.value = '2024-01-21';
-    }
+    // Clear form
+    form.reset();
     
-    // Pre-select employees
-    setTimeout(() => {
-        const employeeCheckboxes = document.querySelectorAll('.employee-checkbox');
-        employeeCheckboxes.forEach((checkbox, index) => {
-            if (index < 5) { // Select first 5 employees
-                checkbox.checked = true;
-                checkbox.closest('.employee-card').classList.add('selected');
-            }
-        });
-        updateEmployeeSummary();
-    }, 500);
+    // Update stats
+    updateStats();
     
-    // Pre-fill schedule assignments
-    setTimeout(() => {
-        prefillScheduleAssignments();
-    }, 1000);
+    alert('تم إضافة التوزيعة بنجاح');
 }
 
-function prefillScheduleAssignments() {
-    // Pre-fill some sample assignments
-    const sampleAssignments = [
-        { day: 'day1', shift: 'shift1', employeeId: '1', employeeName: 'أحمد محمد', hours: 8 },
-        { day: 'day1', shift: 'shift1', employeeId: '2', employeeName: 'فاطمة علي', hours: 8 },
-        { day: 'day1', shift: 'shift2', employeeId: '3', employeeName: 'خالد سعد', hours: 8 },
-        { day: 'day1', shift: 'shift2', employeeId: '2', employeeName: 'فاطمة علي', hours: 1 },
-        { day: 'day1', shift: 'shift3', employeeId: '4', employeeName: 'سارة أحمد', hours: 8 },
-    ];
+// Existing entries from backend (for inline editor prefill)
+const EXISTING_ENTRIES = [
+    {% for entry in entries %}
+    {
+        date: '{{ entry.date|date:"Y-m-d" }}',
+        employee_id: {{ entry.employee.id }},
+        employee_name: '{{ entry.employee.get_full_name|default:entry.employee.username }}',
+        shift_id: {{ entry.shift.id }},
+        shift_name: '{{ entry.shift.name }}',
+        start_time: '{{ entry.start_time|time:"H:i" }}',
+        end_time: '{{ entry.end_time|time:"H:i" }}',
+        hours: {{ entry.hours }},
+        is_cover: {{ entry.is_cover|yesno:"true,false" }},
+        notes: '{{ entry.notes|default:"" }}'
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+];
+
+// ---- Helpers ----
+function getCSRFToken() {
+    const el = document.querySelector('[name=csrfmiddlewaretoken]');
+    return el ? el.value : '';
+}
+
+function computeHours(startHHMM, endHHMM) {
+    if (!startHHMM || !endHHMM) return 0;
+    const [sh, sm] = startHHMM.split(':').map(Number);
+    const [eh, em] = endHHMM.split(':').map(Number);
+    let start = sh + sm / 60;
+    let end = eh + em / 60;
+    if (end < start) end += 24; // handle overnight
+    return +(end - start).toFixed(1);
+}
+
+function showCurrentEntriesModal() {
+    new bootstrap.Modal(document.getElementById('currentEntriesModal')).show();
+}
+
+// ---- Loaders ----
+function reloadBranchData() {
+    const branchId = document.getElementById('branch').value;
+    Promise.all([
+        fetch(`/schedules/api/employees/?branch=${branchId}`).then(r => r.json()),
+        fetch(`/schedules/api/branches/${branchId}/shifts/`).then(r => r.json()),
+    ])
+    .then(([empRes, shiftRes]) => {
+        if (empRes.success) employeesData = empRes.employees || empRes.data || [];
+        if (shiftRes.success) shiftsData = shiftRes.shifts || shiftRes.data || [];
+        refreshRowSelects();
+        // Prefill rows once employees & shifts are available
+        if (!prefilledRows) {
+            prefillRowsFromExisting();
+        }
+    })
+    .catch(err => {
+        console.error('Error loading branch data', err);
+        alert('خطأ في تحميل بيانات الفرع (الموظفين/الشفتات)');
+    });
+}
+
+function refreshRowSelects() {
+    document.querySelectorAll('#entriesEditorBody .entry-row').forEach(row => {
+        const empSelect = row.querySelector('.entry-employee');
+        const shiftSelect = row.querySelector('.entry-shift');
+        const currentEmp = empSelect.value;
+        const currentShift = shiftSelect.value;
+
+        if (employeesData.length) {
+            empSelect.innerHTML = employeesData.map(e => `<option value="${e.id}">${e.full_name || e.username}</option>`).join('');
+            if (currentEmp) empSelect.value = currentEmp;
+        }
+        if (shiftsData.length) {
+            shiftSelect.innerHTML = shiftsData.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            if (currentShift) shiftSelect.value = currentShift;
+        }
+    });
+}
+
+// ---- Rows ----
+function addEntryRow(prefill = null) {
+    const tbody = document.getElementById('entriesEditorBody');
+    const tr = document.createElement('tr');
+    tr.className = 'entry-row';
     
-    sampleAssignments.forEach(assignment => {
-        const employeeListId = `${assignment.day}-${assignment.shift}-employees`;
-        const employeeList = document.getElementById(employeeListId);
+    const today = new Date().toISOString().split('T')[0];
+    const defaultStart = '09:00';
+    const defaultEnd = '17:00';
+
+    const dateVal = prefill?.date || today;
+    const empVal = prefill?.employee_id || '';
+    const shiftVal = prefill?.shift_id || '';
+    const startVal = prefill?.start_time || defaultStart;
+    const endVal = prefill?.end_time || defaultEnd;
+    const hoursVal = prefill?.hours || computeHours(startVal, endVal);
+    const coverVal = !!prefill?.is_cover;
+    const notesVal = prefill?.notes || '';
+
+    tr.innerHTML = `
+        <td class="text-center"><input type="checkbox" class="form-check-input row-select" onchange="updateSelectAllState()"></td>
+        <td class="text-center"><input type="date" class="form-control form-control-sm entry-date" value="${dateVal}"></td>
+        <td class="text-center">
+            <select class="form-select form-select-sm entry-employee"></select>
+        </td>
+        <td class="text-center">
+            <select class="form-select form-select-sm entry-shift"></select>
+        </td>
+        <td class="text-center"><input type="time" class="form-control form-control-sm entry-start" value="${startVal}"></td>
+        <td class="text-center"><input type="time" class="form-control form-control-sm entry-end" value="${endVal}"></td>
+        <td class="text-center"><span class="badge bg-primary entry-hours">${hoursVal}</span></td>
+        <td class="text-center"><input type="checkbox" class="form-check-input entry-cover" ${coverVal ? 'checked' : ''}></td>
+        <td class="text-center"><input type="text" class="form-control form-control-sm entry-notes" value="${notesVal}"></td>
+        <td class="text-center"><button class="btn btn-outline-danger btn-sm" onclick="removeEntryRow(this)"><i class="fas fa-trash"></i></button></td>
+    `;
+    tbody.appendChild(tr);
+
+    // Fill selects after attaching
+    const empSelect = tr.querySelector('.entry-employee');
+    const shiftSelect = tr.querySelector('.entry-shift');
+    empSelect.innerHTML = employeesData.map(e => `<option value="${e.id}">${e.full_name || e.username}</option>`).join('');
+    shiftSelect.innerHTML = shiftsData.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    if (empVal) empSelect.value = empVal;
+    if (shiftVal) shiftSelect.value = shiftVal;
+
+    // Recompute hours on time change
+    const startInput = tr.querySelector('.entry-start');
+    const endInput = tr.querySelector('.entry-end');
+    const hoursBadge = tr.querySelector('.entry-hours');
+    const recompute = () => {
+        hoursBadge.textContent = computeHours(startInput.value, endInput.value);
+        updateStats();
+    };
+    startInput.addEventListener('change', recompute);
+    endInput.addEventListener('change', recompute);
+    
+    // Update stats after adding
+    updateStats();
+}
+
+function removeEntryRow(btn) {
+    btn.closest('tr').remove();
+    updateSelectAllState();
+    updateStats();
+}
+
+function updateStats() {
+    const rows = document.querySelectorAll('#entriesEditorBody .entry-row');
+    const totalHours = Array.from(rows).reduce((sum, row) => {
+        const hours = parseFloat(row.querySelector('.entry-hours').textContent) || 0;
+        return sum + hours;
+    }, 0);
+    
+    const statsEl = document.getElementById('entriesStats');
+    if (statsEl) {
+        statsEl.textContent = `${rows.length} صف • ${totalHours.toFixed(1)} ساعة`;
+    }
+}
+
+// ---- Bulk Operations ----
+function toggleAllRows(checked) {
+    document.querySelectorAll('.row-select').forEach(cb => cb.checked = checked);
+}
+
+function updateSelectAllState() {
+    const allCheckboxes = document.querySelectorAll('.row-select');
+    const checkedCheckboxes = document.querySelectorAll('.row-select:checked');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    
+    if (allCheckboxes.length === 0) {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+    } else if (checkedCheckboxes.length === allCheckboxes.length) {
+        selectAllCheckbox.checked = true;
+        selectAllCheckbox.indeterminate = false;
+    } else if (checkedCheckboxes.length > 0) {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = true;
+    } else {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+    }
+}
+
+function selectAllRows() {
+    document.getElementById('selectAllCheckbox').checked = true;
+    toggleAllRows(true);
+}
+
+function getSelectedRows() {
+    return Array.from(document.querySelectorAll('.row-select:checked')).map(cb => cb.closest('tr'));
+}
+
+function duplicateSelectedRows() {
+    const selectedRows = getSelectedRows();
+    if (selectedRows.length === 0) {
+        alert('يرجى تحديد صف واحد على الأقل للتكرار');
+        return;
+    }
+    
+    selectedRows.forEach(row => {
+        const date = row.querySelector('.entry-date').value;
+        const employee = row.querySelector('.entry-employee').value;
+        const shift = row.querySelector('.entry-shift').value;
+        const startTime = row.querySelector('.entry-start').value;
+        const endTime = row.querySelector('.entry-end').value;
+        const isCover = row.querySelector('.entry-cover').checked;
+        const notes = row.querySelector('.entry-notes').value;
         
-        if (employeeList) {
-            const employeeItem = document.createElement('div');
-            employeeItem.className = 'employee-item';
-            employeeItem.setAttribute('data-employee-id', assignment.employeeId);
-            employeeItem.setAttribute('data-total-hours', assignment.hours);
-            employeeItem.setAttribute('data-assigned-hours', assignment.hours);
-            
-            employeeItem.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="employee-info">
-                        <span class="employee-name">${assignment.employeeName}</span>
-                        <span class="employee-hours">${assignment.hours}/${assignment.hours}س</span>
-                    </div>
-                    <div class="employee-actions">
-                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="adjustEmployeeHours('${assignment.day}', '${assignment.shift}', '${assignment.employeeId}')" title="تعديل الساعات">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button type="button" class="remove-btn" onclick="removeEmployeeFromShift('${assignment.day}', '${assignment.shift}', '${assignment.employeeId}')" title="إزالة الموظف">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="employee-progress mt-1">
-                    <div class="progress" style="height: 4px;">
-                        <div class="progress-bar" role="progressbar" style="width: 100%"></div>
-                    </div>
-                    <small class="text-muted">0 ساعة متبقية</small>
-                </div>
-            `;
-            
-            employeeList.appendChild(employeeItem);
+        addEntryRow({
+            date, employee_id: employee, shift_id: shift,
+            start_time: startTime, end_time: endTime,
+            is_cover: isCover, notes
+        });
+    });
+    
+    alert(`تم تكرار ${selectedRows.length} صف بنجاح`);
+}
+
+function deleteSelectedRows() {
+    const selectedRows = getSelectedRows();
+    if (selectedRows.length === 0) {
+        alert('يرجى تحديد صف واحد على الأقل للحذف');
+        return;
+    }
+    
+    if (confirm(`هل أنت متأكد من حذف ${selectedRows.length} صف؟`)) {
+        selectedRows.forEach(row => row.remove());
+        updateSelectAllState();
+        alert(`تم حذف ${selectedRows.length} صف بنجاح`);
+    }
+}
+
+function prefillRowsFromExisting() {
+    try {
+        const tbody = document.getElementById('entriesEditorBody');
+        // If there are already rows, don't duplicate
+        if (tbody.children.length === 0 && Array.isArray(EXISTING_ENTRIES) && EXISTING_ENTRIES.length > 0) {
+            EXISTING_ENTRIES.forEach(e => addEntryRow(e));
+        }
+        prefilledRows = true;
+    } catch (e) {
+        console.warn('prefillRowsFromExisting failed', e);
+    }
+}
+
+// ---- Validation ----
+function validateFormData() {
+    const errors = [];
+    
+    // Validate basic fields
+    const branch = document.getElementById('branch').value;
+    const scheduleType = document.getElementById('schedule_type').value;
+    const startDate = document.getElementById('start_date').value;
+    const endDate = document.getElementById('end_date').value;
+    
+    if (!branch) errors.push('يجب اختيار الفرع');
+    if (!scheduleType) errors.push('يجب اختيار نوع الجدول');
+    if (!startDate) errors.push('يجب تحديد تاريخ البداية');
+    if (!endDate) errors.push('يجب تحديد تاريخ النهاية');
+    
+    if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+        errors.push('تاريخ البداية يجب أن يكون قبل تاريخ النهاية');
+    }
+    
+    // Validate entries
+    const rows = document.querySelectorAll('#entriesEditorBody .entry-row');
+    if (rows.length === 0) {
+        errors.push('يجب إضافة توزيع واحد على الأقل');
+    }
+    
+    rows.forEach((row, index) => {
+        const date = row.querySelector('.entry-date').value;
+        const employee = row.querySelector('.entry-employee').value;
+        const shift = row.querySelector('.entry-shift').value;
+        const startTime = row.querySelector('.entry-start').value;
+        const endTime = row.querySelector('.entry-end').value;
+        
+        if (!date) errors.push(`الصف ${index + 1}: يجب تحديد التاريخ`);
+        if (!employee) errors.push(`الصف ${index + 1}: يجب اختيار الموظف`);
+        if (!shift) errors.push(`الصف ${index + 1}: يجب اختيار الشفتة`);
+        if (!startTime) errors.push(`الصف ${index + 1}: يجب تحديد وقت البداية`);
+        if (!endTime) errors.push(`الصف ${index + 1}: يجب تحديد وقت النهاية`);
+        
+        if (startTime && endTime && startTime >= endTime) {
+            errors.push(`الصف ${index + 1}: وقت البداية يجب أن يكون قبل وقت النهاية`);
+        }
+        
+        // Check date range
+        if (date && (new Date(date) < new Date(startDate) || new Date(date) > new Date(endDate))) {
+            errors.push(`الصف ${index + 1}: التاريخ خارج نطاق الجدول`);
         }
     });
     
-    // Update coverage
-    updateOverallCoverage();
+    return errors;
 }
 
-function saveDraft() {
-    alert('تم حفظ الجدول كمسودة');
-    // TODO: Implement actual save draft functionality
+// ---- Collect & Save ----
+function collectAllScheduleData() {
+    const data = {
+        branch: parseInt(document.getElementById('branch').value),
+        schedule_type: document.getElementById('schedule_type').value,
+        start_date: document.getElementById('start_date').value,
+        end_date: document.getElementById('end_date').value,
+        notes: document.getElementById('notes').value || '',
+        entries: []
+    };
+    
+    // Collect entries from table
+    document.querySelectorAll('#entriesEditorBody .entry-row').forEach(row => {
+        const date = row.querySelector('.entry-date').value;
+        const employee_id = parseInt(row.querySelector('.entry-employee').value);
+        const shift_id = parseInt(row.querySelector('.entry-shift').value);
+        const start_time = row.querySelector('.entry-start').value;
+        const end_time = row.querySelector('.entry-end').value;
+        const hours = parseFloat(row.querySelector('.entry-hours').textContent) || computeHours(start_time, end_time);
+        const is_cover = row.querySelector('.entry-cover').checked;
+        const notes = row.querySelector('.entry-notes').value || '';
+        
+        if (date && employee_id && shift_id) {
+            data.entries.push({ 
+                date, 
+                employee_id, 
+                shift_id, 
+                start_time, 
+                end_time, 
+                hours, 
+                is_cover, 
+                notes 
+            });
+        }
+    });
+    
+    return data;
 }
+
+function saveScheduleToDatabase() {
+    try {
+        // Validate data first
+        const validationErrors = validateFormData();
+        if (validationErrors.length > 0) {
+            alert('يرجى تصحيح الأخطاء التالية:\n\n' + validationErrors.join('\n'));
+            return;
+        }
+        
+        // Collect all data
+        const payload = collectAllScheduleData();
+        
+        // Show loading state
+        const saveBtn = document.querySelector('button[onclick="saveScheduleToDatabase()"]');
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>جاري الحفظ...';
+        saveBtn.disabled = true;
+        
+        // Save everything using API
+        fetch(`/schedules/api/${SCHEDULE_ID}/save-entries/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+            body: JSON.stringify({ ...payload, schedule_id: SCHEDULE_ID, is_update: true })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                alert(`تم تحديث الجدول بنجاح!\n\nعدد التوزيعات: ${payload.entries.length}\nعدد الساعات: ${payload.entries.reduce((sum, e) => sum + e.hours, 0).toFixed(1)} ساعة`);
+                window.location.href = `/schedules/${SCHEDULE_ID}/`;
+            } else {
+                alert(`فشل الحفظ: ${res.error || 'غير معروف'}`);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('خطأ غير متوقع أثناء الحفظ');
+        })
+        .finally(() => {
+            // Restore button state
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        });
+    } catch (e) {
+        console.error(e);
+        alert('تعذر جمع البيانات للحفظ');
+    }
+}
+
+// ---- Init ----
+document.addEventListener('DOMContentLoaded', () => {
+    // Load employees/shifts for current branch
+    reloadBranchData();
+    // Also populate new-entry form selects initially
+    const initialBranchId = document.getElementById('branch') ? document.getElementById('branch').value : '';
+    if (initialBranchId) {
+        updateFormOptions(initialBranchId);
+    }
+    
+    // Add event listener for branch change
+    const branchSelect = document.getElementById('branch');
+    if (branchSelect) {
+        branchSelect.addEventListener('change', function() {
+            const branchId = this.value;
+            if (branchId) {
+                // Reload rows data and update new-entry form selects
+                reloadBranchData();
+                updateFormOptions(branchId);
+            }
+        });
+    }
+    
+    // If employees/shifts load quickly, rows will be prefilled in reloadBranchData.then
+    // Otherwise, set a fallback timer to prefill after a short delay
+    setTimeout(() => { 
+        if (!prefilledRows) prefillRowsFromExisting(); 
+        updateStats();
+    }, 1500);
+});
+
+// Update form options when branch changes
+async function updateFormOptions(branchId) {
+    try {
+        // Fetch employees for the branch
+        const employeesResponse = await fetch(`/schedules/api/employees/?branch=${branchId}`);
+        const employeesResult = await employeesResponse.json();
+        
+        if (employeesResult.success) {
+            employeesData = employeesResult.employees;
+            
+            // Update employee select in new entry form
+            const employeeSelect = document.getElementById('new_entry_employee');
+            if (employeeSelect) {
+                employeeSelect.innerHTML = '<option value="">اختر موظف</option>';
+                employeesData.forEach(emp => {
+                    const option = document.createElement('option');
+                    option.value = emp.id;
+                    option.textContent = emp.full_name || emp.username;
+                    employeeSelect.appendChild(option);
+                });
+            }
+        }
+        
+        // Fetch shifts for the branch
+        const shiftsResponse = await fetch(`/schedules/api/branches/${branchId}/shifts/`);
+        const shiftsResult = await shiftsResponse.json();
+        
+        if (shiftsResult.success) {
+            shiftsData = shiftsResult.shifts;
+            
+            // Update shift select in new entry form
+            const shiftSelect = document.getElementById('new_entry_shift');
+            if (shiftSelect) {
+                shiftSelect.innerHTML = '<option value="">اختر شفتة</option>';
+                shiftsData.forEach(shift => {
+                    const option = document.createElement('option');
+                    option.value = shift.id;
+                    option.textContent = `${shift.name} (${shift.start_time} - ${shift.end_time})`;
+                    shiftSelect.appendChild(option);
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error updating form options:', error);
+    }
+}
+
+// Also expose a quick modal viewer
+function showCurrentEntriesModal() { new bootstrap.Modal(document.getElementById('currentEntriesModal')).show(); }
 </script>
 {% endblock %}

@@ -7,24 +7,44 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.shortcuts import redirect
 
-def redirect_to_dashboard(request):
-    return redirect('dashboard:index')
+def redirect_to_admin(request):
+    return redirect('admin:index')
+
+# Override admin site settings
+admin.site.site_header = "نظام إدارة الجداول التشغيلية"
+admin.site.site_title = "إدارة الجداول"
+admin.site.index_title = "لوحة التحكم"
+
+# Override admin login URL
+admin.site.login_url = '/login/'
+
+def redirect_accounts_login(request):
+    return redirect('/login/')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', redirect_to_dashboard, name='home'),
+    path('accounts/login/', redirect_accounts_login, name='accounts_login'),
+    path('', redirect_to_admin, name='home'),
     
-    # Dashboard URLs
-    path('dashboard/', include('apps.dashboard.urls')),
+    # Dashboard URLs - سيتم إنشاؤها لاحقاً
+    # path('dashboard/', include('apps.dashboard.urls')),
     
     # Auth URLs are now handled by users app
     
+    # Users URLs
+    path('', include('apps.users.urls')),
+    
+    # Branches URLs
+    path('branches/', include('apps.branches.urls')),
+    
+    # Leaves URLs
+    path('leaves/', include('apps.leaves.urls')),
+    
+    # Schedules URLs
+    path('schedules/', include('apps.schedules.urls')),
+    
     # API URLs
-    path('api/', include('apps.users.urls')),
     path('api/', include('apps.employees.urls')),
-    path('api/', include('apps.branches.urls')),
-    path('api/', include('apps.schedules.urls')),
-    path('api/', include('apps.leaves.urls')),
     path('api/', include('apps.approvals.urls')),
     path('api/', include('apps.violations.urls')),
     path('api/', include('apps.reports.urls')),

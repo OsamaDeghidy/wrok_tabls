@@ -9,7 +9,7 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2><i class="fas fa-user-circle me-2"></i>الملف الشخصي</h2>
-                <a href="{% url 'users:edit_profile' %}" class="btn btn-primary">
+                <a href="{% url 'users:profile_edit' %}" class="btn btn-primary">
                     <i class="fas fa-edit me-1"></i>تعديل الملف الشخصي
                 </a>
             </div>
@@ -30,7 +30,7 @@
                     </div>
                     <h4 class="card-title">{{ user.get_full_name|default:user.username }}</h4>
                     <p class="text-muted">{{ user.email }}</p>
-                    <span class="badge bg-success">{{ user.get_role_display|default:"مستخدم" }}</span>
+                    <span class="badge bg-success">{{ user.profile.get_role_display|default:"مستخدم" }}</span>
                 </div>
             </div>
 
@@ -41,13 +41,23 @@
                 </div>
                 <div class="card-body">
                     <div class="row text-center">
-                        <div class="col-6">
-                            <h5 class="text-primary">24</h5>
+                        <div class="col-4">
+                            <h5 class="text-primary">{{ user.profile.work_hours|default:"8" }}</h5>
                             <small class="text-muted">ساعات العمل</small>
                         </div>
-                        <div class="col-6">
+                        <div class="col-4">
                             <h5 class="text-success">5</h5>
                             <small class="text-muted">المهام المكتملة</small>
+                        </div>
+                        <div class="col-4">
+                            <h5 class="text-info">
+                                {% if user.profile.branch %}
+                                    <i class="fas fa-building"></i>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </h5>
+                            <small class="text-muted">الفرع</small>
                         </div>
                     </div>
                 </div>
@@ -88,6 +98,18 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
+                                <label class="form-label fw-bold">الفرع</label>
+                                <p class="form-control-plaintext">
+                                    {% if user.profile.branch %}
+                                        <i class="fas fa-building me-2 text-primary"></i>{{ user.profile.branch.name }} - {{ user.profile.branch.get_type_display }}
+                                    {% else %}
+                                        <span class="text-muted">غير محدد</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
                                 <label class="form-label fw-bold">تاريخ الانضمام</label>
                                 <p class="form-control-plaintext">{{ user.date_joined|date:"Y/m/d" }}</p>
                             </div>
@@ -101,6 +123,67 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Branch Information -->
+            {% if user.profile.branch %}
+            <div class="card shadow-sm mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-building me-2"></i>معلومات الفرع</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">اسم الفرع</label>
+                                <p class="form-control-plaintext">
+                                    <i class="fas fa-building me-2 text-primary"></i>{{ user.profile.branch.name }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">نوع الفرع</label>
+                                <p class="form-control-plaintext">{{ user.profile.branch.get_type_display }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">فئة الفرع</label>
+                                <p class="form-control-plaintext">
+                                    <span class="badge bg-{% if user.profile.branch.category == 'A' %}success{% elif user.profile.branch.category == 'B' %}warning{% elif user.profile.branch.category == 'C' %}info{% else %}secondary{% endif %}">
+                                        فئة {{ user.profile.branch.category }}
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">المدير</label>
+                                <p class="form-control-plaintext">
+                                    {% if user.profile.branch.manager %}
+                                        {{ user.profile.branch.manager.get_full_name }}
+                                    {% else %}
+                                        <span class="text-muted">غير محدد</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">المدينة</label>
+                                <p class="form-control-plaintext">{{ user.profile.branch.city|default:"غير محدد" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">المنطقة</label>
+                                <p class="form-control-plaintext">{{ user.profile.branch.get_region_display|default:"غير محدد" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
 
             <!-- Recent Activity -->
             <div class="card shadow-sm mt-3">

@@ -1,0 +1,325 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}إدارة إدخالات الجدول - {{ schedule.branch.name }}{% endblock %}
+
+{% block page_title %}
+<div class="d-flex align-items-center">
+    <i class="fas fa-calendar-alt text-primary me-3"></i>
+    <div>
+        <h4 class="mb-0">إدارة إدخالات الجدول</h4>
+        <small class="text-muted">{{ schedule.branch.name }} - {{ schedule.get_schedule_type_display }}</small>
+    </div>
+</div>
+{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <a href="{% url 'schedules:detail' schedule.id %}" class="btn btn-outline-primary">
+        <i class="fas fa-eye me-1"></i>عرض الجدول
+    </a>
+    <a href="{% url 'schedules:edit' schedule.id %}" class="btn btn-outline-secondary">
+        <i class="fas fa-edit me-1"></i>تعديل الجدول
+    </a>
+    <a href="{% url 'schedules:list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Schedule Info -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">معلومات الجدول</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <strong>الفرع:</strong> {{ schedule.branch.name }}
+            </div>
+            <div class="col-md-3">
+                <strong>نوع الجدول:</strong> {{ schedule.get_schedule_type_display }}
+            </div>
+            <div class="col-md-3">
+                <strong>الفترة:</strong> {{ schedule.start_date|date:"Y-m-d" }} إلى {{ schedule.end_date|date:"Y-m-d" }}
+            </div>
+            <div class="col-md-3">
+                <strong>الحالة:</strong> 
+                <span class="badge bg-{% if schedule.status == 'approved' %}success{% elif schedule.status == 'draft' %}secondary{% else %}warning{% endif %}">
+                    {{ schedule.get_status_display }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add New Entry Form -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-success">إضافة إدخال جديد</h6>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_entry">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="id_employee" class="form-label">الموظف</label>
+                        {{ entry_form.employee }}
+                        {% if entry_form.employee.errors %}
+                            <div class="text-danger">{{ entry_form.employee.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="mb-3">
+                        <label for="id_date" class="form-label">التاريخ</label>
+                        {{ entry_form.date }}
+                        {% if entry_form.date.errors %}
+                            <div class="text-danger">{{ entry_form.date.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="mb-3">
+                        <label for="id_shift" class="form-label">الشفت</label>
+                        {{ entry_form.shift }}
+                        {% if entry_form.shift.errors %}
+                            <div class="text-danger">{{ entry_form.shift.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="mb-3">
+                        <label for="id_start_time" class="form-label">ساعة البداية</label>
+                        {{ entry_form.start_time }}
+                        {% if entry_form.start_time.errors %}
+                            <div class="text-danger">{{ entry_form.start_time.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="mb-3">
+                        <label for="id_end_time" class="form-label">ساعة النهاية</label>
+                        {{ entry_form.end_time }}
+                        {% if entry_form.end_time.errors %}
+                            <div class="text-danger">{{ entry_form.end_time.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-1">
+                    <div class="mb-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Entries Table -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">إدخالات الجدول</h6>
+        <div class="text-muted">
+            إجمالي: <span class="badge bg-primary">{{ entries.count }}</span> إدخال
+        </div>
+    </div>
+    <div class="card-body">
+        {% if entries %}
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>الموظف</th>
+                        <th>التاريخ</th>
+                        <th>الشفت</th>
+                        <th>ساعة البداية</th>
+                        <th>ساعة النهاية</th>
+                        <th>الساعات</th>
+                        <th>تغطية</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in entries %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-user me-2 text-primary"></i>
+                                <span>{{ entry.employee.get_full_name|default:entry.employee.username }}</span>
+                            </div>
+                        </td>
+                        <td>{{ entry.date|date:"Y-m-d" }}</td>
+                        <td>{{ entry.shift.name }}</td>
+                        <td>{{ entry.start_time|time:"H:i" }}</td>
+                        <td>{{ entry.end_time|time:"H:i" }}</td>
+                        <td>
+                            <span class="badge bg-info">{{ entry.hours }} ساعة</span>
+                        </td>
+                        <td>
+                            {% if entry.is_cover %}
+                                <span class="badge bg-warning">تغطية</span>
+                            {% else %}
+                                <span class="badge bg-success">عادي</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button class="btn btn-outline-primary" onclick="editEntry({{ entry.id }})" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <form method="post" style="display: inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete_entry">
+                                    <input type="hidden" name="entry_id" value="{{ entry.id }}">
+                                    <button type="submit" class="btn btn-outline-danger" title="حذف" onclick="return confirm('هل أنت متأكد من حذف هذا الإدخال؟')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <div class="text-muted">
+                <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                <p>لا توجد إدخالات في هذا الجدول</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Edit Entry Modal -->
+<div class="modal fade" id="editEntryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تعديل الإدخال</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" id="editEntryForm">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_entry">
+                <input type="hidden" name="entry_id" id="edit_entry_id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_employee" class="form-label">الموظف</label>
+                        <select class="form-select" name="employee" id="edit_employee" required>
+                            {% for employee in employees %}
+                                <option value="{{ employee.id }}">{{ employee.get_full_name|default:employee.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_date" class="form-label">التاريخ</label>
+                        <input type="date" class="form-control" name="date" id="edit_date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_shift" class="form-label">الشفت</label>
+                        <select class="form-select" name="shift" id="edit_shift" required>
+                            {% for shift in shifts %}
+                                <option value="{{ shift.id }}">{{ shift.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_start_time" class="form-label">ساعة البداية</label>
+                                <input type="time" class="form-control" name="start_time" id="edit_start_time" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_end_time" class="form-label">ساعة النهاية</label>
+                                <input type="time" class="form-control" name="end_time" id="edit_end_time" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="is_cover" id="edit_is_cover">
+                            <label class="form-check-label" for="edit_is_cover">
+                                تغطية
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function editEntry(entryId) {
+    // Here you would typically fetch the entry data via AJAX
+    // For now, we'll show the modal
+    const modal = new bootstrap.Modal(document.getElementById('editEntryModal'));
+    document.getElementById('edit_entry_id').value = entryId;
+    modal.show();
+}
+
+// Calculate hours automatically when start/end times change
+document.addEventListener('DOMContentLoaded', function() {
+    const startTimeInputs = document.querySelectorAll('input[name="start_time"]');
+    const endTimeInputs = document.querySelectorAll('input[name="end_time"]');
+    
+    function calculateHours(startInput, endInput) {
+        if (startInput.value && endInput.value) {
+            const start = new Date('1970-01-01T' + startInput.value + ':00');
+            const end = new Date('1970-01-01T' + endInput.value + ':00');
+            
+            // Handle overnight shifts
+            if (end <= start) {
+                end.setDate(end.getDate() + 1);
+            }
+            
+            const diffMs = end - start;
+            const diffHours = diffMs / (1000 * 60 * 60);
+            
+            // You can display this somewhere or update a hidden field
+            console.log('Calculated hours:', diffHours);
+        }
+    }
+    
+    startTimeInputs.forEach(startInput => {
+        startInput.addEventListener('change', function() {
+            const row = this.closest('.row');
+            const endInput = row.querySelector('input[name="end_time"]');
+            if (endInput) {
+                calculateHours(this, endInput);
+            }
+        });
+    });
+    
+    endTimeInputs.forEach(endInput => {
+        endInput.addEventListener('change', function() {
+            const row = this.closest('.row');
+            const startInput = row.querySelector('input[name="start_time"]');
+            if (startInput) {
+                calculateHours(startInput, this);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

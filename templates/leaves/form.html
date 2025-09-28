@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-    {% if leave %}تعديل طلب الإجازة - {{ leave.employee_name }}{% else %}طلب إجازة جديد{% endif %}
+    {% if leave %}تعديل طلب الإجازة - {{ leave.employee.get_full_name }}{% else %}طلب إجازة جديد{% endif %}
 {% endblock %}
 
 {% block page_title %}
@@ -35,6 +35,21 @@
             <div class="card-body">
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
+                    
+                    <!-- عرض أخطاء النموذج -->
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <h6>يرجى تصحيح الأخطاء التالية:</h6>
+                        <ul class="mb-0">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    
                     <div class="row">
                         <!-- Basic Information -->
                         <div class="col-12">
@@ -42,28 +57,18 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_employee" class="form-label">الموظف <span class="text-danger">*</span></label>
-                                <select class="form-select" id="id_employee" name="employee" required>
-                                    <option value="">اختر الموظف</option>
-                                    <option value="1" {% if leave.employee == '1' %}selected{% endif %}>أحمد محمد - مطور برمجيات</option>
-                                    <option value="2" {% if leave.employee == '2' %}selected{% endif %}>فاطمة علي - مديرة الموارد البشرية</option>
-                                    <option value="3" {% if leave.employee == '3' %}selected{% endif %}>محمد حسن - محاسب</option>
-                                    <option value="4" {% if leave.employee == '4' %}selected{% endif %}>سارة أحمد - مديرة التسويق</option>
-                                </select>
+                                <label class="form-label">الموظف <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" value="{{ leave.employee.get_full_name|default:request.user.get_full_name }}" readonly>
+                                <div class="form-text">{% if leave %}الموظف المرتبط بهذا الطلب{% else %}سيتم ربط الطلب بحسابك الشخصي{% endif %}</div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_leave_type" class="form-label">نوع الإجازة <span class="text-danger">*</span></label>
-                                <select class="form-select" id="id_leave_type" name="leave_type" required>
-                                    <option value="">اختر نوع الإجازة</option>
-                                    <option value="annual" {% if leave.leave_type == 'annual' %}selected{% endif %}>إجازة سنوية</option>
-                                    <option value="sick" {% if leave.leave_type == 'sick' %}selected{% endif %}>إجازة مرضية</option>
-                                    <option value="emergency" {% if leave.leave_type == 'emergency' %}selected{% endif %}>إجازة طارئة</option>
-                                    <option value="maternity" {% if leave.leave_type == 'maternity' %}selected{% endif %}>إجازة أمومة</option>
-                                    <option value="paternity" {% if leave.leave_type == 'paternity' %}selected{% endif %}>إجازة أبوة</option>
-                                    <option value="unpaid" {% if leave.leave_type == 'unpaid' %}selected{% endif %}>إجازة بدون راتب</option>
-                                </select>
+                                <label for="{{ form.leave_type.id_for_label }}" class="form-label">{{ form.leave_type.label }} <span class="text-danger">*</span></label>
+                                {{ form.leave_type }}
+                                {% if form.leave_type.errors %}
+                                    <div class="text-danger small">{{ form.leave_type.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
 
@@ -73,56 +78,39 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_start_date" class="form-label">تاريخ البداية <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="id_start_date" name="start_date" 
-                                       value="{{ leave.start_date|default:'' }}" required>
+                                <label for="{{ form.start_date.id_for_label }}" class="form-label">{{ form.start_date.label }} <span class="text-danger">*</span></label>
+                                {{ form.start_date }}
+                                {% if form.start_date.errors %}
+                                    <div class="text-danger small">{{ form.start_date.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_end_date" class="form-label">تاريخ النهاية <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="id_end_date" name="end_date" 
-                                       value="{{ leave.end_date|default:'' }}" required>
+                                <label for="{{ form.end_date.id_for_label }}" class="form-label">{{ form.end_date.label }} <span class="text-danger">*</span></label>
+                                {{ form.end_date }}
+                                {% if form.end_date.errors %}
+                                    <div class="text-danger small">{{ form.end_date.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_days_count" class="form-label">عدد الأيام</label>
+                                <label class="form-label">عدد الأيام</label>
                                 <input type="number" class="form-control" id="id_days_count" name="days_count" 
-                                       value="{{ leave.days_count|default:'' }}" min="1" max="30" readonly>
+                                       min="1" max="30" readonly value="{% if leave %}{{ leave.days_count }}{% endif %}">
+                                <div class="form-text">سيتم حساب عدد الأيام تلقائياً</div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_emergency_contact" class="form-label">رقم الطوارئ</label>
-                                <input type="tel" class="form-control" id="id_emergency_contact" name="emergency_contact" 
-                                       value="{{ leave.emergency_contact|default:'' }}" placeholder="+966501234567">
+                                <label for="{{ form.emergency_contact.id_for_label }}" class="form-label">{{ form.emergency_contact.label }}</label>
+                                {{ form.emergency_contact }}
+                                {% if form.emergency_contact.errors %}
+                                    <div class="text-danger small">{{ form.emergency_contact.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
-
-                        <!-- Status (for editing) -->
-                        {% if leave %}
-                        <div class="col-12 mt-4">
-                            <h6 class="text-primary mb-3">حالة الطلب</h6>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="id_status" class="form-label">الحالة</label>
-                                <select class="form-select" id="id_status" name="status">
-                                    <option value="pending" {% if leave.status == 'pending' %}selected{% endif %}>معلق</option>
-                                    <option value="approved" {% if leave.status == 'approved' %}selected{% endif %}>معتمد</option>
-                                    <option value="rejected" {% if leave.status == 'rejected' %}selected{% endif %}>مرفوض</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="id_manager_notes" class="form-label">ملاحظات المدير</label>
-                                <textarea class="form-control" id="id_manager_notes" name="manager_notes" rows="2" 
-                                          placeholder="ملاحظات المدير...">{{ leave.manager_notes|default:'' }}</textarea>
-                            </div>
-                        </div>
-                        {% endif %}
 
                         <!-- Additional Information -->
                         <div class="col-12 mt-4">
@@ -130,16 +118,20 @@
                         </div>
                         <div class="col-12">
                             <div class="mb-3">
-                                <label for="id_reason" class="form-label">سبب الإجازة <span class="text-danger">*</span></label>
-                                <textarea class="form-control" id="id_reason" name="reason" rows="3" 
-                                          placeholder="اكتب سبب طلب الإجازة..." required>{{ leave.reason|default:'' }}</textarea>
+                                <label for="{{ form.reason.id_for_label }}" class="form-label">{{ form.reason.label }} <span class="text-danger">*</span></label>
+                                {{ form.reason }}
+                                {% if form.reason.errors %}
+                                    <div class="text-danger small">{{ form.reason.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-12">
                             <div class="mb-3">
-                                <label for="id_notes" class="form-label">ملاحظات إضافية</label>
-                                <textarea class="form-control" id="id_notes" name="notes" rows="2" 
-                                          placeholder="أي ملاحظات إضافية...">{{ leave.notes|default:'' }}</textarea>
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">{{ form.notes.label }}</label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}
+                                    <div class="text-danger small">{{ form.notes.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-12">
@@ -148,136 +140,68 @@
                                 <input type="file" class="form-control" id="id_attachments" name="attachments" 
                                        multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
                                 <div class="form-text">يمكن رفع ملفات PDF، صور، أو مستندات Word</div>
-                                
-                                <!-- Show existing attachments -->
-                                {% if leave.attachments %}
-                                <div class="mt-2">
-                                    <small class="text-muted">المرفقات الحالية:</small>
-                                    <div class="list-group list-group-flush">
-                                        {% for attachment in leave.attachments %}
-                                        <div class="list-group-item d-flex justify-content-between align-items-center py-1">
-                                            <small>{{ attachment.name }}</small>
-                                            <a href="{{ attachment.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
-                                                <i class="fas fa-download"></i>
-                                            </a>
-                                        </div>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                                {% endif %}
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="d-flex justify-content-end gap-2 mt-4">
-                        <a href="{% url 'leaves:list' %}" class="btn btn-secondary">إلغاء</a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save me-1"></i>
-                            {% if leave %}حفظ التغييرات{% else %}إرسال الطلب{% endif %}
-                        </button>
+
+                        <!-- Submit Button -->
+                        <div class="col-12 mt-4">
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="{% url 'leaves:list' %}" class="btn btn-outline-secondary me-md-2">
+                                    <i class="fas fa-times me-1"></i>إلغاء
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i>
+                                    {% if leave %}تحديث الطلب{% else %}إرسال الطلب{% endif %}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-
+    
+    <!-- Leave Balance Info -->
     <div class="col-lg-4">
-        <!-- Leave Balance -->
         <div class="card shadow-sm">
             <div class="card-header">
-                <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>رصيد الإجازات</h6>
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    معلومات مفيدة
+                </h6>
             </div>
             <div class="card-body">
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between">
-                        <span>الإجازة السنوية</span>
-                        <span class="fw-bold">21 / 30 يوم</span>
-                    </div>
-                    <div class="progress mt-1" style="height: 8px;">
-                        <div class="progress-bar bg-success" style="width: 70%"></div>
-                    </div>
+                <div class="alert alert-info">
+                    <h6 class="alert-heading">أنواع الإجازات المتاحة:</h6>
+                    <ul class="mb-0 small">
+                        <li><strong>سنوية:</strong> إجازة سنوية مدفوعة الأجر</li>
+                        <li><strong>مرضية:</strong> إجازة بسبب المرض</li>
+                        <li><strong>طارئة:</strong> إجازة طارئة قصيرة</li>
+                        <li><strong>أمومة:</strong> إجازة أمومة</li>
+                        <li><strong>أبوة:</strong> إجازة أبوة</li>
+                        <li><strong>بدون راتب:</strong> إجازة غير مدفوعة</li>
+                        <li><strong>شخصية:</strong> إجازة لأغراض شخصية</li>
+                    </ul>
                 </div>
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between">
-                        <span>الإجازة المرضية</span>
-                        <span class="fw-bold">5 / 10 أيام</span>
-                    </div>
-                    <div class="progress mt-1" style="height: 8px;">
-                        <div class="progress-bar bg-warning" style="width: 50%"></div>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between">
-                        <span>الإجازة الطارئة</span>
-                        <span class="fw-bold">2 / 5 أيام</span>
-                    </div>
-                    <div class="progress mt-1" style="height: 8px;">
-                        <div class="progress-bar bg-danger" style="width: 40%"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Leave Policies -->
-        <div class="card shadow-sm mt-3">
-            <div class="card-header">
-                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>سياسة الإجازات</h6>
-            </div>
-            <div class="card-body">
-                <ul class="list-unstyled mb-0">
-                    <li class="mb-2">
-                        <i class="fas fa-check text-success me-2"></i>
-                        يجب تقديم طلب الإجازة قبل 48 ساعة
-                    </li>
-                    <li class="mb-2">
-                        <i class="fas fa-check text-success me-2"></i>
-                        الإجازة الطارئة تحتاج موافقة فورية
-                    </li>
-                    <li class="mb-2">
-                        <i class="fas fa-check text-success me-2"></i>
-                        لا يمكن أخذ أكثر من 5 أيام متتالية
-                    </li>
-                    <li>
-                        <i class="fas fa-check text-success me-2"></i>
-                        يجب إرفاق تقرير طبي للإجازة المرضية
-                    </li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="card shadow-sm mt-3">
-            <div class="card-header">
-                <h6 class="mb-0"><i class="fas fa-bolt me-2"></i>إجراءات سريعة</h6>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    {% if leave %}
-                    <a href="{% url 'leaves:detail' leave.id %}" class="btn btn-outline-info">
-                        <i class="fas fa-eye me-1"></i>عرض التفاصيل
-                    </a>
-                    {% endif %}
-                    <a href="{% url 'leaves:list' %}" class="btn btn-outline-primary">
-                        <i class="fas fa-list me-1"></i>عرض جميع الطلبات
-                    </a>
-                    <button type="button" class="btn btn-outline-success">
-                        <i class="fas fa-calendar me-1"></i>عرض التقويم
-                    </button>
-                    <button type="button" class="btn btn-outline-warning">
-                        <i class="fas fa-download me-1"></i>تحميل النماذج
-                    </button>
+                
+                <div class="alert alert-warning">
+                    <h6 class="alert-heading">ملاحظات مهمة:</h6>
+                    <ul class="mb-0 small">
+                        <li>يجب تقديم الطلب قبل أسبوع على الأقل</li>
+                        <li>لا يمكن تعديل الطلبات المعتمدة أو المرفوضة</li>
+                        <li>سيتم إشعار المدير بطلب الإجازة</li>
+                    </ul>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
-// Calculate days between dates
-document.getElementById('id_start_date').addEventListener('change', calculateDays);
-document.getElementById('id_end_date').addEventListener('change', calculateDays);
-
-function calculateDays() {
+// Calculate days count automatically
+function calculateDaysCount() {
     const startDate = document.getElementById('id_start_date').value;
     const endDate = document.getElementById('id_end_date').value;
     
@@ -293,21 +217,23 @@ function calculateDays() {
     }
 }
 
+// Add event listeners
+document.getElementById('id_start_date').addEventListener('change', calculateDaysCount);
+document.getElementById('id_end_date').addEventListener('change', calculateDaysCount);
+
 // Form submission
 document.querySelector('form').addEventListener('submit', function(e) {
-    e.preventDefault();
+    // Calculate days count before submission
+    calculateDaysCount();
     
     // Show loading
     const submitBtn = document.querySelector('button[type="submit"]');
     const originalText = submitBtn.innerHTML;
-    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>جاري الحفظ...';
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>جاري الإرسال...';
     submitBtn.disabled = true;
     
-    // Simulate form submission
-    setTimeout(() => {
-        alert('تم حفظ طلب الإجازة بنجاح!');
-        window.location.href = '{% url "leaves:list" %}';
-    }, 2000);
+    // Allow form to submit normally to Django
+    // Don't prevent default - let Django handle the form
 });
 </script>
 {% endblock %}

@@ -1,0 +1,432 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تعديل الملف الشخصي{% endblock %}
+
+{% block page_title %}تعديل الملف الشخصي{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-edit me-2"></i>تعديل الملف الشخصي
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <!-- Personal Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-user me-2"></i>المعلومات الشخصية
+                            </h6>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="first_name" class="form-label">الاسم الأول <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" 
+                                       value="{{ user.first_name }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="last_name" class="form-label">الاسم الأخير <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" 
+                                       value="{{ user.last_name }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">اسم المستخدم <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="username" name="username" 
+                                       value="{{ user.username }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">البريد الإلكتروني <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       value="{{ user.email }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">رقم الهاتف</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" 
+                                       value="{{ user.profile.phone }}" placeholder="+966501234567">
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="role" class="form-label">الدور</label>
+                                <select class="form-select" id="role" name="role" disabled>
+                                    <option value="{{ user.profile.role }}" selected>{{ user.profile.get_role_display }}</option>
+                                </select>
+                                <div class="form-text">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        لا يمكن تغيير الدور من هنا
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="branch" class="form-label">الفرع</label>
+                                <select class="form-select" id="branch" name="branch">
+                                    <option value="">اختر الفرع</option>
+                                    {% for branch in branches %}
+                                    <option value="{{ branch.id }}" {% if user.profile.branch and user.profile.branch.id == branch.id %}selected{% endif %}>
+                                        {{ branch.name }} - {{ branch.get_type_display }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        يمكن تغيير الفرع من هنا
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Work Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-briefcase me-2"></i>معلومات العمل
+                            </h6>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="job_id" class="form-label">الرقم الوظيفي</label>
+                                <input type="text" class="form-control" id="job_id" name="job_id" 
+                                       value="{{ user.profile.job_id }}" readonly>
+                                <div class="form-text">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        يتم إنشاؤه تلقائياً
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="work_hours" class="form-label">عدد ساعات العمل</label>
+                                <select class="form-select" id="work_hours" name="work_hours">
+                                    <option value="8" {% if user.profile.work_hours == 8 %}selected{% endif %}>8 ساعات (6 أيام عمل)</option>
+                                    <option value="9" {% if user.profile.work_hours == 9 %}selected{% endif %}>9 ساعات (5 أيام عمل)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="position" class="form-label">المنصب</label>
+                                <input type="text" class="form-control" id="position" name="position" 
+                                       value="{{ user.profile.position }}" placeholder="مثال: مطور ويب">
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="department" class="form-label">القسم</label>
+                                <select class="form-select" id="department" name="department">
+                                    <option value="">اختر القسم</option>
+                                    <option value="الموارد البشرية" {% if user.profile.department == "الموارد البشرية" %}selected{% endif %}>الموارد البشرية</option>
+                                    <option value="تقنية المعلومات" {% if user.profile.department == "تقنية المعلومات" %}selected{% endif %}>تقنية المعلومات</option>
+                                    <option value="المالية" {% if user.profile.department == "المالية" %}selected{% endif %}>المالية</option>
+                                    <option value="العمليات" {% if user.profile.department == "العمليات" %}selected{% endif %}>العمليات</option>
+                                    <option value="المبيعات" {% if user.profile.department == "المبيعات" %}selected{% endif %}>المبيعات</option>
+                                    <option value="التسويق" {% if user.profile.department == "التسويق" %}selected{% endif %}>التسويق</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="hire_date" class="form-label">تاريخ التوظيف</label>
+                                <input type="date" class="form-control" id="hire_date" name="hire_date" 
+                                       value="{{ user.profile.hire_date|date:'Y-m-d'|default:'' }}">
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="salary" class="form-label">الراتب</label>
+                                <input type="number" class="form-control" id="salary" name="salary" 
+                                       value="{{ user.profile.salary|default:'' }}" step="0.01" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-address-book me-2"></i>معلومات الاتصال
+                            </h6>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="address" class="form-label">العنوان</label>
+                                <textarea class="form-control" id="address" name="address" rows="3" 
+                                          placeholder="أدخل العنوان الكامل">{{ user.profile.address }}</textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="emergency_contact" class="form-label">جهة اتصال للطوارئ</label>
+                                <input type="text" class="form-control" id="emergency_contact" name="emergency_contact" 
+                                       value="{{ user.profile.emergency_contact }}" placeholder="اسم جهة الاتصال">
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="emergency_phone" class="form-label">رقم هاتف الطوارئ</label>
+                                <input type="tel" class="form-control" id="emergency_phone" name="emergency_phone" 
+                                       value="{{ user.profile.emergency_phone }}" placeholder="+966501234567">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Picture -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-image me-2"></i>الصورة الشخصية
+                            </h6>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="avatar" class="form-label">رفع صورة شخصية</label>
+                                <input type="file" class="form-control" id="avatar" name="avatar" 
+                                       accept="image/*">
+                                <div class="form-text">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        الحد الأقصى: 5 ميجابايت، الصيغ المدعومة: JPG, PNG, GIF
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {% if user.profile.avatar %}
+                                <div class="mb-3">
+                                    <label class="form-label">الصورة الحالية</label>
+                                    <div>
+                                        <img src="{{ user.profile.avatar.url }}" alt="الصورة الشخصية" 
+                                             class="img-thumbnail" width="100" height="100">
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-sticky-note me-2"></i>ملاحظات إضافية
+                            </h6>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="notes" class="form-label">ملاحظات</label>
+                                <textarea class="form-control" id="notes" name="notes" rows="4" 
+                                          placeholder="أي ملاحظات إضافية...">{{ user.profile.notes }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'users:profile' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-right me-1"></i>إلغاء
+                        </a>
+                        <div>
+                            <a href="{% url 'users:change_password' %}" class="btn btn-warning me-2">
+                                <i class="fas fa-lock me-1"></i>تغيير كلمة المرور
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>حفظ التغييرات
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Profile Preview -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-eye me-2"></i>معاينة الملف الشخصي
+                </h6>
+            </div>
+            <div class="card-body text-center">
+                {% if user.profile.avatar %}
+                    <img src="{{ user.profile.avatar.url }}" alt="الصورة الشخصية" 
+                         class="rounded-circle mb-3" width="120" height="120">
+                {% else %}
+                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center mb-3 mx-auto" 
+                         style="width: 120px; height: 120px;">
+                        <i class="fas fa-user fa-3x text-muted"></i>
+                    </div>
+                {% endif %}
+                <h5 class="card-title">{{ user.get_full_name|default:user.username }}</h5>
+                <p class="text-muted">{{ user.profile.get_role_display }}</p>
+                <span class="badge bg-success">{{ user.profile.get_status_display }}</span>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>إجراءات سريعة
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'users:change_password' %}" class="btn btn-outline-warning">
+                        <i class="fas fa-lock me-2"></i>تغيير كلمة المرور
+                    </a>
+                    <a href="{% url 'users:profile' %}" class="btn btn-outline-info">
+                        <i class="fas fa-eye me-2"></i>عرض الملف الشخصي
+                    </a>
+                    <a href="{% url 'users:dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-home me-2"></i>العودة للوحة التحكم
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Form validation
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const inputs = form.querySelectorAll('input[required], select[required]');
+    
+    // Real-time validation
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            validateField(this);
+        });
+    });
+    
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        inputs.forEach(input => {
+            if (!validateField(input)) {
+                isValid = false;
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            showAlert('يرجى تصحيح الأخطاء قبل المتابعة', 'danger');
+        }
+    });
+    
+    function validateField(field) {
+        const value = field.value.trim();
+        let isValid = true;
+        let message = '';
+        
+        // Remove existing validation classes
+        field.classList.remove('is-valid', 'is-invalid');
+        
+        // Check if required field is empty
+        if (field.hasAttribute('required') && !value) {
+            isValid = false;
+            message = 'هذا الحقل مطلوب';
+        }
+        
+        // Email validation
+        if (field.type === 'email' && value) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(value)) {
+                isValid = false;
+                message = 'يرجى إدخال بريد إلكتروني صحيح';
+            }
+        }
+        
+        // Phone validation
+        if (field.type === 'tel' && value) {
+            const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,}$/;
+            if (!phoneRegex.test(value)) {
+                isValid = false;
+                message = 'يرجى إدخال رقم هاتف صحيح';
+            }
+        }
+        
+        // Apply validation styling
+        if (isValid) {
+            field.classList.add('is-valid');
+        } else {
+            field.classList.add('is-invalid');
+            showFieldError(field, message);
+        }
+        
+        return isValid;
+    }
+    
+    function showFieldError(field, message) {
+        let feedback = field.parentNode.querySelector('.invalid-feedback');
+        if (!feedback) {
+            feedback = document.createElement('div');
+            feedback.className = 'invalid-feedback';
+            field.parentNode.appendChild(feedback);
+        }
+        feedback.textContent = message;
+    }
+    
+    function showAlert(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        const container = document.querySelector('.container-fluid');
+        container.insertBefore(alertDiv, container.firstChild);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
+    }
+});
+</script>
+{% endblock %}

@@ -35,6 +35,7 @@
                     <option value="A">فئة أ</option>
                     <option value="B">فئة ب</option>
                     <option value="C">فئة ج</option>
+                    <option value="D">فئة د</option>
                 </select>
             </div>
             <div class="col-md-3">
@@ -58,149 +59,64 @@
 
 <!-- Branches Grid -->
 <div class="row">
+    {% for branch in branches %}
     <div class="col-lg-4 col-md-6 mb-4">
         <div class="card shadow h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold text-primary">فرع الرياض الرئيسي</h6>
-                <span class="badge bg-success">فئة أ</span>
+                <h6 class="m-0 font-weight-bold text-primary">{{ branch.name }}</h6>
+                <span class="badge bg-{% if branch.category == 'A' %}success{% elif branch.category == 'B' %}warning{% elif branch.category == 'C' %}info{% else %}secondary{% endif %}">
+                    فئة {{ branch.category }}
+                </span>
             </div>
             <div class="card-body">
                 <div class="row text-center mb-3">
                     <div class="col-4">
                         <div class="border-end">
-                            <h5 class="text-primary">45</h5>
+                            <h5 class="text-primary">{{ branch.get_employees_count }}</h5>
                             <small class="text-muted">موظف</small>
                         </div>
                     </div>
                     <div class="col-4">
                         <div class="border-end">
-                            <h5 class="text-success">8</h5>
-                            <small class="text-muted">جداول نشطة</small>
+                            <h5 class="text-success">{{ branch.get_active_shifts_count }}</h5>
+                            <small class="text-muted">شفت نشط</small>
                         </div>
                     </div>
                     <div class="col-4">
-                        <h5 class="text-info">95%</h5>
-                        <small class="text-muted">تغطية</small>
+                        <h5 class="text-info">{{ branch.capacity }}</h5>
+                        <small class="text-muted">السعة</small>
                     </div>
                 </div>
                 <div class="mb-3">
                     <i class="fas fa-map-marker-alt me-2 text-muted"></i>
-                    <span>الرياض، المملكة العربية السعودية</span>
+                    <span>{{ branch.city|default:"غير محدد" }}, {{ branch.get_region_display|default:"غير محدد" }}</span>
                 </div>
                 <div class="mb-3">
-                    <i class="fas fa-clock me-2 text-muted"></i>
-                    <span>08:00 - 22:00</span>
+                    <i class="fas fa-phone me-2 text-muted"></i>
+                    <span>{{ branch.phone|default:"غير محدد" }}</span>
                 </div>
                 <div class="mb-3">
                     <i class="fas fa-calendar me-2 text-muted"></i>
-                    <span>السبت - الخميس</span>
+                    <span>{{ branch.get_working_days_display|join:", " }}</span>
                 </div>
             </div>
             <div class="card-footer">
                 <div class="btn-group w-100" role="group">
-                    <a href="{% url 'branches:detail' 1 %}" class="btn btn-outline-primary btn-sm">عرض</a>
-                    <a href="{% url 'branches:edit' 1 %}" class="btn btn-outline-warning btn-sm">تعديل</a>
-                    <button class="btn btn-outline-danger btn-sm" data-confirm-delete>حذف</button>
+                    <a href="{% url 'branches:detail' branch.id %}" class="btn btn-outline-primary btn-sm">عرض</a>
+                    <a href="{% url 'branches:edit' branch.id %}" class="btn btn-outline-warning btn-sm">تعديل</a>
+                    <button class="btn btn-outline-danger btn-sm" onclick="deleteBranch({{ branch.id }})">حذف</button>
                 </div>
             </div>
         </div>
     </div>
-
-    <div class="col-lg-4 col-md-6 mb-4">
-        <div class="card shadow h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold text-primary">فرع جدة</h6>
-                <span class="badge bg-warning">فئة ب</span>
-            </div>
-            <div class="card-body">
-                <div class="row text-center mb-3">
-                    <div class="col-4">
-                        <div class="border-end">
-                            <h5 class="text-primary">32</h5>
-                            <small class="text-muted">موظف</small>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <div class="border-end">
-                            <h5 class="text-success">6</h5>
-                            <small class="text-muted">جداول نشطة</small>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <h5 class="text-info">88%</h5>
-                        <small class="text-muted">تغطية</small>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <i class="fas fa-map-marker-alt me-2 text-muted"></i>
-                    <span>جدة، المملكة العربية السعودية</span>
-                </div>
-                <div class="mb-3">
-                    <i class="fas fa-clock me-2 text-muted"></i>
-                    <span>09:00 - 21:00</span>
-                </div>
-                <div class="mb-3">
-                    <i class="fas fa-calendar me-2 text-muted"></i>
-                    <span>السبت - الخميس</span>
-                </div>
-            </div>
-            <div class="card-footer">
-                <div class="btn-group w-100" role="group">
-                    <a href="{% url 'branches:detail' 2 %}" class="btn btn-outline-primary btn-sm">عرض</a>
-                    <a href="{% url 'branches:edit' 2 %}" class="btn btn-outline-warning btn-sm">تعديل</a>
-                    <button class="btn btn-outline-danger btn-sm" data-confirm-delete>حذف</button>
-                </div>
-            </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info text-center">
+            <i class="fas fa-info-circle me-2"></i>
+            لا توجد فروع متاحة حالياً
         </div>
     </div>
-
-    <div class="col-lg-4 col-md-6 mb-4">
-        <div class="card shadow h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold text-primary">فرع الدمام</h6>
-                <span class="badge bg-info">فئة ج</span>
-            </div>
-            <div class="card-body">
-                <div class="row text-center mb-3">
-                    <div class="col-4">
-                        <div class="border-end">
-                            <h5 class="text-primary">28</h5>
-                            <small class="text-muted">موظف</small>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <div class="border-end">
-                            <h5 class="text-success">5</h5>
-                            <small class="text-muted">جداول نشطة</small>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <h5 class="text-info">92%</h5>
-                        <small class="text-muted">تغطية</small>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <i class="fas fa-map-marker-alt me-2 text-muted"></i>
-                    <span>الدمام، المملكة العربية السعودية</span>
-                </div>
-                <div class="mb-3">
-                    <i class="fas fa-clock me-2 text-muted"></i>
-                    <span>10:00 - 20:00</span>
-                </div>
-                <div class="mb-3">
-                    <i class="fas fa-calendar me-2 text-muted"></i>
-                    <span>السبت - الخميس</span>
-                </div>
-            </div>
-            <div class="card-footer">
-                <div class="btn-group w-100" role="group">
-                    <a href="{% url 'branches:detail' 3 %}" class="btn btn-outline-primary btn-sm">عرض</a>
-                    <a href="{% url 'branches:edit' 3 %}" class="btn btn-outline-warning btn-sm">تعديل</a>
-                    <button class="btn btn-outline-danger btn-sm" data-confirm-delete>حذف</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    {% endfor %}
 </div>
 
 <!-- Summary Statistics -->
@@ -208,8 +124,8 @@
     <div class="col-md-3">
         <div class="card bg-primary text-white">
             <div class="card-body text-center">
-                <h5 class="card-title">إجمالي المعارض</h5>
-                <h2 class="card-text">3</h2>
+                <h5 class="card-title">إجمالي الفروع</h5>
+                <h2 class="card-text">{{ branches|length }}</h2>
             </div>
         </div>
     </div>
@@ -217,23 +133,46 @@
         <div class="card bg-success text-white">
             <div class="card-body text-center">
                 <h5 class="card-title">إجمالي الموظفين</h5>
-                <h2 class="card-text">105</h2>
+                <h2 class="card-text">
+                    {% with total_employees=0 %}
+                        {% for branch in branches %}
+                            {% with total_employees=total_employees|add:branch.get_employees_count %}{% endwith %}
+                        {% endfor %}
+                        {{ total_employees }}
+                    {% endwith %}
+                </h2>
             </div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="card bg-info text-white">
             <div class="card-body text-center">
-                <h5 class="card-title">متوسط التغطية</h5>
-                <h2 class="card-text">92%</h2>
+                <h5 class="card-title">الفروع النشطة</h5>
+                <h2 class="card-text">
+                    {% with active_branches=0 %}
+                        {% for branch in branches %}
+                            {% if branch.status == 'active' %}
+                                {% with active_branches=active_branches|add:1 %}{% endwith %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ active_branches }}
+                    {% endwith %}
+                </h2>
             </div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="card bg-warning text-white">
             <div class="card-body text-center">
-                <h5 class="card-title">الجداول النشطة</h5>
-                <h2 class="card-text">19</h2>
+                <h5 class="card-title">إجمالي الشفتات</h5>
+                <h2 class="card-text">
+                    {% with total_shifts=0 %}
+                        {% for branch in branches %}
+                            {% with total_shifts=total_shifts|add:branch.get_active_shifts_count %}{% endwith %}
+                        {% endfor %}
+                        {{ total_shifts }}
+                    {% endwith %}
+                </h2>
             </div>
         </div>
     </div>
@@ -256,5 +195,31 @@ document.getElementById('search').addEventListener('keyup', function() {
         }
     });
 });
+
+// Delete branch function
+function deleteBranch(branchId) {
+    if (confirm('هل أنت متأكد من حذف هذا الفرع؟')) {
+        fetch(`/branches/${branchId}/delete/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('حدث خطأ: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ في حذف الفرع');
+        });
+    }
+}
 </script>
 {% endblock %}

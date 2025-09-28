@@ -22,8 +22,8 @@
     <div class="col-lg-4">
         <div class="card shadow-sm">
             <div class="card-body">
-                <h5 class="card-title">{{ leave.employee_name }}</h5>
-                <p class="text-muted">{{ leave.leave_type_display }}</p>
+                <h5 class="card-title">{{ leave.employee.get_full_name }}</h5>
+                <p class="text-muted">{{ leave.get_leave_type_display }}</p>
                 <div class="mb-3">
                     <span class="badge bg-{% if leave.status == 'approved' %}success{% elif leave.status == 'pending' %}warning{% elif leave.status == 'rejected' %}danger{% else %}secondary{% endif %} fs-6">
                         {% if leave.status == 'approved' %}معتمد{% elif leave.status == 'pending' %}معلق{% elif leave.status == 'rejected' %}مرفوض{% else %}غير محدد{% endif %}
@@ -35,7 +35,7 @@
                         <small class="text-muted">عدد الأيام</small>
                     </div>
                     <div class="col-6">
-                        <h6 class="text-success">{{ leave.start_date }}</h6>
+                        <h6 class="text-success">{{ leave.start_date|date:"Y-m-d" }}</h6>
                         <small class="text-muted">تاريخ البداية</small>
                     </div>
                 </div>
@@ -137,9 +137,12 @@
                         <div class="list-group-item d-flex justify-content-between align-items-center">
                             <div>
                                 <i class="fas fa-paperclip me-2"></i>
-                                {{ attachment.name }}
+                                {{ attachment.original_name }}
+                                <small class="text-muted d-block">
+                                    {% widthratio attachment.file_size 1024 1 %} KB
+                                </small>
                             </div>
-                            <a href="{{ attachment.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                            <a href="/media/{{ attachment.file_path }}" class="btn btn-sm btn-outline-primary" target="_blank">
                                 <i class="fas fa-download me-1"></i>تحميل
                             </a>
                         </div>

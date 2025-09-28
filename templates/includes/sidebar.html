@@ -24,7 +24,7 @@
             
             <!-- Dashboard -->
             <li class="nav-item">
-                <a class="nav-link {% if request.path == '/dashboard/' or request.path == '/' %}active{% endif %}" href="{% url 'dashboard:index' %}">
+                <a class="nav-link {% if request.path == '/dashboard/' or request.path == '/' %}active{% endif %}" href="{% url 'users:dashboard' %}">
                     <i class="fas fa-home me-2"></i>
                     لوحة التحكم
                 </a>
@@ -39,7 +39,7 @@
             
             <!-- Employees -->
             <li class="nav-item">
-                <a class="nav-link {% if 'employees' in request.path %}active{% endif %}" href="{% url 'employees:list' %}">
+                <a class="nav-link {% if 'employees' in request.path %}active{% endif %}" href="{% url 'users:list' %}">
                     <i class="fas fa-users me-2"></i>
                     الموظفين
                 </a>
@@ -79,7 +79,7 @@
             
             <!-- Approvals -->
             <li class="nav-item">
-                <a class="nav-link {% if 'approvals' in request.path %}active{% endif %}" href="{% url 'approvals:list' %}">
+                <a class="nav-link {% if 'approvals' in request.path %}active{% endif %}" href="#">
                     <i class="fas fa-check-circle me-2"></i>
                     الموافقات
                     <span class="badge bg-danger ms-2">5</span>
@@ -88,7 +88,7 @@
             
             <!-- Violations -->
             <li class="nav-item">
-                <a class="nav-link {% if 'violations' in request.path %}active{% endif %}" href="{% url 'violations:list' %}">
+                <a class="nav-link {% if 'violations' in request.path %}active{% endif %}" href="#">
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     المخالفات
                 </a>
@@ -102,14 +102,14 @@
             </li>
             
             <li class="nav-item">
-                <a class="nav-link {% if 'reports' in request.path %}active{% endif %}" href="{% url 'reports:list' %}">
+                <a class="nav-link {% if 'reports' in request.path %}active{% endif %}" href="#">
                     <i class="fas fa-chart-bar me-2"></i>
                     التقارير
                 </a>
             </li>
             
             <li class="nav-item">
-                <a class="nav-link {% if 'integrations' in request.path %}active{% endif %}" href="{% url 'integrations:list' %}">
+                <a class="nav-link {% if 'integrations' in request.path %}active{% endif %}" href="#">
                     <i class="fas fa-download me-2"></i>
                     الاستيراد والتصدير
                 </a>
@@ -130,7 +130,7 @@
             </li>
             
             <li class="nav-item">
-                <a class="nav-link {% if 'profile/edit' in request.path %}active{% endif %}" href="{% url 'users:edit_profile' %}">
+                <a class="nav-link {% if 'profile/edit' in request.path %}active{% endif %}" href="{% url 'users:profile_edit' %}">
                     <i class="fas fa-user-edit me-2"></i>
                     تعديل الملف الشخصي
                 </a>

@@ -83,11 +83,9 @@
                                     <label for="id_branch" class="form-label">الفرع</label>
                                     <select class="form-select" id="id_branch" name="branch">
                                         <option value="">اختر الفرع (اختياري)</option>
-                                        <option value="1">فرع الرياض - المعرض الرئيسي</option>
-                                        <option value="2">فرع جدة - معرض جدة</option>
-                                        <option value="3">فرع الدمام - معرض الدمام</option>
-                                        <option value="4">فرع مكة - معرض مكة</option>
-                                        <option value="5">فرع المدينة - معرض المدينة</option>
+                                        {% for branch in branches %}
+                                        <option value="{{ branch.id }}">{{ branch.name }} - {{ branch.get_type_display }}</option>
+                                        {% endfor %}
                                     </select>
                                     <div class="form-text">
                                         <small class="text-muted">

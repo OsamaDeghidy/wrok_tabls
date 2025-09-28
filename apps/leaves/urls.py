@@ -4,14 +4,27 @@ from . import views
 app_name = 'leaves'
 
 urlpatterns = [
-    # Leave URLs
-    path('leaves/', views.LeaveListView, name='list'),
-    path('leaves/create/', views.LeaveCreateView, name='create'),
-    path('leaves/<int:pk>/', views.LeaveDetailView, name='detail'),
-    path('leaves/<int:pk>/edit/', views.LeaveEditView, name='edit'),
-    path('leaves/<int:pk>/delete/', views.LeaveDeleteView, name='delete'),
+    # قائمة الإجازات
+    path('', views.leave_list_view, name='list'),
     
-    # Leave Actions
-    path('leaves/<int:pk>/approve/', views.LeaveApproveView, name='approve'),
-    path('leaves/<int:pk>/reject/', views.LeaveRejectView, name='reject'),
+    # إنشاء طلب إجازة جديد
+    path('create/', views.leave_create_view, name='create'),
+    
+    # تفاصيل طلب الإجازة
+    path('<int:leave_id>/', views.leave_detail_view, name='detail'),
+    
+    # تعديل طلب الإجازة
+    path('<int:leave_id>/edit/', views.leave_edit_view, name='edit'),
+    
+    # موافقة على طلب الإجازة
+    path('<int:leave_id>/approve/', views.leave_approve_view, name='approve'),
+    
+    # رفض طلب الإجازة
+    path('<int:leave_id>/reject/', views.leave_reject_view, name='reject'),
+    
+    # إلغاء طلب الإجازة
+    path('<int:leave_id>/cancel/', views.leave_cancel_view, name='cancel'),
+    
+    # رصيد الإجازات
+    path('balance/', views.leave_balance_view, name='balance'),
 ]

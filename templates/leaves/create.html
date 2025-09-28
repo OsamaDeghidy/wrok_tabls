@@ -24,6 +24,21 @@
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
+                    
+                    <!-- عرض أخطاء النموذج -->
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <h6>يرجى تصحيح الأخطاء التالية:</h6>
+                        <ul class="mb-0">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    
                     <div class="row">
                         <!-- Basic Information -->
                         <div class="col-12">
@@ -31,28 +46,18 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_employee" class="form-label">الموظف <span class="text-danger">*</span></label>
-                                <select class="form-select" id="id_employee" name="employee" required>
-                                    <option value="">اختر الموظف</option>
-                                    <option value="1">أحمد محمد - مطور برمجيات</option>
-                                    <option value="2">فاطمة علي - مديرة الموارد البشرية</option>
-                                    <option value="3">محمد حسن - محاسب</option>
-                                    <option value="4">سارة أحمد - مديرة التسويق</option>
-                                </select>
+                                <label class="form-label">الموظف <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" value="{{ request.user.get_full_name }}" readonly>
+                                <div class="form-text">سيتم ربط الطلب بحسابك الشخصي</div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_leave_type" class="form-label">نوع الإجازة <span class="text-danger">*</span></label>
-                                <select class="form-select" id="id_leave_type" name="leave_type" required>
-                                    <option value="">اختر نوع الإجازة</option>
-                                    <option value="annual">إجازة سنوية</option>
-                                    <option value="sick">إجازة مرضية</option>
-                                    <option value="emergency">إجازة طارئة</option>
-                                    <option value="maternity">إجازة أمومة</option>
-                                    <option value="paternity">إجازة أبوة</option>
-                                    <option value="unpaid">إجازة بدون راتب</option>
-                                </select>
+                                <label for="{{ form.leave_type.id_for_label }}" class="form-label">{{ form.leave_type.label }} <span class="text-danger">*</span></label>
+                                {{ form.leave_type }}
+                                {% if form.leave_type.errors %}
+                                    <div class="text-danger small">{{ form.leave_type.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
 
@@ -62,28 +67,37 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_start_date" class="form-label">تاريخ البداية <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="id_start_date" name="start_date" required>
+                                <label for="{{ form.start_date.id_for_label }}" class="form-label">{{ form.start_date.label }} <span class="text-danger">*</span></label>
+                                {{ form.start_date }}
+                                {% if form.start_date.errors %}
+                                    <div class="text-danger small">{{ form.start_date.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_end_date" class="form-label">تاريخ النهاية <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="id_end_date" name="end_date" required>
+                                <label for="{{ form.end_date.id_for_label }}" class="form-label">{{ form.end_date.label }} <span class="text-danger">*</span></label>
+                                {{ form.end_date }}
+                                {% if form.end_date.errors %}
+                                    <div class="text-danger small">{{ form.end_date.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_days_count" class="form-label">عدد الأيام</label>
+                                <label class="form-label">عدد الأيام</label>
                                 <input type="number" class="form-control" id="id_days_count" name="days_count" 
                                        min="1" max="30" readonly>
+                                <div class="form-text">سيتم حساب عدد الأيام تلقائياً</div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_emergency_contact" class="form-label">رقم الطوارئ</label>
-                                <input type="tel" class="form-control" id="id_emergency_contact" name="emergency_contact" 
-                                       placeholder="+966501234567">
+                                <label for="{{ form.emergency_contact.id_for_label }}" class="form-label">{{ form.emergency_contact.label }}</label>
+                                {{ form.emergency_contact }}
+                                {% if form.emergency_contact.errors %}
+                                    <div class="text-danger small">{{ form.emergency_contact.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
 
@@ -93,16 +107,20 @@
                         </div>
                         <div class="col-12">
                             <div class="mb-3">
-                                <label for="id_reason" class="form-label">سبب الإجازة <span class="text-danger">*</span></label>
-                                <textarea class="form-control" id="id_reason" name="reason" rows="3" 
-                                          placeholder="اكتب سبب طلب الإجازة..." required></textarea>
+                                <label for="{{ form.reason.id_for_label }}" class="form-label">{{ form.reason.label }} <span class="text-danger">*</span></label>
+                                {{ form.reason }}
+                                {% if form.reason.errors %}
+                                    <div class="text-danger small">{{ form.reason.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-12">
                             <div class="mb-3">
-                                <label for="id_notes" class="form-label">ملاحظات إضافية</label>
-                                <textarea class="form-control" id="id_notes" name="notes" rows="2" 
-                                          placeholder="أي ملاحظات إضافية..."></textarea>
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">{{ form.notes.label }}</label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}
+                                    <div class="text-danger small">{{ form.notes.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-12">
@@ -235,7 +253,8 @@ function calculateDays() {
 
 // Form submission
 document.querySelector('form').addEventListener('submit', function(e) {
-    e.preventDefault();
+    // Calculate days count before submission
+    calculateDaysCount();
     
     // Show loading
     const submitBtn = document.querySelector('button[type="submit"]');
@@ -243,11 +262,8 @@ document.querySelector('form').addEventListener('submit', function(e) {
     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>جاري الإرسال...';
     submitBtn.disabled = true;
     
-    // Simulate form submission
-    setTimeout(() => {
-        alert('تم إرسال طلب الإجازة بنجاح!');
-        window.location.href = '{% url "leaves:list" %}';
-    }, 2000);
+    // Allow form to submit normally to Django
+    // Don't prevent default - let Django handle the form
 });
 </script>
 {% endblock %}

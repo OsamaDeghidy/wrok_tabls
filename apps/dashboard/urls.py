@@ -4,5 +4,5 @@ from . import views
 app_name = 'dashboard'
 
 urlpatterns = [
-    path('', views.DashboardView, name='index'),
+    # URLs will be added when views are created
 ]

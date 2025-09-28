@@ -129,6 +129,18 @@
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
+                            <label class="form-label fw-bold">الفرع</label>
+                            <p class="form-control-plaintext">
+                                {% if user_detail.branch %}
+                                    <i class="fas fa-building me-2 text-primary"></i>{{ user_detail.branch.name }} - {{ user_detail.branch.get_type_display }}
+                                {% else %}
+                                    <span class="text-muted">غير محدد</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
                             <label class="form-label fw-bold">تاريخ الانضمام</label>
                             <p class="form-control-plaintext">{{ user_detail.created_at|date:"Y/m/d" }}</p>
                         </div>

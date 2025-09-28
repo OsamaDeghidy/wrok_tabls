@@ -1,0 +1,354 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تحليلات الجدول - {{ schedule.branch.name }}{% endblock %}
+
+{% block page_title %}
+<div class="d-flex align-items-center">
+    <i class="fas fa-chart-bar text-primary me-3"></i>
+    <div>
+        <h4 class="mb-0">تحليلات الجدول التشغيلي</h4>
+        <small class="text-muted">{{ schedule.branch.name }} - {{ schedule.get_schedule_type_display }}</small>
+    </div>
+</div>
+{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <a href="{% url 'schedules:detail' schedule.id %}" class="btn btn-outline-primary">
+        <i class="fas fa-eye me-1"></i>عرض الجدول
+    </a>
+    <a href="{% url 'schedules:entries' schedule.id %}" class="btn btn-outline-info">
+        <i class="fas fa-list me-1"></i>إدارة الإدخالات
+    </a>
+    <a href="{% url 'schedules:list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Schedule Overview -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-primary h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-building text-primary fs-2 mb-2"></i>
+                <h6 class="card-title">الفرع</h6>
+                <p class="card-text text-muted">{{ schedule.branch.name }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-info h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-calendar-week text-info fs-2 mb-2"></i>
+                <h6 class="card-title">نوع الجدول</h6>
+                <p class="card-text text-muted">{{ schedule.get_schedule_type_display }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-success h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-users text-success fs-2 mb-2"></i>
+                <h6 class="card-title">الموظفين</h6>
+                <p class="card-text text-muted">{{ employee_analytics|length }} موظف</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-warning h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-percentage text-warning fs-2 mb-2"></i>
+                <h6 class="card-title">التغطية</h6>
+                <p class="card-text text-muted">{{ schedule.get_coverage_percentage|floatformat:0 }}%</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Employee Analytics -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">تحليلات الموظفين</h6>
+    </div>
+    <div class="card-body">
+        {% if employee_analytics %}
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>الموظف</th>
+                        <th>إجمالي الساعات</th>
+                        <th>عدد الأيام</th>
+                        <th>عدد الشفتات</th>
+                        <th>متوسط الساعات/يوم</th>
+                        <th>الحالة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee_id, data in employee_analytics.items %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-user me-2 text-primary"></i>
+                                <span>{{ data.employee.get_full_name|default:data.employee.username }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-info">{{ data.total_hours|floatformat:1 }} ساعة</span>
+                        </td>
+                        <td>{{ data.days_count }} يوم</td>
+                        <td>{{ data.shifts_count }} شفت</td>
+                        <td>
+                            {% if data.days_count > 0 %}
+                                {{ data.total_hours|floatformat:1|add:0|div:data.days_count|floatformat:1 }} ساعة
+                            {% else %}
+                                0 ساعة
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if data.total_hours >= 40 %}
+                                <span class="badge bg-success">ممتاز</span>
+                            {% elif data.total_hours >= 30 %}
+                                <span class="badge bg-warning">جيد</span>
+                            {% else %}
+                                <span class="badge bg-danger">ضعيف</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <div class="text-muted">
+                <i class="fas fa-users fa-3x mb-3"></i>
+                <p>لا توجد بيانات للموظفين</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Shift Analytics -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">تحليلات الشفتات</h6>
+    </div>
+    <div class="card-body">
+        {% if shift_analytics %}
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>الشفت</th>
+                        <th>إجمالي الساعات</th>
+                        <th>عدد الإدخالات</th>
+                        <th>عدد الموظفين</th>
+                        <th>متوسط الساعات/إدخال</th>
+                        <th>التغطية</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for shift_id, data in shift_analytics.items %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-clock me-2 text-info"></i>
+                                <span>{{ data.shift.name }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-info">{{ data.total_hours|floatformat:1 }} ساعة</span>
+                        </td>
+                        <td>{{ data.entries_count }} إدخال</td>
+                        <td>{{ data.employees_count }} موظف</td>
+                        <td>
+                            {% if data.entries_count > 0 %}
+                                {{ data.total_hours|floatformat:1|add:0|div:data.entries_count|floatformat:1 }} ساعة
+                            {% else %}
+                                0 ساعة
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar 
+                                    {% if data.employees_count >= 2 %}bg-success
+                                    {% elif data.employees_count >= 1 %}bg-warning
+                                    {% else %}bg-danger{% endif %}" 
+                                    style="width: {{ data.employees_count|add:0|mul:50 }}%">
+                                    {{ data.employees_count }}/2
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <div class="text-muted">
+                <i class="fas fa-clock fa-3x mb-3"></i>
+                <p>لا توجد بيانات للشفتات</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Daily Coverage Analytics -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">تحليل التغطية اليومية</h6>
+    </div>
+    <div class="card-body">
+        {% if coverage_analytics %}
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>التاريخ</th>
+                        <th>إجمالي الساعات</th>
+                        <th>عدد الموظفين</th>
+                        <th>عدد الإدخالات</th>
+                        <th>حالة التغطية</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for date_str, data in coverage_analytics.items %}
+                    <tr>
+                        <td>{{ data.date|date:"Y-m-d" }}</td>
+                        <td>
+                            <span class="badge bg-info">{{ data.total_hours|floatformat:1 }} ساعة</span>
+                        </td>
+                        <td>{{ data.unique_employees }} موظف</td>
+                        <td>{{ data.entries_count }} إدخال</td>
+                        <td>
+                            {% if data.total_hours >= 8 %}
+                                <span class="badge bg-success">ممتاز</span>
+                            {% elif data.total_hours >= 4 %}
+                                <span class="badge bg-warning">جيد</span>
+                            {% else %}
+                                <span class="badge bg-danger">ضعيف</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <div class="text-muted">
+                <i class="fas fa-calendar-day fa-3x mb-3"></i>
+                <p>لا توجد بيانات للتغطية اليومية</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">توزيع الساعات حسب الموظف</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="employeeHoursChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">توزيع الساعات حسب الشفت</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="shiftHoursChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Employee Hours Chart
+    const employeeCtx = document.getElementById('employeeHoursChart').getContext('2d');
+    const employeeData = {
+        labels: [
+            {% for employee_id, data in employee_analytics.items %}
+                '{{ data.employee.get_full_name|default:data.employee.username }}',
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'الساعات',
+            data: [
+                {% for employee_id, data in employee_analytics.items %}
+                    {{ data.total_hours }},
+                {% endfor %}
+            ],
+            backgroundColor: [
+                '#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1',
+                '#20c997', '#fd7e14', '#e83e8c', '#6c757d', '#17a2b8'
+            ]
+        }]
+    };
+    
+    new Chart(employeeCtx, {
+        type: 'doughnut',
+        data: employeeData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                }
+            }
+        }
+    });
+    
+    // Shift Hours Chart
+    const shiftCtx = document.getElementById('shiftHoursChart').getContext('2d');
+    const shiftData = {
+        labels: [
+            {% for shift_id, data in shift_analytics.items %}
+                '{{ data.shift.name }}',
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'الساعات',
+            data: [
+                {% for shift_id, data in shift_analytics.items %}
+                    {{ data.total_hours }},
+                {% endfor %}
+            ],
+            backgroundColor: [
+                '#28a745', '#ffc107', '#dc3545', '#6f42c1', '#20c997'
+            ]
+        }]
+    };
+    
+    new Chart(shiftCtx, {
+        type: 'bar',
+        data: shiftData,
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

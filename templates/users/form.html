@@ -110,6 +110,34 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
+                                <label for="id_role" class="form-label">الدور <span class="text-danger">*</span></label>
+                                <select class="form-select" id="id_role" name="role" required>
+                                    <option value="">اختر الدور</option>
+                                    <option value="employee" {% if user_detail.role == 'employee' %}selected{% endif %}>موظف</option>
+                                    <option value="branch_manager" {% if user_detail.role == 'branch_manager' %}selected{% endif %}>مدير معرض</option>
+                                    <option value="coordinator" {% if user_detail.role == 'coordinator' %}selected{% endif %}>منسق</option>
+                                    <option value="region_manager" {% if user_detail.role == 'region_manager' %}selected{% endif %}>مدير منطقة</option>
+                                    <option value="operations_manager" {% if user_detail.role == 'operations_manager' %}selected{% endif %}>مدير عمليات</option>
+                                    <option value="admin_manager" {% if user_detail.role == 'admin_manager' %}selected{% endif %}>مدير إدارة</option>
+                                    <option value="super_admin" {% if user_detail.role == 'super_admin' %}selected{% endif %}>مدير عام</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_branch" class="form-label">الفرع</label>
+                                <select class="form-select" id="id_branch" name="branch">
+                                    <option value="">اختر الفرع</option>
+                                    {% for branch in branches %}
+                                    <option value="{{ branch.id }}" {% if user_detail.branch.id == branch.id %}selected{% endif %}>
+                                        {{ branch.name }} - {{ branch.get_type_display }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
                                 <label for="id_join_date" class="form-label">تاريخ الانضمام</label>
                                 <input type="date" class="form-control" id="id_join_date" name="join_date" 
                                        value="{{ user_detail.join_date|default:'' }}">

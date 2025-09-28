@@ -135,10 +135,17 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Authentication
 # AUTH_USER_MODEL = 'users.User'  # نستخدم User الافتراضي في Django
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/login/'
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'guardian.backends.ObjectPermissionBackend',
 ]
+
+# Django Admin
+ADMIN_URL = 'admin/'
+ADMIN_LOGIN_URL = '/login/'
 
 # REST Framework
 REST_FRAMEWORK = {

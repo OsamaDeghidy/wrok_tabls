@@ -31,53 +31,115 @@
                 <label for="branch" class="form-label">الفرع</label>
                 <select class="form-select" id="branch" name="branch">
                     <option value="">جميع الفروع</option>
-                    <option value="1">فرع الرياض</option>
-                    <option value="2">فرع جدة</option>
-                    <option value="3">فرع الدمام</option>
+                    {% for branch in branches %}
+                        <option value="{{ branch.id }}" {% if current_filters.branch == branch.id|stringformat:"s" %}selected{% endif %}>
+                            {{ branch.name }}
+                        </option>
+                    {% endfor %}
                 </select>
             </div>
             <div class="col-md-3">
                 <label for="status" class="form-label">الحالة</label>
                 <select class="form-select" id="status" name="status">
                     <option value="">جميع الحالات</option>
-                    <option value="draft">مسودة</option>
-                    <option value="pending">معلق</option>
-                    <option value="approved">معتمد</option>
-                    <option value="rejected">مرفوض</option>
+                    {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if current_filters.status == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
                 </select>
             </div>
             <div class="col-md-3">
                 <label for="schedule_type" class="form-label">نوع الجدول</label>
                 <select class="form-select" id="schedule_type" name="schedule_type">
                     <option value="">جميع الأنواع</option>
-                    <option value="weekly">أسبوعي</option>
-                    <option value="monthly">شهري</option>
-                    <option value="quarterly">ربع سنوي</option>
-                    <option value="yearly">سنوي</option>
+                    {% for value, label in schedule_types %}
+                        <option value="{{ value }}" {% if current_filters.schedule_type == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
                 </select>
             </div>
             <div class="col-md-3">
-                <label for="date_from" class="form-label">من تاريخ</label>
-                <input type="date" class="form-control" id="date_from" name="date_from">
-            </div>
-            <div class="col-md-3">
-                <label for="date_to" class="form-label">إلى تاريخ</label>
-                <input type="date" class="form-control" id="date_to" name="date_to">
-            </div>
-            <div class="col-12">
-                <button type="submit" class="btn btn-primary">تطبيق</button>
-                <a href="{% url 'schedules:list' %}" class="btn btn-outline-secondary">مسح الفلاتر</a>
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">تطبيق</button>
+                </div>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">إجمالي الجداول</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">المعتمدة</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.approved }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">في الانتظار</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.pending }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clock fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">النشطة</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.active }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-play-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <!-- Schedules Table -->
 <div class="card shadow mb-4">
     <div class="card-header py-3 d-flex justify-content-between align-items-center">
-        <h6 class="m-0 font-weight-bold text-primary">قائمة الجداول</h6>
+        <h6 class="m-0 font-weight-bold text-primary">قائمة الجداول التشغيلية</h6>
         <div class="text-muted">
-            إجمالي: <span class="badge bg-primary">23</span> جدول
+            إجمالي: <span class="badge bg-primary">{{ schedules.paginator.count }}</span> جدول
         </div>
     </div>
     <div class="card-body">
@@ -96,186 +158,132 @@
                     </tr>
                 </thead>
                 <tbody>
+                    {% for schedule in schedules %}
                     <tr>
                         <td>
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-building me-2 text-primary"></i>
-                                <span>فرع الرياض</span>
+                                <span>{{ schedule.branch.name }}</span>
                             </div>
                         </td>
                         <td>
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-calendar-week me-2 text-info"></i>
-                                <span>أسبوعي</span>
+                                <span>{{ schedule.get_schedule_type_display }}</span>
                             </div>
                         </td>
                         <td>
                             <div>
-                                <div class="fw-bold">15-21 يناير 2024</div>
-                                <small class="text-muted">7 أيام</small>
+                                <div class="fw-bold">{{ schedule.start_date|date:"Y-m-d" }} - {{ schedule.end_date|date:"Y-m-d" }}</div>
+                                <small class="text-muted">
+                                    {% with duration=schedule.end_date|timesince:schedule.start_date %}
+                                        {{ duration }}
+                                    {% endwith %}
+                                </small>
                             </div>
                         </td>
                         <td>
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-users me-2 text-success"></i>
-                                <span>5 موظف</span>
+                                <span>{{ schedule.get_employees_count }} موظف</span>
                             </div>
                         </td>
                         <td>
                             <div class="d-flex align-items-center">
                                 <div class="progress me-2" style="width: 60px; height: 8px;">
-                                    <div class="progress-bar bg-success" style="width: 100%"></div>
+                                    <div class="progress-bar 
+                                        {% if schedule.get_coverage_percentage >= 90 %}bg-success
+                                        {% elif schedule.get_coverage_percentage >= 70 %}bg-warning
+                                        {% else %}bg-danger{% endif %}" 
+                                        style="width: {{ schedule.get_coverage_percentage }}%"></div>
                                 </div>
-                                <span class="text-success fw-bold">100%</span>
+                                <span class="{% if schedule.get_coverage_percentage >= 90 %}text-success
+                                {% elif schedule.get_coverage_percentage >= 70 %}text-warning
+                                {% else %}text-danger{% endif %} fw-bold">
+                                    {{ schedule.get_coverage_percentage|floatformat:0 }}%
+                                </span>
                             </div>
                         </td>
-                        <td><span class="badge bg-success">معتمد</span></td>
+                        <td>
+                            <span class="badge bg-{% if schedule.status == 'approved' %}success
+                            {% elif schedule.status == 'pending_coordinator' %}warning
+                            {% elif schedule.status == 'pending_region_manager' %}info
+                            {% elif schedule.status == 'pending_operations_manager' %}primary
+                            {% elif schedule.status == 'pending_admin_manager' %}secondary
+                            {% elif schedule.status == 'rejected' %}danger
+                            {% elif schedule.status == 'active' %}success
+                            {% else %}secondary{% endif %}">
+                                {{ schedule.get_status_display }}
+                            </span>
+                        </td>
                         <td>
                             <div>
-                                <div>أحمد محمد</div>
-                                <small class="text-muted">2024-01-10</small>
+                                <div>{{ schedule.created_by.get_full_name|default:schedule.created_by.username }}</div>
+                                <small class="text-muted">{{ schedule.created_at|date:"Y-m-d" }}</small>
                             </div>
                         </td>
                         <td>
                             <div class="btn-group btn-group-sm" role="group">
-                                <a href="{% url 'schedules:detail' 1 %}" class="btn btn-outline-primary" title="عرض">
+                                <a href="{% url 'schedules:detail' schedule.id %}" class="btn btn-outline-primary" title="عرض">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <a href="{% url 'schedules:edit' 1 %}" class="btn btn-outline-warning" title="تعديل">
+                                {% if schedule.status == 'draft' or 'pending' in schedule.status %}
+                                <a href="{% url 'schedules:edit' schedule.id %}" class="btn btn-outline-warning" title="تعديل">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <button class="btn btn-outline-danger" title="حذف" data-confirm-delete>
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                                {% endif %}
+                                {% if schedule.status == 'approved' %}
+                                <a href="{% url 'schedules:activate' schedule.id %}" class="btn btn-outline-success" title="تفعيل" onclick="return confirm('هل أنت متأكد من تفعيل هذا الجدول؟')">
+                                    <i class="fas fa-play"></i>
+                                </a>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>
+                    {% empty %}
                     <tr>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-building me-2 text-primary"></i>
-                                <span>فرع جدة</span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-calendar-alt me-2 text-warning"></i>
-                                <span>شهري</span>
-                            </div>
-                        </td>
-                        <td>
-                            <div>
-                                <div class="fw-bold">22-28 يناير 2024</div>
-                                <small class="text-muted">7 أيام</small>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-users me-2 text-success"></i>
-                                <span>4 موظف</span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="progress me-2" style="width: 60px; height: 8px;">
-                                    <div class="progress-bar bg-warning" style="width: 75%"></div>
-                                </div>
-                                <span class="text-warning fw-bold">75%</span>
-                            </div>
-                        </td>
-                        <td><span class="badge bg-warning">معلق</span></td>
-                        <td>
-                            <div>
-                                <div>فاطمة علي</div>
-                                <small class="text-muted">2024-01-15</small>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="btn-group btn-group-sm" role="group">
-                                <a href="{% url 'schedules:detail' 2 %}" class="btn btn-outline-primary" title="عرض">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <a href="{% url 'schedules:edit' 2 %}" class="btn btn-outline-warning" title="تعديل">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <button class="btn btn-outline-danger" title="حذف" data-confirm-delete>
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                        <td colspan="8" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                                <p>لا توجد جداول تشغيلية</p>
                             </div>
                         </td>
                     </tr>
-                    <tr>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-building me-2 text-primary"></i>
-                                <span>فرع الدمام</span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-calendar-day me-2 text-danger"></i>
-                                <span>ربع سنوي</span>
-                            </div>
-                        </td>
-                        <td>
-                            <div>
-                                <div class="fw-bold">29 يناير - 4 فبراير 2024</div>
-                                <small class="text-muted">7 أيام</small>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-users me-2 text-success"></i>
-                                <span>3 موظف</span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="progress me-2" style="width: 60px; height: 8px;">
-                                    <div class="progress-bar bg-danger" style="width: 45%"></div>
-                                </div>
-                                <span class="text-danger fw-bold">45%</span>
-                            </div>
-                        </td>
-                        <td><span class="badge bg-secondary">مسودة</span></td>
-                        <td>
-                            <div>
-                                <div>خالد سعد</div>
-                                <small class="text-muted">2024-01-20</small>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="btn-group btn-group-sm" role="group">
-                                <a href="{% url 'schedules:detail' 3 %}" class="btn btn-outline-primary" title="عرض">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <a href="{% url 'schedules:edit' 3 %}" class="btn btn-outline-warning" title="تعديل">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <button class="btn btn-outline-danger" title="حذف" data-confirm-delete>
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
         
         <!-- Pagination -->
+        {% if schedules.has_other_pages %}
         <nav aria-label="Page navigation">
             <ul class="pagination justify-content-center">
-                <li class="page-item disabled">
-                    <a class="page-link" href="#" tabindex="-1">السابق</a>
+                {% if schedules.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if current_filters.branch %}&branch={{ current_filters.branch }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}{% if current_filters.schedule_type %}&schedule_type={{ current_filters.schedule_type }}{% endif %}{% if current_filters.date_from %}&date_from={{ current_filters.date_from }}{% endif %}{% if current_filters.date_to %}&date_to={{ current_filters.date_to }}{% endif %}">الأولى</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ schedules.previous_page_number }}{% if current_filters.branch %}&branch={{ current_filters.branch }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}{% if current_filters.schedule_type %}&schedule_type={{ current_filters.schedule_type }}{% endif %}{% if current_filters.date_from %}&date_from={{ current_filters.date_from }}{% endif %}{% if current_filters.date_to %}&date_to={{ current_filters.date_to }}{% endif %}">السابقة</a>
+                    </li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">
+                        صفحة {{ schedules.number }} من {{ schedules.paginator.num_pages }}
+                    </span>
                 </li>
-                <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                <li class="page-item">
-                    <a class="page-link" href="#">التالي</a>
-                </li>
+                
+                {% if schedules.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ schedules.next_page_number }}{% if current_filters.branch %}&branch={{ current_filters.branch }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}{% if current_filters.schedule_type %}&schedule_type={{ current_filters.schedule_type }}{% endif %}{% if current_filters.date_from %}&date_from={{ current_filters.date_from }}{% endif %}{% if current_filters.date_to %}&date_to={{ current_filters.date_to }}{% endif %}">التالية</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ schedules.paginator.num_pages }}{% if current_filters.branch %}&branch={{ current_filters.branch }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}{% if current_filters.schedule_type %}&schedule_type={{ current_filters.schedule_type }}{% endif %}{% if current_filters.date_from %}&date_from={{ current_filters.date_from }}{% endif %}{% if current_filters.date_to %}&date_to={{ current_filters.date_to }}{% endif %}">الأخيرة</a>
+                    </li>
+                {% endif %}
             </ul>
         </nav>
+        {% endif %}
     </div>
 </div>
 
@@ -293,9 +301,9 @@
                         <label for="templateSelect" class="form-label">اختر القالب</label>
                         <select class="form-select" id="templateSelect" required>
                             <option value="">اختر قالب</option>
-                            <option value="1">قالب فرع الرياض</option>
-                            <option value="2">قالب فرع جدة</option>
-                            <option value="3">قالب فرع الدمام</option>
+                            {% for branch in branches %}
+                                <option value="{{ branch.id }}">قالب {{ branch.name }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3">
@@ -319,74 +327,21 @@
 
 {% block scripts %}
 <script>
-// Table search functionality
-document.getElementById('branch').addEventListener('change', function() {
-    filterTable();
-});
-
-document.getElementById('status').addEventListener('change', function() {
-    filterTable();
-});
-
-document.getElementById('schedule_type').addEventListener('change', function() {
-    filterTable();
-});
-
-function filterTable() {
-    const branchFilter = document.getElementById('branch').value;
-    const statusFilter = document.getElementById('status').value;
-    const typeFilter = document.getElementById('schedule_type').value;
-    const table = document.getElementById('schedulesTable');
-    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
-    
-    for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
-        const branchCell = row.cells[0].textContent.toLowerCase();
-        const typeCell = row.cells[1].textContent.toLowerCase();
-        const statusCell = row.cells[5].textContent.toLowerCase();
-        
-        let showRow = true;
-        
-        if (branchFilter && !branchCell.includes(branchFilter.toLowerCase())) {
-            showRow = false;
-        }
-        
-        if (typeFilter && !typeCell.includes(typeFilter.toLowerCase())) {
-            showRow = false;
-        }
-        
-        if (statusFilter && !statusCell.includes(statusFilter.toLowerCase())) {
-            showRow = false;
-        }
-        
-        row.style.display = showRow ? '' : 'none';
-    }
-}
-
-// Template functionality
 function createFromTemplate() {
-    const template = document.getElementById('templateSelect').value;
+    const templateId = document.getElementById('templateSelect').value;
     const dateFrom = document.getElementById('templateDateFrom').value;
     const dateTo = document.getElementById('templateDateTo').value;
     
-    if (!template || !dateFrom || !dateTo) {
-        alert('يرجى ملء جميع الحقول');
+    if (!templateId || !dateFrom || !dateTo) {
+        alert('يرجى ملء جميع الحقول المطلوبة');
         return;
     }
     
-    // Show loading
-    const createBtn = document.querySelector('#templateModal .btn-primary');
-    const originalText = createBtn.innerHTML;
-    createBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>جاري الإنشاء...';
-    createBtn.disabled = true;
+    // Here you would typically make an AJAX request to create the schedule
+    console.log('Creating schedule from template:', { templateId, dateFrom, dateTo });
     
-    // Simulate creation
-    setTimeout(() => {
-        alert('تم إنشاء الجدول بنجاح!');
-        createBtn.innerHTML = originalText;
-        createBtn.disabled = false;
-        bootstrap.Modal.getInstance(document.getElementById('templateModal')).hide();
-    }, 2000);
+    // Close modal
+    bootstrap.Modal.getInstance(document.getElementById('templateModal')).hide();
 }
 </script>
 {% endblock %}

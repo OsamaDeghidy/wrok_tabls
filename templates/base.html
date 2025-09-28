@@ -17,15 +17,19 @@
 </head>
 <body>
     <!-- Navigation -->
-    {% include 'includes/header.html' %}
+    {% if user.is_authenticated %}
+        {% include 'includes/header.html' %}
+    {% endif %}
     
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            {% include 'includes/sidebar.html' %}
+            {% if user.is_authenticated %}
+                {% include 'includes/sidebar.html' %}
+            {% endif %}
             
             <!-- Main Content -->
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <main class="{% if user.is_authenticated %}col-md-9 ms-sm-auto col-lg-10{% else %}col-12{% endif %} px-md-4">
                 <!-- Page Header -->
                 {% block page_header %}
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
