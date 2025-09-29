@@ -43,9 +43,11 @@ urlpatterns = [
     # Schedules URLs
     path('schedules/', include('apps.schedules.urls')),
     
+    # Approvals URLs
+    path('approvals/', include('apps.approvals.urls')),
+    
     # API URLs
     path('api/', include('apps.employees.urls')),
-    path('api/', include('apps.approvals.urls')),
     path('api/', include('apps.violations.urls')),
     path('api/', include('apps.reports.urls')),
     path('api/', include('apps.integrations.urls')),

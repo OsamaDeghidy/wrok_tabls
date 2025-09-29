@@ -115,6 +115,9 @@ LANGUAGE_CODE = 'ar'
 TIME_ZONE = 'Asia/Riyadh'
 USE_I18N = True
 USE_TZ = True
+USE_L10N = False  # تعطيل التنسيق المحلي للأرقام
+USE_THOUSAND_SEPARATOR = False  # تعطيل فاصل الآلاف
+DECIMAL_SEPARATOR = '.'  # استخدام النقطة كفاصل عشري
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'

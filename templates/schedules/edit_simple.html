@@ -1,0 +1,338 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load schedule_filters %}
+
+{% block title %}تعديل الجدول التشغيلي - {{ schedule.id }}{% endblock %}
+
+{% block page_title %}
+<div class="d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="h3 mb-0">تعديل الجدول التشغيلي</h1>
+        <p class="text-muted mb-0">الجدول رقم {{ schedule.id }}</p>
+    </div>
+    <div class="btn-group" role="group">
+        <a href="{% url 'schedules:detail' schedule.id %}" class="btn btn-outline-primary">
+            <i class="fas fa-eye me-1"></i>عرض التفاصيل
+        </a>
+        <button type="button" class="btn btn-success" onclick="saveSchedule()">
+            <i class="fas fa-save me-1"></i>حفظ التعديلات
+        </button>
+        <a href="{% url 'schedules:list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Basic Schedule Info -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">معلومات الجدول الأساسية</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="branch" class="form-label">الفرع</label>
+                        <select class="form-select" id="branch" name="branch">
+                            <option value="">اختر الفرع</option>
+                            {% for branch in branches %}
+                            <option value="{{ branch.id }}" {% if branch.id == schedule.branch.id %}selected{% endif %}>
+                                {{ branch.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="schedule_type" class="form-label">نوع الجدول</label>
+                        <select class="form-select" id="schedule_type" name="schedule_type">
+                            <option value="">اختر النوع</option>
+                            {% for type_key, type_name in schedule_types %}
+                            <option value="{{ type_key }}" {% if type_key == schedule.schedule_type %}selected{% endif %}>
+                                {{ type_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="status" class="form-label">حالة الجدول</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="draft" {% if schedule.status == 'draft' %}selected{% endif %}>مسودة</option>
+                            <option value="pending_coordinator" {% if schedule.status == 'pending_coordinator' %}selected{% endif %}>في انتظار موافقة المنسق</option>
+                            <option value="pending_region_manager" {% if schedule.status == 'pending_region_manager' %}selected{% endif %}>في انتظار موافقة مدير المنطقة</option>
+                            <option value="pending_operations_manager" {% if schedule.status == 'pending_operations_manager' %}selected{% endif %}>في انتظار موافقة مدير العمليات</option>
+                            <option value="pending_admin_manager" {% if schedule.status == 'pending_admin_manager' %}selected{% endif %}>في انتظار موافقة مدير الإدارة</option>
+                            <option value="approved" {% if schedule.status == 'approved' %}selected{% endif %}>معتمد</option>
+                            <option value="rejected" {% if schedule.status == 'rejected' %}selected{% endif %}>مرفوض</option>
+                            <option value="active" {% if schedule.status == 'active' %}selected{% endif %}>نشط</option>
+                            <option value="completed" {% if schedule.status == 'completed' %}selected{% endif %}>مكتمل</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="version" class="form-label">الإصدار</label>
+                        <input type="number" class="form-control" id="version" name="version" value="{{ schedule.version }}" min="1">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="start_date" class="form-label">تاريخ البداية</label>
+                        <input type="date" class="form-control" id="start_date" name="start_date" value="{{ schedule.start_date|date:'Y-m-d' }}">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="end_date" class="form-label">تاريخ النهاية</label>
+                        <input type="date" class="form-control" id="end_date" name="end_date" value="{{ schedule.end_date|date:'Y-m-d' }}">
+                    </div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="notes" class="form-label">ملاحظات</label>
+                <textarea class="form-control" id="notes" name="notes" rows="3">{{ schedule.notes }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Entries Table -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">التوزيعات</h5>
+            <button type="button" class="btn btn-primary btn-sm" onclick="addRow()">
+                <i class="fas fa-plus me-1"></i>إضافة صف
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped" id="entries_table">
+                    <thead>
+                        <tr>
+                            <th>التاريخ</th>
+                            <th>الموظف</th>
+                            <th>الشفت</th>
+                            <th>وقت البداية</th>
+                            <th>وقت النهاية</th>
+                            <th>الساعات</th>
+                            <th>تغطية</th>
+                            <th>ملاحظات</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="entries_tbody">
+                        {% for entry in entries %}
+                        <tr>
+                            <td><input type="date" class="form-control form-control-sm" name="date" value="{{ entry.date|date:'Y-m-d' }}"></td>
+                            <td>
+                                <select class="form-select form-select-sm" name="employee">
+                                    {% for employee in schedule.branch.employees.all %}
+                                    <option value="{{ employee.id }}" {% if employee.id == entry.employee.id %}selected{% endif %}>
+                                        {{ employee.user.get_full_name|default:employee.user.username }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td>
+                                <select class="form-select form-select-sm" name="shift">
+                                    {% for shift in schedule.branch.shifts.all %}
+                                    <option value="{{ shift.id }}" {% if shift.id == entry.shift.id %}selected{% endif %}>
+                                        {{ shift.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td><input type="time" class="form-control form-control-sm" name="start_time" value="{{ entry.start_time|time:'H:i' }}"></td>
+                            <td><input type="time" class="form-control form-control-sm" name="end_time" value="{{ entry.end_time|time:'H:i' }}"></td>
+                            <td><input type="number" class="form-control form-control-sm" name="hours" value="{{ entry.hours|safe_decimal }}" step="0.1" readonly></td>
+                            <td><input type="checkbox" class="form-check-input" name="is_cover" {% if entry.is_cover %}checked{% endif %}></td>
+                            <td><input type="text" class="form-control form-control-sm" name="notes" value="{{ entry.notes }}"></td>
+                            <td>
+                                <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSRF Token -->
+{% csrf_token %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+console.log('=== Simple Edit Page Loading ===');
+
+// Schedule ID
+const SCHEDULE_ID = {{ schedule.id }};
+console.log('Schedule ID:', SCHEDULE_ID);
+
+// Simple save function
+function saveSchedule() {
+    console.log('Save function called!');
+    alert('تم استدعاء دالة الحفظ!');
+    
+    // Collect basic data
+    const data = {
+        schedule_id: SCHEDULE_ID,
+        branch_id: document.getElementById('branch').value,
+        schedule_type: document.getElementById('schedule_type').value,
+        status: document.getElementById('status').value,
+        version: document.getElementById('version').value,
+        start_date: document.getElementById('start_date').value,
+        end_date: document.getElementById('end_date').value,
+        notes: document.getElementById('notes').value,
+        entries: []
+    };
+    
+    // Collect entries
+    const rows = document.querySelectorAll('#entries_tbody tr');
+    rows.forEach(row => {
+        const entry = {
+            date: row.querySelector('input[name="date"]').value,
+            employee_id: row.querySelector('select[name="employee"]').value,
+            shift_id: row.querySelector('select[name="shift"]').value,
+            start_time: row.querySelector('input[name="start_time"]').value,
+            end_time: row.querySelector('input[name="end_time"]').value,
+            is_cover: row.querySelector('input[name="is_cover"]').checked,
+            notes: row.querySelector('input[name="notes"]').value
+        };
+        
+        // Calculate hours
+        if (entry.start_time && entry.end_time) {
+            const start = new Date('2000-01-01 ' + entry.start_time);
+            const end = new Date('2000-01-01 ' + entry.end_time);
+            let hours = (end - start) / (1000 * 60 * 60);
+            
+            // Handle negative hours (cross midnight)
+            if (hours < 0) {
+                hours += 24; // Add 24 hours for next day
+            }
+            
+            entry.hours = Math.round(hours * 10) / 10; // Round to 1 decimal
+        } else {
+            entry.hours = 0;
+        }
+        
+        data.entries.push(entry);
+    });
+    
+    console.log('Data to save:', data);
+    
+    // Send to backend
+    fetch(`/schedules/api/${SCHEDULE_ID}/save-entries/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        console.log('Save result:', result);
+        if (result.success) {
+            alert('تم حفظ التعديلات بنجاح!');
+            window.location.href = `/schedules/${SCHEDULE_ID}/`;
+        } else {
+            alert('خطأ في الحفظ: ' + (result.message || 'خطأ غير معروف'));
+        }
+    })
+    .catch(error => {
+        console.error('Save error:', error);
+        alert('خطأ في الاتصال: ' + error.message);
+    });
+}
+
+// Add new row
+function addRow() {
+    const tbody = document.getElementById('entries_tbody');
+    const newRow = tbody.insertRow();
+    
+    newRow.innerHTML = `
+        <td><input type="date" class="form-control form-control-sm" name="date"></td>
+        <td>
+            <select class="form-select form-select-sm" name="employee">
+                <option value="">اختر الموظف</option>
+                {% for employee in schedule.branch.employees.all %}
+                <option value="{{ employee.id }}">{{ employee.user.get_full_name|default:employee.user.username }}</option>
+                {% endfor %}
+            </select>
+        </td>
+        <td>
+            <select class="form-select form-select-sm" name="shift">
+                <option value="">اختر الشفت</option>
+                {% for shift in schedule.branch.shifts.all %}
+                <option value="{{ shift.id }}">{{ shift.name }}</option>
+                {% endfor %}
+            </select>
+        </td>
+        <td><input type="time" class="form-control form-control-sm" name="start_time" onchange="calculateHours(this)"></td>
+        <td><input type="time" class="form-control form-control-sm" name="end_time" onchange="calculateHours(this)"></td>
+        <td><input type="number" class="form-control form-control-sm" name="hours" step="0.1" readonly></td>
+        <td><input type="checkbox" class="form-check-input" name="is_cover"></td>
+        <td><input type="text" class="form-control form-control-sm" name="notes"></td>
+        <td>
+            <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+    `;
+}
+
+// Remove row
+function removeRow(btn) {
+    btn.closest('tr').remove();
+}
+
+// Calculate hours
+function calculateHours(input) {
+    const row = input.closest('tr');
+    const startTime = row.querySelector('input[name="start_time"]').value;
+    const endTime = row.querySelector('input[name="end_time"]').value;
+    const hoursInput = row.querySelector('input[name="hours"]');
+    
+    if (startTime && endTime) {
+        const start = new Date('2000-01-01 ' + startTime);
+        const end = new Date('2000-01-01 ' + endTime);
+        let hours = (end - start) / (1000 * 60 * 60);
+        
+        // Handle negative hours (cross midnight)
+        if (hours < 0) {
+            hours += 24; // Add 24 hours for next day
+        }
+        
+        hoursInput.value = Math.round(hours * 10) / 10; // Round to 1 decimal
+    }
+}
+
+// Make functions globally available
+window.saveSchedule = saveSchedule;
+window.addRow = addRow;
+window.removeRow = removeRow;
+window.calculateHours = calculateHours;
+
+console.log('=== Simple Edit Page Loaded Successfully ===');
+console.log('Functions available:', {
+    saveSchedule: typeof window.saveSchedule,
+    addRow: typeof window.addRow,
+    removeRow: typeof window.removeRow,
+    calculateHours: typeof window.calculateHours
+});
+</script>
+{% endblock %}

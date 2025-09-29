@@ -7,7 +7,7 @@
 
 {% block page_actions %}
 <div class="btn-group" role="group">
-    {% if schedule.status == 'draft' or 'pending' in schedule.status %}
+    {% if schedule.status == 'draft' or 'pending' in schedule.status or schedule.status == 'rejected' %}
     <a href="{% url 'schedules:edit' schedule.id %}" class="btn btn-warning">
         <i class="fas fa-edit me-1"></i>تعديل
     </a>
@@ -15,6 +15,16 @@
     {% if schedule.status == 'approved' %}
     <a href="{% url 'schedules:activate' schedule.id %}" class="btn btn-success" onclick="return confirm('هل أنت متأكد من تفعيل هذا الجدول؟')">
         <i class="fas fa-play me-1"></i>تفعيل
+    </a>
+    {% endif %}
+    {% if schedule.status == 'draft' %}
+    <a href="{% url 'approvals:create_for_schedule' schedule.id %}" class="btn btn-info">
+        <i class="fas fa-check-circle me-1"></i>طلب موافقة
+    </a>
+    {% endif %}
+    {% if schedule.status == 'active' %}
+    <a href="{% url 'schedules:complete' schedule.id %}" class="btn btn-primary" onclick="return confirm('هل أنت متأكد من إكمال هذا الجدول؟')">
+        <i class="fas fa-check-double me-1"></i>إكمال
     </a>
     {% endif %}
     <button type="button" class="btn btn-outline-primary" onclick="printSchedule()">
@@ -118,13 +128,17 @@
             </div>
             <div class="card-body">
                 <div class="d-flex align-items-center mb-3">
-                    <span class="badge bg-{% if schedule.status == 'approved' %}success{% elif schedule.status == 'active' %}success{% elif 'pending' in schedule.status %}warning{% elif schedule.status == 'rejected' %}danger{% else %}secondary{% endif %} fs-6 me-3">
+                    <span class="badge bg-{% if schedule.status == 'approved' %}success{% elif schedule.status == 'active' %}success{% elif schedule.status == 'completed' %}info{% elif 'pending' in schedule.status %}warning{% elif schedule.status == 'rejected' %}danger{% else %}secondary{% endif %} fs-6 me-3">
                         {{ schedule.get_status_display }}
                     </span>
                     <span class="text-muted">
                         {% if schedule.status == 'approved' %}تم اعتماد الجدول بنجاح
                         {% elif schedule.status == 'active' %}الجدول نشط ومفعل
-                        {% elif 'pending' in schedule.status %}في انتظار الاعتماد
+                        {% elif schedule.status == 'completed' %}تم إكمال الجدول بنجاح
+                        {% elif schedule.status == 'pending_coordinator' %}في انتظار موافقة المنسق
+                        {% elif schedule.status == 'pending_region_manager' %}في انتظار موافقة مدير المنطقة
+                        {% elif schedule.status == 'pending_operations_manager' %}في انتظار موافقة مدير العمليات
+                        {% elif schedule.status == 'pending_admin_manager' %}في انتظار موافقة مدير الإدارة
                         {% elif schedule.status == 'rejected' %}تم رفض الجدول
                         {% else %}مسودة غير مكتملة{% endif %}
                     </span>

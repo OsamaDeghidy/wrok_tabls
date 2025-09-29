@@ -13,6 +13,15 @@
     <button type="button" class="btn btn-success" onclick="saveScheduleToDatabase()">
         <i class="fas fa-save me-1"></i>حفظ التعديلات
     </button>
+    <button type="button" class="btn btn-info btn-sm ms-2" onclick="alert('JavaScript يعمل!')">
+        <i class="fas fa-check me-1"></i>اختبار JS
+    </button>
+    <button type="button" class="btn btn-primary btn-sm ms-2" onclick="testSave()">
+        <i class="fas fa-vial me-1"></i>اختبار بسيط
+    </button>
+    <button type="button" class="btn btn-warning btn-sm ms-2" onclick="saveScheduleToDatabase()">
+        <i class="fas fa-save me-1"></i>اختبار الحفظ
+    </button>
     <a href="{% url 'schedules:list' %}" class="btn btn-outline-secondary">
         <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
     </a>
@@ -246,131 +255,73 @@
     </div>
 </div>
 
-<!-- Add New Entry Form -->
-<div class="card border-0 shadow-sm mt-4">
-    <div class="card-header bg-success text-white">
-        <h6 class="mb-0">
-            <i class="fas fa-plus me-2"></i>إضافة توزيعة جديدة
-        </h6>
-    </div>
-    <div class="card-body">
-        <form id="addEntryForm">
-            {% csrf_token %}
-            <div class="row g-3">
-                <div class="col-md-2">
-                    <label for="new_entry_date" class="form-label">التاريخ</label>
-                    <input type="date" id="new_entry_date" name="date" class="form-control" required>
-                </div>
-                <div class="col-md-3">
-                    <label for="new_entry_employee" class="form-label">الموظف</label>
-                    <select id="new_entry_employee" name="employee" class="form-select" required>
-                        <option value="">اختر موظف</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label for="new_entry_shift" class="form-label">الشفتة</label>
-                    <select id="new_entry_shift" name="shift" class="form-select" required>
-                        <option value="">اختر شفتة</option>
-                    </select>
-                </div>
-                <div class="col-md-1">
-                    <label for="new_entry_start_time" class="form-label">من</label>
-                    <input type="time" id="new_entry_start_time" name="start_time" class="form-control" required>
-                </div>
-                <div class="col-md-1">
-                    <label for="new_entry_end_time" class="form-label">إلى</label>
-                    <input type="time" id="new_entry_end_time" name="end_time" class="form-control" required>
-                </div>
-                <div class="col-md-1">
-                    <label class="form-label">تغطية</label>
-                    <div class="form-check form-switch d-flex justify-content-center">
-                        <input type="checkbox" id="new_entry_is_cover" name="is_cover" class="form-check-input">
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <label for="new_entry_notes" class="form-label">ملاحظات</label>
-                    <input type="text" id="new_entry_notes" name="notes" class="form-control" placeholder="ملاحظات...">
-                </div>
-            </div>
-            <div class="row mt-3">
-                <div class="col-12 text-end">
-                    <button type="button" class="btn btn-success" onclick="addNewEntry()">
-                        <i class="fas fa-plus me-1"></i>إضافة التوزيعة
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-// ---- Config ----
-const EDIT_MODE = true;
-const SCHEDULE_ID = {{ schedule.id }};
-let employeesData = [];
-let shiftsData = [];
-let prefilledRows = false;
+try {
+    console.log('=== JavaScript Loading ===');
+    console.log('Schedule ID from template:', {{ schedule.id }});
 
-// ---- Add New Entry ----
-function addNewEntry() {
-    const form = document.getElementById('addEntryForm');
-    const formData = new FormData(form);
-    
-    // Validate form
-    const date = formData.get('date');
-    const employee = formData.get('employee');
-    const shift = formData.get('shift');
-    const startTime = formData.get('start_time');
-    const endTime = formData.get('end_time');
-    
-    if (!date || !employee || !shift || !startTime || !endTime) {
-        alert('يرجى ملء جميع الحقول المطلوبة');
-        return;
+    // ---- Config ----
+    const EDIT_MODE = true;
+    const SCHEDULE_ID = {{ schedule.id }};
+    let employeesData = [];
+    let shiftsData = [];
+    let prefilledRows = false;
+
+    console.log('SCHEDULE_ID set to:', SCHEDULE_ID);
+    console.log('EDIT_MODE:', EDIT_MODE);
+
+    // Simple test function first
+    function testSave() {
+        alert('Test function works!');
+        console.log('Test function called');
     }
+
+    // Make test function available globally immediately
+    window.testSave = testSave;
+    window.saveScheduleToDatabase = testSave; // Temporary assignment
     
-    // Calculate hours
-    const hours = computeHours(startTime, endTime);
-    
-    // Add to table
-    addEntryRow({
-        date: date,
-        employee_id: employee,
-        shift_id: shift,
-        start_time: startTime,
-        end_time: endTime,
-        hours: hours,
-        is_cover: formData.get('is_cover') === 'on',
-        notes: formData.get('notes') || ''
-    });
-    
-    // Clear form
-    form.reset();
-    
-    // Update stats
-    updateStats();
-    
-    alert('تم إضافة التوزيعة بنجاح');
+    console.log('Basic setup completed successfully');
+} catch (error) {
+    console.error('Error in basic setup:', error);
+    alert('خطأ في تحميل JavaScript: ' + error.message);
 }
 
+// Simple save function for now
+function saveScheduleToDatabase() {
+    alert('تم استدعاء دالة الحفظ!');
+    console.log('saveScheduleToDatabase called successfully');
+}
+
+// Make save function available globally immediately
+window.saveScheduleToDatabase = saveScheduleToDatabase;
+
+
 // Existing entries from backend (for inline editor prefill)
-const EXISTING_ENTRIES = [
-    {% for entry in entries %}
-    {
-        date: '{{ entry.date|date:"Y-m-d" }}',
-        employee_id: {{ entry.employee.id }},
-        employee_name: '{{ entry.employee.get_full_name|default:entry.employee.username }}',
-        shift_id: {{ entry.shift.id }},
-        shift_name: '{{ entry.shift.name }}',
-        start_time: '{{ entry.start_time|time:"H:i" }}',
-        end_time: '{{ entry.end_time|time:"H:i" }}',
-        hours: {{ entry.hours }},
-        is_cover: {{ entry.is_cover|yesno:"true,false" }},
-        notes: '{{ entry.notes|default:"" }}'
-    }{% if not forloop.last %},{% endif %}
-    {% endfor %}
-];
+try {
+    const EXISTING_ENTRIES = [
+        {% for entry in entries %}
+        {
+            date: '{{ entry.date|date:"Y-m-d" }}',
+            employee_id: {{ entry.employee.id }},
+            employee_name: '{{ entry.employee.get_full_name|default:entry.employee.username|escapejs }}',
+            shift_id: {{ entry.shift.id }},
+            shift_name: '{{ entry.shift.name|escapejs }}',
+            start_time: '{{ entry.start_time|time:"H:i" }}',
+            end_time: '{{ entry.end_time|time:"H:i" }}',
+            hours: {{ entry.hours }},
+            is_cover: {{ entry.is_cover|yesno:"true,false" }},
+            notes: '{{ entry.notes|default:""|escapejs }}'
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+    console.log('EXISTING_ENTRIES loaded:', EXISTING_ENTRIES.length, 'entries');
+} catch (error) {
+    console.error('Error loading EXISTING_ENTRIES:', error);
+    const EXISTING_ENTRIES = [];
+}
 
 // ---- Helpers ----
 function getCSRFToken() {
@@ -395,14 +346,32 @@ function showCurrentEntriesModal() {
 // ---- Loaders ----
 function reloadBranchData() {
     const branchId = document.getElementById('branch').value;
+    console.log('Reloading branch data for:', branchId);
+    
+    if (!branchId) {
+        console.warn('No branch ID selected');
+        return;
+    }
+    
     Promise.all([
         fetch(`/schedules/api/employees/?branch=${branchId}`).then(r => r.json()),
         fetch(`/schedules/api/branches/${branchId}/shifts/`).then(r => r.json()),
     ])
     .then(([empRes, shiftRes]) => {
-        if (empRes.success) employeesData = empRes.employees || empRes.data || [];
-        if (shiftRes.success) shiftsData = shiftRes.shifts || shiftRes.data || [];
+        console.log('Branch data loaded:', {empRes, shiftRes});
+        
+        if (empRes.success) {
+            employeesData = empRes.employees || empRes.data || [];
+            console.log('Loaded employees for rows:', employeesData.length);
+        }
+        
+        if (shiftRes.success) {
+            shiftsData = shiftRes.shifts || shiftRes.data || [];
+            console.log('Loaded shifts for rows:', shiftsData.length);
+        }
+        
         refreshRowSelects();
+        
         // Prefill rows once employees & shifts are available
         if (!prefilledRows) {
             prefillRowsFromExisting();
@@ -455,10 +424,10 @@ function addEntryRow(prefill = null) {
         <td class="text-center"><input type="checkbox" class="form-check-input row-select" onchange="updateSelectAllState()"></td>
         <td class="text-center"><input type="date" class="form-control form-control-sm entry-date" value="${dateVal}"></td>
         <td class="text-center">
-            <select class="form-select form-select-sm entry-employee"></select>
+            <select class="form-select form-select-sm entry-employee" onchange="showEmployeeInfo(this)"></select>
         </td>
         <td class="text-center">
-            <select class="form-select form-select-sm entry-shift"></select>
+            <select class="form-select form-select-sm entry-shift" onchange="updateShiftTimes(this)"></select>
         </td>
         <td class="text-center"><input type="time" class="form-control form-control-sm entry-start" value="${startVal}"></td>
         <td class="text-center"><input type="time" class="form-control form-control-sm entry-end" value="${endVal}"></td>
@@ -568,7 +537,7 @@ function duplicateSelectedRows() {
         });
     });
     
-    alert(`تم تكرار ${selectedRows.length} صف بنجاح`);
+    alert(`✅ تم تكرار ${selectedRows.length} صف بنجاح!`);
 }
 
 function deleteSelectedRows() {
@@ -581,7 +550,7 @@ function deleteSelectedRows() {
     if (confirm(`هل أنت متأكد من حذف ${selectedRows.length} صف؟`)) {
         selectedRows.forEach(row => row.remove());
         updateSelectAllState();
-        alert(`تم حذف ${selectedRows.length} صف بنجاح`);
+        alert(`✅ تم حذف ${selectedRows.length} صف بنجاح!`);
     }
 }
 
@@ -688,73 +657,176 @@ function collectAllScheduleData() {
     return data;
 }
 
-function saveScheduleToDatabase() {
-    try {
-        // Validate data first
-        const validationErrors = validateFormData();
-        if (validationErrors.length > 0) {
-            alert('يرجى تصحيح الأخطاء التالية:\n\n' + validationErrors.join('\n'));
-            return;
-        }
-        
-        // Collect all data
-        const payload = collectAllScheduleData();
-        
-        // Show loading state
-        const saveBtn = document.querySelector('button[onclick="saveScheduleToDatabase()"]');
-        const originalText = saveBtn.innerHTML;
-        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>جاري الحفظ...';
-        saveBtn.disabled = true;
-        
-        // Save everything using API
-        fetch(`/schedules/api/${SCHEDULE_ID}/save-entries/`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
-            body: JSON.stringify({ ...payload, schedule_id: SCHEDULE_ID, is_update: true })
-        })
-        .then(r => r.json())
-        .then(res => {
-            if (res.success) {
-                alert(`تم تحديث الجدول بنجاح!\n\nعدد التوزيعات: ${payload.entries.length}\nعدد الساعات: ${payload.entries.reduce((sum, e) => sum + e.hours, 0).toFixed(1)} ساعة`);
-                window.location.href = `/schedules/${SCHEDULE_ID}/`;
-            } else {
-                alert(`فشل الحفظ: ${res.error || 'غير معروف'}`);
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            alert('خطأ غير متوقع أثناء الحفظ');
-        })
-        .finally(() => {
-            // Restore button state
-            saveBtn.innerHTML = originalText;
-            saveBtn.disabled = false;
-        });
-    } catch (e) {
-        console.error(e);
-        alert('تعذر جمع البيانات للحفظ');
+// Validation function
+function validateFormData() {
+    const errors = [];
+    
+    // Check basic schedule info
+    const branch = document.getElementById('branch');
+    const scheduleType = document.getElementById('schedule_type');
+    const startDate = document.getElementById('start_date');
+    const endDate = document.getElementById('end_date');
+    
+    if (!branch || !branch.value) {
+        errors.push('يجب اختيار الفرع');
     }
+    
+    if (!scheduleType || !scheduleType.value) {
+        errors.push('يجب اختيار نوع الجدول');
+    }
+    
+    if (!startDate || !startDate.value) {
+        errors.push('يجب تحديد تاريخ البداية');
+    }
+    
+    if (!endDate || !endDate.value) {
+        errors.push('يجب تحديد تاريخ النهاية');
+    }
+    
+    if (startDate && endDate && startDate.value && endDate.value) {
+        if (new Date(startDate.value) >= new Date(endDate.value)) {
+            errors.push('تاريخ البداية يجب أن يكون قبل تاريخ النهاية');
+        }
+    }
+    
+    // Check entries in the table
+    const entryRows = document.querySelectorAll('#entries_table tbody tr');
+    let hasEntries = false;
+    
+    entryRows.forEach((row, index) => {
+        const date = row.querySelector('input[name="date"]');
+        const employee = row.querySelector('select[name="employee"]');
+        const shift = row.querySelector('select[name="shift"]');
+        const startTime = row.querySelector('input[name="start_time"]');
+        const endTime = row.querySelector('input[name="end_time"]');
+        
+        if (date && date.value && employee && employee.value && shift && shift.value) {
+            hasEntries = true;
+            
+            if (!startTime || !startTime.value) {
+                errors.push(`الصف ${index + 1}: يجب تحديد وقت البداية`);
+            }
+            
+            if (!endTime || !endTime.value) {
+                errors.push(`الصف ${index + 1}: يجب تحديد وقت النهاية`);
+            }
+            
+            if (startTime && endTime && startTime.value && endTime.value) {
+                const start = new Date(`2000-01-01 ${startTime.value}`);
+                const end = new Date(`2000-01-01 ${endTime.value}`);
+                
+                if (start >= end) {
+                    errors.push(`الصف ${index + 1}: وقت البداية يجب أن يكون قبل وقت النهاية`);
+                }
+            }
+        }
+    });
+    
+    if (!hasEntries) {
+        errors.push('يجب إضافة توزيعة واحدة على الأقل');
+    }
+    
+    return {
+        isValid: errors.length === 0,
+        message: errors.join('\n')
+    };
 }
+
+// Collect all schedule data
+function collectAllScheduleData() {
+    const data = {
+        schedule_id: SCHEDULE_ID,
+        is_update: true,
+        
+        // Basic schedule info
+        branch_id: document.getElementById('branch').value,
+        schedule_type: document.getElementById('schedule_type').value,
+        start_date: document.getElementById('start_date').value,
+        end_date: document.getElementById('end_date').value,
+        notes: document.getElementById('notes').value || '',
+        
+        // Entries
+        entries: []
+    };
+    
+    // Collect entries from table
+    const entryRows = document.querySelectorAll('#entries_table tbody tr');
+    
+    entryRows.forEach(row => {
+        const date = row.querySelector('input[name="date"]');
+        const employee = row.querySelector('select[name="employee"]');
+        const shift = row.querySelector('select[name="shift"]');
+        const startTime = row.querySelector('input[name="start_time"]');
+        const endTime = row.querySelector('input[name="end_time"]');
+        const isCover = row.querySelector('input[name="is_cover"]');
+        const notes = row.querySelector('input[name="notes"]');
+        
+        if (date && date.value && employee && employee.value && shift && shift.value) {
+            const entry = {
+                date: date.value,
+                employee_id: parseInt(employee.value),
+                shift_id: parseInt(shift.value),
+                start_time: startTime ? startTime.value : '',
+                end_time: endTime ? endTime.value : '',
+                is_cover: isCover ? isCover.checked : false,
+                notes: notes ? notes.value : ''
+            };
+            
+            // Calculate hours
+            if (entry.start_time && entry.end_time) {
+                entry.hours = computeHours(entry.start_time, entry.end_time);
+            } else {
+                entry.hours = 0;
+            }
+            
+            data.entries.push(entry);
+        }
+    });
+    
+    console.log('Collected data:', data);
+    return data;
+}
+
 
 // ---- Init ----
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, initializing...');
+    
+    // Check if all required functions are defined
+    const requiredFunctions = [
+        'reloadBranchData', 'validateFormData', 
+        'collectAllScheduleData', 'saveScheduleToDatabase', 'getCSRFToken'
+    ];
+    
+    const missingFunctions = requiredFunctions.filter(func => typeof window[func] !== 'function');
+    if (missingFunctions.length > 0) {
+        console.error('Missing functions:', missingFunctions);
+        alert('خطأ: بعض الدوال المطلوبة غير موجودة: ' + missingFunctions.join(', '));
+        return;
+    }
+    
+    // Check if SCHEDULE_ID is defined
+    if (typeof SCHEDULE_ID === 'undefined') {
+        console.error('SCHEDULE_ID is not defined');
+        alert('خطأ: معرف الجدول غير محدد');
+        return;
+    }
+    
+    console.log('All required functions are available');
+    console.log('SCHEDULE_ID:', SCHEDULE_ID);
+    
     // Load employees/shifts for current branch
     reloadBranchData();
-    // Also populate new-entry form selects initially
-    const initialBranchId = document.getElementById('branch') ? document.getElementById('branch').value : '';
-    if (initialBranchId) {
-        updateFormOptions(initialBranchId);
-    }
     
     // Add event listener for branch change
     const branchSelect = document.getElementById('branch');
     if (branchSelect) {
         branchSelect.addEventListener('change', function() {
             const branchId = this.value;
+            console.log('Branch changed to:', branchId);
             if (branchId) {
-                // Reload rows data and update new-entry form selects
+                // Reload rows data
                 reloadBranchData();
-                updateFormOptions(branchId);
             }
         });
     }
@@ -762,59 +834,154 @@ document.addEventListener('DOMContentLoaded', () => {
     // If employees/shifts load quickly, rows will be prefilled in reloadBranchData.then
     // Otherwise, set a fallback timer to prefill after a short delay
     setTimeout(() => { 
+        console.log('Fallback timer triggered');
         if (!prefilledRows) prefillRowsFromExisting(); 
         updateStats();
-    }, 1500);
+    }, 2000);
 });
 
-// Update form options when branch changes
-async function updateFormOptions(branchId) {
-    try {
-        // Fetch employees for the branch
-        const employeesResponse = await fetch(`/schedules/api/employees/?branch=${branchId}`);
-        const employeesResult = await employeesResponse.json();
+
+// ---- Employee Info ----
+function showEmployeeInfo(selectElement) {
+    const employeeId = selectElement.value;
+    if (!employeeId) return;
+    
+    const employee = employeesData.find(emp => emp.id == employeeId);
+    if (employee) {
+        // Show employee info in a tooltip or alert
+        const info = `
+الموظف: ${employee.full_name || employee.username}
+المنصب: ${employee.position || 'غير محدد'}
+ساعات العمل اليومية: ${employee.hours_per_day || 8} ساعة
+الهاتف: ${employee.phone || 'غير محدد'}
+البريد الإلكتروني: ${employee.email || 'غير محدد'}
+        `;
         
-        if (employeesResult.success) {
-            employeesData = employeesResult.employees;
-            
-            // Update employee select in new entry form
-            const employeeSelect = document.getElementById('new_entry_employee');
-            if (employeeSelect) {
-                employeeSelect.innerHTML = '<option value="">اختر موظف</option>';
-                employeesData.forEach(emp => {
-                    const option = document.createElement('option');
-                    option.value = emp.id;
-                    option.textContent = emp.full_name || emp.username;
-                    employeeSelect.appendChild(option);
-                });
-            }
+        // Create a temporary tooltip or show in console
+        console.log('Employee Info:', info);
+        
+        // You can also show this in a modal or tooltip
+        if (window.showEmployeeModal) {
+            showEmployeeModal(employee);
         }
-        
-        // Fetch shifts for the branch
-        const shiftsResponse = await fetch(`/schedules/api/branches/${branchId}/shifts/`);
-        const shiftsResult = await shiftsResponse.json();
-        
-        if (shiftsResult.success) {
-            shiftsData = shiftsResult.shifts;
-            
-            // Update shift select in new entry form
-            const shiftSelect = document.getElementById('new_entry_shift');
-            if (shiftSelect) {
-                shiftSelect.innerHTML = '<option value="">اختر شفتة</option>';
-                shiftsData.forEach(shift => {
-                    const option = document.createElement('option');
-                    option.value = shift.id;
-                    option.textContent = `${shift.name} (${shift.start_time} - ${shift.end_time})`;
-                    shiftSelect.appendChild(option);
-                });
-            }
-        }
-    } catch (error) {
-        console.error('Error updating form options:', error);
     }
+}
+
+// ---- Shift Time Update ----
+function updateShiftTimes(selectElement) {
+    const shiftId = selectElement.value;
+    if (!shiftId) return;
+    
+    const shift = shiftsData.find(s => s.id == shiftId);
+    if (shift) {
+        const row = selectElement.closest('tr');
+        const startInput = row.querySelector('.entry-start');
+        const endInput = row.querySelector('.entry-end');
+        const hoursBadge = row.querySelector('.entry-hours');
+        
+        // Update times based on shift
+        startInput.value = shift.start_time;
+        endInput.value = shift.end_time;
+        
+        // Recalculate hours
+        const hours = computeHours(shift.start_time, shift.end_time);
+        hoursBadge.textContent = hours.toFixed(1);
+        
+        // Update stats
+        updateStats();
+    }
+}
+
+
+// ---- Employee Modal ----
+function showEmployeeModal(employee) {
+    // Create modal HTML if it doesn't exist
+    let modal = document.getElementById('employeeInfoModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'employeeInfoModal';
+        modal.className = 'modal fade';
+        modal.innerHTML = `
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">معلومات الموظف</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body" id="employeeInfoContent">
+                        <!-- Content will be filled here -->
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    
+    // Fill modal content
+    const content = document.getElementById('employeeInfoContent');
+    content.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <strong>الاسم:</strong> ${employee.full_name || employee.username}
+            </div>
+            <div class="col-md-6">
+                <strong>المنصب:</strong> ${employee.position || 'غير محدد'}
+            </div>
+            <div class="col-md-6">
+                <strong>ساعات العمل اليومية:</strong> ${employee.hours_per_day || 8} ساعة
+            </div>
+            <div class="col-md-6">
+                <strong>الهاتف:</strong> ${employee.phone || 'غير محدد'}
+            </div>
+            <div class="col-md-12">
+                <strong>البريد الإلكتروني:</strong> ${employee.email || 'غير محدد'}
+            </div>
+        </div>
+    `;
+    
+    // Show modal
+    new bootstrap.Modal(modal).show();
 }
 
 // Also expose a quick modal viewer
 function showCurrentEntriesModal() { new bootstrap.Modal(document.getElementById('currentEntriesModal')).show(); }
+
+// Test function to verify everything is working
+function testEditPage() {
+    console.log('=== Testing Edit Page ===');
+    console.log('SCHEDULE_ID:', typeof SCHEDULE_ID !== 'undefined' ? SCHEDULE_ID : 'UNDEFINED');
+    console.log('employeesData:', employeesData.length);
+    console.log('shiftsData:', shiftsData.length);
+    console.log('Required functions check:');
+    const functions = ['reloadBranchData', 'updateFormOptions', 'validateFormData', 'collectAllScheduleData', 'saveScheduleToDatabase', 'getCSRFToken'];
+    functions.forEach(func => {
+        console.log(`  ${func}: ${typeof window[func]}`);
+    });
+    console.log('DOM elements check:');
+    const elements = ['branch', 'schedule_type', 'start_date', 'end_date'];
+    elements.forEach(id => {
+        const el = document.getElementById(id);
+        console.log(`  ${id}: ${el ? 'EXISTS' : 'MISSING'}`);
+    });
+    console.log('=== End Test ===');
+}
+
+// Make test function available globally
+window.testEditPage = testEditPage;
+
+console.log('=== JavaScript Loaded Successfully ===');
+console.log('saveScheduleToDatabase function:', typeof window.saveScheduleToDatabase);
+console.log('testSave function:', typeof window.testSave);
+console.log('testEditPage function:', typeof window.testEditPage);
+
+// Final test
+if (typeof window.saveScheduleToDatabase === 'function') {
+    console.log('✅ saveScheduleToDatabase is available globally');
+} else {
+    console.error('❌ saveScheduleToDatabase is NOT available globally');
+}
 </script>
 {% endblock %}

@@ -23,7 +23,15 @@
         <div class="card bg-warning text-white">
             <div class="card-body text-center">
                 <h5 class="card-title">معلقة</h5>
-                <h2 class="card-text">8</h2>
+                <h2 class="card-text">{{ stats.pending }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h5 class="card-title">قيد المراجعة</h5>
+                <h2 class="card-text">{{ stats.in_progress }}</h2>
             </div>
         </div>
     </div>
@@ -31,7 +39,7 @@
         <div class="card bg-success text-white">
             <div class="card-body text-center">
                 <h5 class="card-title">معتمدة</h5>
-                <h2 class="card-text">23</h2>
+                <h2 class="card-text">{{ stats.approved }}</h2>
             </div>
         </div>
     </div>
@@ -39,15 +47,7 @@
         <div class="card bg-danger text-white">
             <div class="card-body text-center">
                 <h5 class="card-title">مرفوضة</h5>
-                <h2 class="card-text">3</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-info text-white">
-            <div class="card-body text-center">
-                <h5 class="card-title">إجمالي</h5>
-                <h2 class="card-text">34</h2>
+                <h2 class="card-text">{{ stats.rejected }}</h2>
             </div>
         </div>
     </div>
@@ -103,125 +103,78 @@
     <div class="card-header py-3 d-flex justify-content-between align-items-center">
         <h6 class="m-0 font-weight-bold text-primary">قائمة الموافقات</h6>
         <div class="text-muted">
-            إجمالي: <span class="badge bg-primary">8</span> موافقة معلقة
+            إجمالي: <span class="badge bg-primary">{{ stats.total }}</span> موافقة
         </div>
     </div>
     <div class="card-body">
+        {% if approval_flows %}
         <div class="list-group list-group-flush">
-            <!-- Approval Item 1 -->
+            {% for approval in approval_flows %}
             <div class="list-group-item">
                 <div class="row align-items-center">
                     <div class="col-md-8">
                         <div class="d-flex align-items-center">
                             <div class="me-3">
-                                <i class="fas fa-calendar-alt fa-2x text-primary"></i>
+                                {% if approval.content_type.model == 'schedule' %}
+                                    <i class="fas fa-calendar-alt fa-2x text-primary"></i>
+                                {% elif approval.content_type.model == 'leaverequest' %}
+                                    <i class="fas fa-calendar-times fa-2x text-info"></i>
+                                {% else %}
+                                    <i class="fas fa-file-alt fa-2x text-secondary"></i>
+                                {% endif %}
                             </div>
                             <div>
-                                <h6 class="mb-1">جدول تشغيلي - فرع الرياض</h6>
-                                <p class="mb-1 text-muted">الفترة: 15-21 يناير 2024</p>
+                                <h6 class="mb-1">{{ approval.get_related_object_display }}</h6>
+                                <p class="mb-1 text-muted">
+                                    {% if approval.content_type.model == 'schedule' %}
+                                        الجدول التشغيلي - {{ approval.related_object.branch.name }}
+                                    {% elif approval.content_type.model == 'leaverequest' %}
+                                        طلب إجازة - {{ approval.related_object.employee.user.get_full_name|default:approval.related_object.employee.user.username }}
+                                    {% else %}
+                                        {{ approval.content_type.model }}
+                                    {% endif %}
+                                </p>
                                 <small class="text-muted">
-                                    <i class="fas fa-user me-1"></i>أحمد محمد
+                                    <i class="fas fa-user me-1"></i>{{ approval.created_by.get_full_name|default:approval.created_by.username }}
                                     <span class="mx-2">•</span>
-                                    <i class="fas fa-clock me-1"></i>منذ يومين
+                                    <i class="fas fa-clock me-1"></i>{{ approval.created_at|timesince }}
                                 </small>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="d-flex justify-content-end align-items-center">
-                            <span class="badge bg-warning me-2">معلقة</span>
+                            <span class="badge bg-{% if approval.status == 'pending' %}warning{% elif approval.status == 'in_progress' %}primary{% elif approval.status == 'approved' %}success{% elif approval.status == 'rejected' %}danger{% else %}secondary{% endif %} me-2">
+                                {% if approval.status == 'pending' %}معلقة{% elif approval.status == 'in_progress' %}قيد المراجعة{% elif approval.status == 'approved' %}معتمدة{% elif approval.status == 'rejected' %}مرفوضة{% else %}{{ approval.status }}{% endif %}
+                            </span>
                             <div class="btn-group btn-group-sm" role="group">
-                                <button class="btn btn-success" onclick="approveItem(1)">
+                                {% if approval.status in 'pending,in_progress' and user_role in 'coordinator,region_manager,operations_manager,admin_manager' %}
+                                <a href="{% url 'approvals:detail' approval.id %}" class="btn btn-success" title="اعتماد">
                                     <i class="fas fa-check"></i>
-                                </button>
-                                <button class="btn btn-danger" onclick="rejectItem(1)">
+                                </a>
+                                <a href="{% url 'approvals:detail' approval.id %}" class="btn btn-danger" title="رفض">
                                     <i class="fas fa-times"></i>
-                                </button>
-                                <button class="btn btn-outline-primary" onclick="viewDetails(1)">
+                                </a>
+                                {% endif %}
+                                <a href="{% url 'approvals:detail' approval.id %}" class="btn btn-outline-primary" title="عرض التفاصيل">
                                     <i class="fas fa-eye"></i>
-                                </button>
+                                </a>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+            {% endfor %}
 
-            <!-- Approval Item 2 -->
-            <div class="list-group-item">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <div class="d-flex align-items-center">
-                            <div class="me-3">
-                                <i class="fas fa-calendar-times fa-2x text-info"></i>
-                            </div>
-                            <div>
-                                <h6 class="mb-1">طلب إجازة - فاطمة علي</h6>
-                                <p class="mb-1 text-muted">إجازة سنوية - 5 أيام</p>
-                                <small class="text-muted">
-                                    <i class="fas fa-user me-1"></i>فاطمة علي
-                                    <span class="mx-2">•</span>
-                                    <i class="fas fa-clock me-1"></i>منذ 3 أيام
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="d-flex justify-content-end align-items-center">
-                            <span class="badge bg-warning me-2">معلقة</span>
-                            <div class="btn-group btn-group-sm" role="group">
-                                <button class="btn btn-success" onclick="approveItem(2)">
-                                    <i class="fas fa-check"></i>
-                                </button>
-                                <button class="btn btn-danger" onclick="rejectItem(2)">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                                <button class="btn btn-outline-primary" onclick="viewDetails(2)">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Approval Item 3 -->
-            <div class="list-group-item">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <div class="d-flex align-items-center">
-                            <div class="me-3">
-                                <i class="fas fa-clock fa-2x text-warning"></i>
-                            </div>
-                            <div>
-                                <h6 class="mb-1">ساعات إضافية - خالد سعد</h6>
-                                <p class="mb-1 text-muted">4 ساعات إضافية - يوم السبت</p>
-                                <small class="text-muted">
-                                    <i class="fas fa-user me-1"></i>خالد سعد
-                                    <span class="mx-2">•</span>
-                                    <i class="fas fa-clock me-1"></i>منذ 5 أيام
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="d-flex justify-content-end align-items-center">
-                            <span class="badge bg-warning me-2">معلقة</span>
-                            <div class="btn-group btn-group-sm" role="group">
-                                <button class="btn btn-success" onclick="approveItem(3)">
-                                    <i class="fas fa-check"></i>
-                                </button>
-                                <button class="btn btn-danger" onclick="rejectItem(3)">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                                <button class="btn btn-outline-primary" onclick="viewDetails(3)">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">لا توجد موافقات</h5>
+            <p class="text-muted">لم يتم العثور على أي موافقات لعرضها</p>
+        </div>
+        {% endif %}
+
     </div>
 </div>
 

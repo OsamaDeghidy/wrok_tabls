@@ -9,8 +9,7 @@ class BranchForm(forms.ModelForm):
     class Meta:
         model = Branch
         fields = [
-إعدادات الشفتات وساعات العمل
-الشفتات            'name', 'code', 'type', 'category', 'status', 'address', 'city', 'region', 
+            'name', 'code', 'type', 'category', 'status', 'address', 'city', 'region', 
             'postal_code', 'phone', 'email', 'manager', 'capacity', 
             'opening_date', 'working_days', 'description', 'notes'
         ]

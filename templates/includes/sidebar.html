@@ -79,10 +79,9 @@
             
             <!-- Approvals -->
             <li class="nav-item">
-                <a class="nav-link {% if 'approvals' in request.path %}active{% endif %}" href="#">
+                <a class="nav-link {% if 'approvals' in request.path %}active{% endif %}" href="{% url 'approvals:list' %}">
                     <i class="fas fa-check-circle me-2"></i>
                     الموافقات
-                    <span class="badge bg-danger ms-2">5</span>
                 </a>
             </li>
             

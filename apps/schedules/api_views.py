@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from apps.branches.models import Branch, BranchShift
 from apps.leaves.models import LeaveRequest
 from apps.users.models import UserProfile
+from .models import Schedule, ScheduleEntry
 import json
 
 
@@ -344,9 +345,8 @@ def create_schedule_api(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
-@login_required
-@require_http_methods(["POST"])
 @csrf_exempt
+@require_http_methods(["POST"])
 def save_schedule_entries_api(request, schedule_id):
     """حفظ إدخالات الجدول التشغيلي"""
     try:
@@ -358,17 +358,24 @@ def save_schedule_entries_api(request, schedule_id):
         print("Entries count:", len(data.get('entries', [])))
         
         # التحقق من الصلاحيات
+        if not request.user.is_authenticated:
+            return JsonResponse({'success': False, 'error': 'يجب تسجيل الدخول'}, status=401)
+        
         if not request.user.is_superuser and hasattr(request.user, 'profile'):
             user_role = request.user.profile.role
             if user_role == 'branch_manager':
                 if hasattr(request.user.profile, 'branch') and request.user.profile.branch != schedule.branch:
-                    return JsonResponse({'error': 'ليس لديك صلاحية لتعديل هذا الجدول'}, status=403)
+                    return JsonResponse({'success': False, 'error': 'ليس لديك صلاحية لتعديل هذا الجدول'}, status=403)
         
         # تحديث البيانات الأساسية للجدول
-        if 'branch' in data:
-            schedule.branch_id = data['branch']
+        if 'branch_id' in data:
+            schedule.branch_id = data['branch_id']
         if 'schedule_type' in data:
             schedule.schedule_type = data['schedule_type']
+        if 'status' in data:
+            schedule.status = data['status']
+        if 'version' in data:
+            schedule.version = data['version']
         if 'start_date' in data:
             schedule.start_date = data['start_date']
         if 'end_date' in data:
@@ -379,10 +386,13 @@ def save_schedule_entries_api(request, schedule_id):
         schedule.save()
         print(f"Updated basic schedule data")
         
-        # حذف الإدخالات الموجودة
-        old_entries_count = schedule.entries.count()
-        schedule.entries.all().delete()
-        print(f"Deleted {old_entries_count} old entries")
+        # حذف الإدخالات الموجودة فقط إذا لم يكن هناك خيار للاحتفاظ بها
+        if not data.get('keep_existing', False):
+            old_entries_count = schedule.entries.count()
+            schedule.entries.all().delete()
+            print(f"Deleted {old_entries_count} old entries")
+        else:
+            print("Keeping existing entries, adding new ones only")
         
         # إنشاء الإدخالات الجديدة
         entries_created = 0
@@ -416,9 +426,10 @@ def save_schedule_entries_api(request, schedule_id):
         return JsonResponse({
             'success': True,
             'entries_created': entries_created,
+            'entries_updated': entries_created,
             'message': f'تم حفظ {entries_created} إدخال بنجاح'
         })
         
     except Exception as e:
         print(f"=== API: Error occurred: {e} ===")
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

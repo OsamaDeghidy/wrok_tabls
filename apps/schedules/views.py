@@ -367,7 +367,7 @@ def schedule_edit_view(request, schedule_id):
         'new_entry_form': new_entry_form,
     }
     
-    return render(request, 'schedules/edit.html', context)
+    return render(request, 'schedules/edit_simple.html', context)
 
 
 @login_required

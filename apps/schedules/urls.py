@@ -38,7 +38,7 @@ urlpatterns = [
     path('api/branches/<int:branch_id>/shifts/', views.branch_shifts_api, name='branch_shifts_api'),
     path('api/leaves/conflicts/', views.leave_conflicts_api, name='leave_conflicts_api'),
     path('api/create/', views.create_schedule_api, name='create_schedule_api'),
-    path('api/<int:schedule_id>/save-entries/', views.save_schedule_entries_api, name='save_schedule_entries_api'),
+    path('api/<int:schedule_id>/save-entries/', api_views.save_schedule_entries_api, name='save_schedule_entries_api'),
     path('api/<int:schedule_id>/delete-day-entries/', api_views.delete_day_entries_api, name='delete_day_entries_api'),
     path('api/<int:schedule_id>/get-day-entries/', api_views.get_day_entries_api, name='get_day_entries_api'),
 ]
