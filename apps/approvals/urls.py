@@ -5,6 +5,7 @@ app_name = 'approvals'
 
 urlpatterns = [
     path('', views.approvals_list_view, name='list'),
+    path('guide/', views.approvals_guide_view, name='guide'),
     path('my-approvals/', views.my_approvals_view, name='my_approvals'),
     path('<int:approval_id>/', views.approval_detail_view, name='detail'),
     path('<int:approval_id>/approve/', views.approve_request_view, name='approve'),

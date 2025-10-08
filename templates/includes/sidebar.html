@@ -39,7 +39,7 @@
             
             <!-- Employees -->
             <li class="nav-item">
-                <a class="nav-link {% if 'employees' in request.path %}active{% endif %}" href="{% url 'users:list' %}">
+                <a class="nav-link {% if 'employees' in request.path %}active{% endif %}" href="{% url 'employees:list' %}">
                     <i class="fas fa-users me-2"></i>
                     الموظفين
                 </a>
@@ -79,9 +79,17 @@
             
             <!-- Approvals -->
             <li class="nav-item">
-                <a class="nav-link {% if 'approvals' in request.path %}active{% endif %}" href="{% url 'approvals:list' %}">
+                <a class="nav-link {% if 'approvals' in request.path and 'guide' not in request.path %}active{% endif %}" href="{% url 'approvals:list' %}">
                     <i class="fas fa-check-circle me-2"></i>
                     الموافقات
+                </a>
+            </li>
+            
+            <!-- Approvals Guide -->
+            <li class="nav-item">
+                <a class="nav-link {% if 'approvals/guide' in request.path %}active{% endif %}" href="{% url 'approvals:guide' %}">
+                    <i class="fas fa-book-reader me-2"></i>
+                    شرح الموافقات
                 </a>
             </li>
             
@@ -90,27 +98,6 @@
                 <a class="nav-link {% if 'violations' in request.path %}active{% endif %}" href="#">
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     المخالفات
-                </a>
-            </li>
-            
-            <!-- Reports & Analytics -->
-            <li class="nav-item mt-3">
-                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-                    <span>التقارير والتحليلات</span>
-                </h6>
-            </li>
-            
-            <li class="nav-item">
-                <a class="nav-link {% if 'reports' in request.path %}active{% endif %}" href="#">
-                    <i class="fas fa-chart-bar me-2"></i>
-                    التقارير
-                </a>
-            </li>
-            
-            <li class="nav-item">
-                <a class="nav-link {% if 'integrations' in request.path %}active{% endif %}" href="#">
-                    <i class="fas fa-download me-2"></i>
-                    الاستيراد والتصدير
                 </a>
             </li>
             

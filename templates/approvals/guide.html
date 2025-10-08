@@ -1,0 +1,661 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}شرح نظام الموافقات - نظام إدارة الجداول التشغيلية{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-book-reader me-2"></i>شرح نظام الموافقات
+{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <a href="{% url 'approvals:list' %}" class="btn btn-primary">
+        <i class="fas fa-list me-1"></i>عرض الموافقات
+    </a>
+    <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
+        <i class="fas fa-print me-1"></i>طباعة
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+    .guide-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    .guide-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .guide-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    
+    .step-number {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+    }
+    
+    .role-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        font-weight: 600;
+        margin: 0.3rem;
+    }
+    
+    .flow-arrow {
+        font-size: 2rem;
+        color: #667eea;
+        text-align: center;
+        margin: 1rem 0;
+    }
+    
+    .status-badge {
+        padding: 0.7rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        display: inline-block;
+        margin: 0.5rem;
+    }
+    
+    .mockup-screen {
+        border: 3px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        font-family: 'Courier New', monospace;
+        margin: 1rem 0;
+    }
+    
+    .timeline-guide {
+        position: relative;
+        padding-left: 40px;
+    }
+    
+    .timeline-guide::before {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: linear-gradient(to bottom, #667eea, #764ba2);
+    }
+    
+    .timeline-item-guide {
+        position: relative;
+        margin-bottom: 2rem;
+    }
+    
+    .timeline-dot {
+        position: absolute;
+        left: -32px;
+        top: 5px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: white;
+        border: 4px solid #667eea;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+    }
+    
+    .permission-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 0 20px rgba(0,0,0,0.08);
+    }
+    
+    .permission-table th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem;
+        font-weight: 600;
+    }
+    
+    .permission-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .permission-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .permission-table tr:nth-child(even) {
+        background: #f8f9fa;
+    }
+    
+    .icon-box {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+</style>
+
+<!-- Hero Section -->
+<div class="guide-section">
+    <div class="row align-items-center">
+        <div class="col-lg-8">
+            <h1 class="display-4 fw-bold mb-3">
+                <i class="fas fa-clipboard-check me-3"></i>
+                نظام الموافقات
+            </h1>
+            <p class="lead mb-4">
+                دليل شامل لفهم آلية عمل نظام الموافقات المتعدد المستويات - من تقديم الطلب حتى الاعتماد النهائي
+            </p>
+            <div class="d-flex gap-3">
+                <div class="bg-white bg-opacity-25 rounded p-3">
+                    <h3 class="mb-0">4</h3>
+                    <small>مستويات موافقة</small>
+                </div>
+                <div class="bg-white bg-opacity-25 rounded p-3">
+                    <h3 class="mb-0">7</h3>
+                    <small>أدوار مختلفة</small>
+                </div>
+                <div class="bg-white bg-opacity-25 rounded p-3">
+                    <h3 class="mb-0">3</h3>
+                    <small>أنواع طلبات</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 text-center">
+            <i class="fas fa-tasks fa-10x opacity-25"></i>
+        </div>
+    </div>
+</div>
+
+<!-- الفكرة العامة -->
+<div class="guide-card">
+    <div class="icon-box">
+        <i class="fas fa-lightbulb"></i>
+    </div>
+    <h2 class="text-primary mb-4">🎯 الفكرة العامة</h2>
+    <p class="lead">
+        نظام الموافقات هو نظام متعدد المستويات لاعتماد الطلبات (جداول تشغيلية، إجازات، مخالفات) 
+        حيث يمر الطلب خلال عدة خطوات متسلسلة حسب دور كل مستخدم حتى يتم اعتماده نهائياً.
+    </p>
+    <div class="alert alert-info mt-3">
+        <i class="fas fa-info-circle me-2"></i>
+        <strong>ملاحظة:</strong> كل خطوة تحتاج موافقة من مستخدم بدور محدد، وفي حالة الرفض يتوقف المسار فوراً.
+    </div>
+</div>
+
+<!-- رحلة الموافقة الكاملة -->
+<div class="guide-card">
+    <div class="icon-box">
+        <i class="fas fa-route"></i>
+    </div>
+    <h2 class="text-primary mb-4">🔄 رحلة الموافقة الكاملة</h2>
+    
+    <div class="timeline-guide">
+        <!-- المرحلة 1 -->
+        <div class="timeline-item-guide">
+            <div class="timeline-dot"></div>
+            <div class="step-number">1</div>
+            <h4 class="text-primary">إنشاء الطلب</h4>
+            <p>الموظف يقوم بإنشاء طلب جديد (إجازة، جدول تشغيلي، أو مخالفة)</p>
+            <div class="mockup-screen">
+┌─────────────────────────────────┐<br>
+│ 📝 طلب إجازة جديدة             │<br>
+├─────────────────────────────────┤<br>
+│ نوع الإجازة: [سنوية ▼]         │<br>
+│ من تاريخ: [2024-01-15]          │<br>
+│ إلى تاريخ: [2024-01-19]         │<br>
+│ السبب: [ظروف عائلية]           │<br>
+│                                 │<br>
+│        [إلغاء]  [حفظ ✓]        │<br>
+└─────────────────────────────────┘
+            </div>
+        </div>
+        
+        <!-- المرحلة 2 -->
+        <div class="timeline-item-guide">
+            <div class="timeline-dot"></div>
+            <div class="step-number">2</div>
+            <h4 class="text-primary">إنشاء مسار الموافقة</h4>
+            <p>النظام تلقائياً ينشئ <code>ApprovalFlow</code> و <code>ApprovalSteps</code> حسب نوع الطلب</p>
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle me-2"></i>
+                تم إنشاء طلب الموافقة بنجاح! سيتم مراجعته من قبل المسؤولين.
+            </div>
+        </div>
+        
+        <!-- المرحلة 3 -->
+        <div class="timeline-item-guide">
+            <div class="timeline-dot"></div>
+            <div class="step-number">3</div>
+            <h4 class="text-primary">المسؤول يستلم الطلب</h4>
+            <p>المسؤول المختص يدخل على صفحة الموافقات ويرى الطلبات المعلقة</p>
+            <div class="row mt-3">
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white text-center">
+                        <div class="card-body">
+                            <h3>5</h3>
+                            <small>معلقة</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white text-center">
+                        <div class="card-body">
+                            <h3>3</h3>
+                            <small>قيد المراجعة</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white text-center">
+                        <div class="card-body">
+                            <h3>20</h3>
+                            <small>معتمدة</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-danger text-white text-center">
+                        <div class="card-body">
+                            <h3>2</h3>
+                            <small>مرفوضة</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- المرحلة 4 -->
+        <div class="timeline-item-guide">
+            <div class="timeline-dot"></div>
+            <div class="step-number">4</div>
+            <h4 class="text-primary">مراجعة التفاصيل</h4>
+            <p>المسؤول يضغط على الطلب لعرض التفاصيل الكاملة</p>
+            <ul class="list-unstyled mt-3">
+                <li><i class="fas fa-check text-success me-2"></i>معلومات مقدم الطلب</li>
+                <li><i class="fas fa-check text-success me-2"></i>تفاصيل الطلب وأسبابه</li>
+                <li><i class="fas fa-check text-success me-2"></i>المرفقات (إن وجدت)</li>
+                <li><i class="fas fa-check text-success me-2"></i>سجل الموافقات السابقة</li>
+            </ul>
+        </div>
+        
+        <!-- المرحلة 5 -->
+        <div class="timeline-item-guide">
+            <div class="timeline-dot"></div>
+            <div class="step-number">5</div>
+            <h4 class="text-primary">اتخاذ القرار</h4>
+            <p>المسؤول يختار بين الموافقة أو الرفض</p>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <div class="card border-success">
+                        <div class="card-body">
+                            <h5 class="text-success"><i class="fas fa-check-circle me-2"></i>الموافقة</h5>
+                            <p class="small mb-0">ينتقل الطلب للخطوة التالية أو يتم اعتماده نهائياً</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-danger">
+                        <div class="card-body">
+                            <h5 class="text-danger"><i class="fas fa-times-circle me-2"></i>الرفض</h5>
+                            <p class="small mb-0">يتوقف المسار ويتم إشعار مقدم الطلب بالسبب</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- المرحلة 6 -->
+        <div class="timeline-item-guide">
+            <div class="timeline-dot"></div>
+            <div class="step-number">6</div>
+            <h4 class="text-primary">استلام النتيجة</h4>
+            <p>الموظف يستلم إشعار بنتيجة الطلب (معتمد أو مرفوض)</p>
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle me-2"></i>
+                <strong>تم اعتماد طلب الإجازة!</strong><br>
+                <small>تمت الموافقة بواسطة: المنسق - التعليق: "تمت الموافقة، إجازة سعيدة!"</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مسارات الموافقة -->
+<div class="guide-card">
+    <div class="icon-box">
+        <i class="fas fa-project-diagram"></i>
+    </div>
+    <h2 class="text-primary mb-4">📊 مسارات الموافقة حسب نوع الطلب</h2>
+    
+    <div class="row">
+        <!-- جدول تشغيلي -->
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>جدول تشغيلي</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <div class="role-badge bg-info text-white">المنسق</div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="role-badge bg-primary text-white">مدير المنطقة</div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="role-badge bg-warning text-dark">مدير العمليات</div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="role-badge bg-danger text-white">مدير الإدارة</div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="status-badge bg-success text-white">✓ معتمد</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- طلب إجازة -->
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 border-info">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-calendar-times me-2"></i>طلب إجازة</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <p class="small text-muted mb-3">إذا كان مقدم الطلب موظف عادي:</p>
+                        <div class="role-badge bg-primary text-white">مدير الفرع</div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="status-badge bg-success text-white">✓ معتمد</div>
+                        
+                        <hr class="my-4">
+                        
+                        <p class="small text-muted mb-3">إذا كان مقدم الطلب مدير فرع:</p>
+                        <div class="role-badge bg-info text-white">المنسق</div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="status-badge bg-success text-white">✓ معتمد</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- مخالفة -->
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>مخالفة</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <div class="role-badge bg-primary text-white">مدير الفرع</div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="status-badge bg-success text-white">✓ معتمد</div>
+                        
+                        <div class="alert alert-info mt-4">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <small>المخالفات تحتاج موافقة واحدة فقط</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- الصلاحيات -->
+<div class="guide-card">
+    <div class="icon-box">
+        <i class="fas fa-user-shield"></i>
+    </div>
+    <h2 class="text-primary mb-4">🔐 الصلاحيات - من يرى ماذا؟</h2>
+    
+    <table class="permission-table">
+        <thead>
+            <tr>
+                <th>الدور</th>
+                <th>الصلاحيات</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>موظف عادي</strong></td>
+                <td>يرى طلباته فقط</td>
+            </tr>
+            <tr>
+                <td><strong>مدير فرع</strong></td>
+                <td>طلبات موظفي فرعه + طلباته الشخصية</td>
+            </tr>
+            <tr>
+                <td><strong>منسق</strong></td>
+                <td>جميع الطلبات المعلقة التي تحتاج موافقته</td>
+            </tr>
+            <tr>
+                <td><strong>مدير منطقة</strong></td>
+                <td>جميع الطلبات التي وصلت لخطوته</td>
+            </tr>
+            <tr>
+                <td><strong>مدير عمليات</strong></td>
+                <td>جميع الطلبات التي وصلت لخطوته</td>
+            </tr>
+            <tr>
+                <td><strong>مدير إدارة</strong></td>
+                <td>جميع الطلبات التي وصلت لخطوته</td>
+            </tr>
+            <tr>
+                <td><strong>مدير عام</strong></td>
+                <td><span class="badge bg-success">جميع الطلبات بدون استثناء</span></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- حالات الموافقة -->
+<div class="guide-card">
+    <div class="icon-box">
+        <i class="fas fa-traffic-light"></i>
+    </div>
+    <h2 class="text-primary mb-4">🎨 حالات الموافقة والألوان</h2>
+    
+    <div class="row">
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card border-0 bg-warning bg-opacity-10">
+                <div class="card-body text-center">
+                    <div class="display-4 mb-3">🟡</div>
+                    <h5>معلقة</h5>
+                    <span class="badge bg-warning text-dark">pending</span>
+                    <p class="small text-muted mt-2">لم تبدأ المراجعة بعد</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card border-0 bg-primary bg-opacity-10">
+                <div class="card-body text-center">
+                    <div class="display-4 mb-3">🔵</div>
+                    <h5>قيد المراجعة</h5>
+                    <span class="badge bg-primary">in_progress</span>
+                    <p class="small text-muted mt-2">جاري مراجعة الطلب</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card border-0 bg-success bg-opacity-10">
+                <div class="card-body text-center">
+                    <div class="display-4 mb-3">🟢</div>
+                    <h5>معتمدة</h5>
+                    <span class="badge bg-success">approved</span>
+                    <p class="small text-muted mt-2">تمت الموافقة النهائية</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card border-0 bg-danger bg-opacity-10">
+                <div class="card-body text-center">
+                    <div class="display-4 mb-3">🔴</div>
+                    <h5>مرفوضة</h5>
+                    <span class="badge bg-danger">rejected</span>
+                    <p class="small text-muted mt-2">تم رفض الطلب</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- الصفحات الأساسية -->
+<div class="guide-card">
+    <div class="icon-box">
+        <i class="fas fa-link"></i>
+    </div>
+    <h2 class="text-primary mb-4">📍 الصفحات الأساسية</h2>
+    
+    <div class="list-group">
+        <div class="list-group-item">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-1"><i class="fas fa-list text-primary me-2"></i>قائمة الموافقات</h5>
+                    <p class="mb-1 text-muted">عرض جميع الطلبات حسب صلاحياتك</p>
+                    <code>/approvals/</code>
+                </div>
+                <a href="{% url 'approvals:list' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-external-link-alt"></i>
+                </a>
+            </div>
+        </div>
+        <div class="list-group-item">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-1"><i class="fas fa-user-check text-info me-2"></i>موافقاتي</h5>
+                    <p class="mb-1 text-muted">عرض طلباتي الشخصية فقط</p>
+                    <code>/approvals/my-approvals/</code>
+                </div>
+                <a href="{% url 'approvals:my_approvals' %}" class="btn btn-outline-info">
+                    <i class="fas fa-external-link-alt"></i>
+                </a>
+            </div>
+        </div>
+        <div class="list-group-item">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-1"><i class="fas fa-eye text-success me-2"></i>تفاصيل الموافقة</h5>
+                    <p class="mb-1 text-muted">عرض تفاصيل طلب محدد</p>
+                    <code>/approvals/{id}/</code>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- نصائح مهمة -->
+<div class="guide-card bg-light">
+    <h2 class="text-primary mb-4">💡 نصائح مهمة</h2>
+    
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <div class="d-flex align-items-start">
+                <i class="fas fa-check-circle text-success fa-2x me-3 mt-1"></i>
+                <div>
+                    <h5>راجع التفاصيل جيداً</h5>
+                    <p class="text-muted">تأكد من قراءة جميع تفاصيل الطلب قبل اتخاذ القرار</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="d-flex align-items-start">
+                <i class="fas fa-comment-alt text-info fa-2x me-3 mt-1"></i>
+                <div>
+                    <h5>أضف تعليقات واضحة</h5>
+                    <p class="text-muted">التعليقات تساعد في توضيح سبب الموافقة أو الرفض</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="d-flex align-items-start">
+                <i class="fas fa-clock text-warning fa-2x me-3 mt-1"></i>
+                <div>
+                    <h5>راجع الطلبات بانتظام</h5>
+                    <p class="text-muted">تحقق من الطلبات المعلقة يومياً لتجنب التأخير</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="d-flex align-items-start">
+                <i class="fas fa-bell text-danger fa-2x me-3 mt-1"></i>
+                <div>
+                    <h5>فعّل الإشعارات</h5>
+                    <p class="text-muted">الإشعارات تساعدك على متابعة الطلبات الجديدة</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- خلاصة -->
+<div class="guide-card bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <h2 class="mb-4">✨ الخلاصة</h2>
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <div class="bg-white bg-opacity-25 rounded p-3 h-100">
+                <h3 class="h4 mb-3"><i class="fas fa-user me-2"></i>للموظفين</h3>
+                <ul class="list-unstyled">
+                    <li>✓ قدّم طلبك بوضوح</li>
+                    <li>✓ اذكر الأسباب</li>
+                    <li>✓ تابع حالة طلبك</li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="bg-white bg-opacity-25 rounded p-3 h-100">
+                <h3 class="h4 mb-3"><i class="fas fa-user-tie me-2"></i>للمدراء</h3>
+                <ul class="list-unstyled">
+                    <li>✓ راجع الطلبات بسرعة</li>
+                    <li>✓ أضف تعليقات مفيدة</li>
+                    <li>✓ اتخذ قرارات عادلة</li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="bg-white bg-opacity-25 rounded p-3 h-100">
+                <h3 class="h4 mb-3"><i class="fas fa-cog me-2"></i>النظام</h3>
+                <ul class="list-unstyled">
+                    <li>✓ يتتبع كل خطوة</li>
+                    <li>✓ يرسل الإشعارات</li>
+                    <li>✓ يحفظ السجل الكامل</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- زر العودة -->
+<div class="text-center mt-4">
+    <a href="{% url 'approvals:list' %}" class="btn btn-primary btn-lg">
+        <i class="fas fa-arrow-left me-2"></i>العودة لقائمة الموافقات
+    </a>
+</div>
+
+{% endblock %}
+

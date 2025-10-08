@@ -34,6 +34,9 @@ urlpatterns = [
     # Users URLs
     path('', include('apps.users.urls')),
     
+    # Employees URLs
+    path('employees/', include('apps.employees.urls')),
+    
     # Branches URLs
     path('branches/', include('apps.branches.urls')),
     
@@ -46,8 +49,8 @@ urlpatterns = [
     # Approvals URLs
     path('approvals/', include('apps.approvals.urls')),
     
-    # API URLs
-    path('api/', include('apps.employees.urls')),
+    # Employees API URLs
+    path('api/employees/', include('apps.employees.urls')),
     path('api/', include('apps.violations.urls')),
     path('api/', include('apps.reports.urls')),
     path('api/', include('apps.integrations.urls')),

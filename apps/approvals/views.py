@@ -277,3 +277,9 @@ def my_approvals_view(request):
     }
     
     return render(request, 'approvals/my_approvals.html', context)
+
+
+@login_required
+def approvals_guide_view(request):
+    """دليل شرح نظام الموافقات"""
+    return render(request, 'approvals/guide.html')

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}تفاصيل الموظف - {{ employee.first_name }} {{ employee.last_name }}{% endblock %}
+{% block title %}تفاصيل الموظف - {{ employee.user.get_full_name }}{% endblock %}
 
 {% block page_title %}تفاصيل الموظف{% endblock %}
 
@@ -22,18 +22,20 @@
     <div class="col-lg-4">
         <div class="card shadow mb-4">
             <div class="card-body text-center">
-                <img src="{% static 'images/avatar-placeholder.png' %}" class="rounded-circle mb-3" width="120" height="120">
-                <h4 class="card-title">{{ employee.first_name }} {{ employee.last_name }}</h4>
+                <h4 class="card-title">{{ employee.user.get_full_name }}</h4>
                 <p class="text-muted">{{ employee.job_title }}</p>
-                <div class="row text-center">
+                <span class="badge {% if employee.status == 'active' %}bg-success{% elif employee.status == 'inactive' %}bg-secondary{% elif employee.status == 'suspended' %}bg-warning{% else %}bg-danger{% endif %}">
+                    {{ employee.get_status_display }}
+                </span>
+                <div class="row text-center mt-3">
                     <div class="col-6">
                         <div class="border-end">
-                            <h5 class="text-primary">156</h5>
+                            <h5 class="text-primary">{{ monthly_hours|default:"0" }}</h5>
                             <small class="text-muted">ساعة عمل</small>
                         </div>
                     </div>
                     <div class="col-6">
-                        <h5 class="text-success">23</h5>
+                        <h5 class="text-success">{{ monthly_shifts|default:"0" }}</h5>
                         <small class="text-muted">نوبة هذا الشهر</small>
                     </div>
                 </div>
@@ -48,19 +50,19 @@
             <div class="card-body">
                 <div class="mb-3">
                     <i class="fas fa-envelope me-2 text-muted"></i>
-                    <span>{{ employee.email|default:"غير محدد" }}</span>
+                    <span>{{ employee.user.email|default:"غير محدد" }}</span>
                 </div>
                 <div class="mb-3">
                     <i class="fas fa-phone me-2 text-muted"></i>
-                    <span>{{ employee.phone|default:"غير محدد" }}</span>
+                    <span>{{ employee.user.profile.phone|default:"غير محدد" }}</span>
                 </div>
                 <div class="mb-3">
                     <i class="fas fa-map-marker-alt me-2 text-muted"></i>
-                    <span>{{ employee.branch.name }}</span>
+                    <span>{% if employee.get_branch %}{{ employee.get_branch.name }}{% else %}غير محدد{% endif %}</span>
                 </div>
                 <div class="mb-3">
                     <i class="fas fa-calendar me-2 text-muted"></i>
-                    <span>انضم في {{ employee.join_date|date:"d/m/Y" }}</span>
+                    <span>انضم في {% if employee.hire_date %}{{ employee.hire_date|date:"d/m/Y" }}{% else %}غير محدد{% endif %}</span>
                 </div>
             </div>
         </div>
@@ -83,26 +85,67 @@
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
+                            <label class="form-label fw-bold">الدور الوظيفي</label>
+                            <p class="form-control-plaintext">{{ employee.get_role }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
                             <label class="form-label fw-bold">نوع التوظيف</label>
                             <p class="form-control-plaintext">{{ employee.get_employment_type_display }}</p>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label class="form-label fw-bold">الحد الأقصى للساعات الأسبوعية</label>
-                            <p class="form-control-plaintext">{{ employee.max_weekly_hours }} ساعة</p>
+                            <label class="form-label fw-bold">ساعات العمل الأسبوعية</label>
+                            <p class="form-control-plaintext">{{ employee.get_work_hours }} ساعة</p>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label fw-bold">الحالة</label>
                             <p class="form-control-plaintext">
-                                {% if employee.is_active %}
+                                {% if employee.status == 'active' %}
                                     <span class="badge bg-success">نشط</span>
                                 {% else %}
                                     <span class="badge bg-danger">غير نشط</span>
                                 {% endif %}
                             </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Statistics -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">الإحصائيات الشهرية</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="p-3">
+                            <h4 class="text-primary">{{ monthly_hours }}</h4>
+                            <small class="text-muted">ساعة عمل</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3">
+                            <h4 class="text-success">{{ attendance_rate }}%</h4>
+                            <small class="text-muted">معدل الحضور</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3">
+                            <h4 class="text-info">{{ monthly_leaves }}</h4>
+                            <small class="text-muted">إجازات</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3">
+                            <h4 class="text-danger">{{ monthly_violations }}</h4>
+                            <small class="text-muted">مخالفات</small>
                         </div>
                     </div>
                 </div>
@@ -147,31 +190,23 @@
                                         <th>بداية النوبة</th>
                                         <th>نهاية النوبة</th>
                                         <th>المدة</th>
-                                        <th>النوع</th>
+                                        <th>الفرع</th>
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {% for shift in all_shifts %}
                                     <tr>
-                                        <td>2024-01-15</td>
-                                        <td>08:00</td>
-                                        <td>16:00</td>
-                                        <td>8 ساعات</td>
-                                        <td><span class="badge bg-primary">عادي</span></td>
+                                        <td>{{ shift.schedule.start_date|date:"Y-m-d" }}</td>
+                                        <td>{{ shift.start_time|time:"H:i" }}</td>
+                                        <td>{{ shift.end_time|time:"H:i" }}</td>
+                                        <td>{{ shift.get_duration|floatformat:1 }} ساعة</td>
+                                        <td>{{ shift.branch.name|default:"غير محدد" }}</td>
                                     </tr>
+                                    {% empty %}
                                     <tr>
-                                        <td>2024-01-16</td>
-                                        <td>16:00</td>
-                                        <td>00:00</td>
-                                        <td>8 ساعات</td>
-                                        <td><span class="badge bg-warning">مسائي</span></td>
+                                        <td colspan="5" class="text-center text-muted">لا توجد نوبات</td>
                                     </tr>
-                                    <tr>
-                                        <td>2024-01-17</td>
-                                        <td>00:00</td>
-                                        <td>08:00</td>
-                                        <td>8 ساعات</td>
-                                        <td><span class="badge bg-info">ليلي</span></td>
-                                    </tr>
+                                    {% endfor %}
                                 </tbody>
                             </table>
                         </div>
@@ -191,20 +226,29 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {% for leave in all_leaves %}
                                     <tr>
-                                        <td>إجازة سنوية</td>
-                                        <td>2024-01-20</td>
-                                        <td>2024-01-25</td>
-                                        <td>5 أيام</td>
-                                        <td><span class="badge bg-success">معتمدة</span></td>
+                                        <td>{{ leave.get_leave_type_display }}</td>
+                                        <td>{{ leave.start_date|date:"Y-m-d" }}</td>
+                                        <td>{{ leave.end_date|date:"Y-m-d" }}</td>
+                                        <td>{{ leave.duration }} يوم</td>
+                                        <td>
+                                            {% if leave.status == 'approved' %}
+                                                <span class="badge bg-success">معتمدة</span>
+                                            {% elif leave.status == 'pending' %}
+                                                <span class="badge bg-warning">معلقة</span>
+                                            {% elif leave.status == 'rejected' %}
+                                                <span class="badge bg-danger">مرفوضة</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">ملغاة</span>
+                                            {% endif %}
+                                        </td>
                                     </tr>
+                                    {% empty %}
                                     <tr>
-                                        <td>إجازة مرضية</td>
-                                        <td>2024-01-10</td>
-                                        <td>2024-01-12</td>
-                                        <td>3 أيام</td>
-                                        <td><span class="badge bg-warning">معلقة</span></td>
+                                        <td colspan="5" class="text-center text-muted">لا توجد إجازات</td>
                                     </tr>
+                                    {% endfor %}
                                 </tbody>
                             </table>
                         </div>
@@ -224,13 +268,29 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {% for violation in all_violations %}
                                     <tr>
-                                        <td>2024-01-05</td>
-                                        <td>تأخير</td>
-                                        <td>تأخير 30 دقيقة</td>
-                                        <td>إنذار شفهي</td>
-                                        <td><span class="badge bg-warning">نشط</span></td>
+                                        <td>{{ violation.date|date:"Y-m-d" }} {{ violation.time|time:"H:i" }}</td>
+                                        <td>{{ violation.get_violation_type_display }}</td>
+                                        <td>{{ violation.description|truncatewords:10 }}</td>
+                                        <td>{{ violation.action_taken|default:"لم يتم اتخاذ إجراء" }}</td>
+                                        <td>
+                                            {% if violation.status == 'pending' %}
+                                                <span class="badge bg-warning">قيد المراجعة</span>
+                                            {% elif violation.status == 'confirmed' %}
+                                                <span class="badge bg-danger">مؤكدة</span>
+                                            {% elif violation.status == 'resolved' %}
+                                                <span class="badge bg-success">محلولة</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">ملغاة</span>
+                                            {% endif %}
+                                        </td>
                                     </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">لا توجد مخالفات</td>
+                                    </tr>
+                                    {% endfor %}
                                 </tbody>
                             </table>
                         </div>
@@ -239,21 +299,39 @@
                     <!-- Reports Tab -->
                     <div class="tab-pane fade" id="reports" role="tabpanel">
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-6 mb-3">
                                 <div class="card bg-light">
                                     <div class="card-body text-center">
                                         <h5 class="card-title text-primary">ساعات العمل الشهرية</h5>
-                                        <h3 class="text-primary">156</h3>
+                                        <h3 class="text-primary">{{ monthly_hours }}</h3>
                                         <p class="text-muted">ساعة</p>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-6 mb-3">
                                 <div class="card bg-light">
                                     <div class="card-body text-center">
                                         <h5 class="card-title text-success">معدل الحضور</h5>
-                                        <h3 class="text-success">95%</h3>
+                                        <h3 class="text-success">{{ attendance_rate }}%</h3>
                                         <p class="text-muted">هذا الشهر</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title text-info">إجمالي النوبات</h5>
+                                        <h3 class="text-info">{{ monthly_shifts }}</h3>
+                                        <p class="text-muted">نوبة هذا الشهر</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title text-warning">إجمالي الإجازات</h5>
+                                        <h3 class="text-warning">{{ monthly_leaves }}</h3>
+                                        <p class="text-muted">إجازة هذا الشهر</p>
                                     </div>
                                 </div>
                             </div>

@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}استيراد الموظفين - نظام إدارة الجداول التشغيلية{% endblock %}
+
+{% block page_title %}استيراد الموظفين{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <a href="{% url 'employees:list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-upload me-2"></i>
+                    استيراد الموظفين من ملف Excel
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.file.id_for_label }}" class="form-label">
+                            ملف Excel <span class="text-danger">*</span>
+                        </label>
+                        {{ form.file }}
+                        {% if form.file.errors %}
+                            <div class="text-danger mt-1">
+                                {% for error in form.file.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            يرجى رفع ملف Excel يحتوي على بيانات الموظفين. يجب أن يحتوي الملف على الأعمدة التالية:
+                            <ul class="mt-2">
+                                <li><strong>first_name</strong> - الاسم الأول</li>
+                                <li><strong>last_name</strong> - الاسم الأخير</li>
+                                <li><strong>username</strong> - اسم المستخدم (مطلوب)</li>
+                                <li><strong>email</strong> - البريد الإلكتروني (مطلوب)</li>
+                                <li><strong>password</strong> - كلمة المرور (اختياري، افتراضي: password123)</li>
+                                <li><strong>phone</strong> - رقم الهاتف</li>
+                                <li><strong>job_title</strong> - المسمى الوظيفي</li>
+                                <li><strong>role</strong> - الدور (employee, branch_manager, coordinator, etc.)</li>
+                                <li><strong>branch</strong> - الفرع</li>
+                                <li><strong>hire_date</strong> - تاريخ التعيين (YYYY-MM-DD)</li>
+                            </ul>
+                            <div class="alert alert-info mt-2">
+                                <small><i class="fas fa-info-circle me-1"></i>
+                                    استخدم الأسماء الإنجليزية للأعمدة كما هي موضحة أعلاه (first_name, last_name, username, email, etc.)
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="form-check">
+                            {{ form.update_existing }}
+                            <label class="form-check-label" for="{{ form.update_existing.id_for_label }}">
+                                تحديث الموظفين الموجودين
+                            </label>
+                        </div>
+                        {% if form.update_existing.errors %}
+                            <div class="text-danger mt-1">
+                                {% for error in form.update_existing.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            إذا تم تحديد هذا الخيار، سيتم تحديث بيانات الموظفين الموجودين بناءً على اسم المستخدم أو البريد الإلكتروني.
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'employees:list' %}" class="btn btn-outline-secondary me-md-2">إلغاء</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload me-1"></i>استيراد الموظفين
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Sample File Download -->
+        <div class="card shadow mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-download me-2"></i>
+                    تحميل ملف نموذجي
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">
+                    يمكنك تحميل ملف Excel نموذجي يحتوي على التنسيق المطلوب لاستيراد الموظفين.
+                </p>
+                <a href="{% url 'employees:download_sample' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-file-excel me-1"></i>تحميل الملف النموذجي
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
