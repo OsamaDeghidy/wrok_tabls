@@ -156,6 +156,11 @@
                                     <i class="fas fa-times"></i>
                                 </a>
                                 {% endif %}
+                                {% if approval.content_type.model == 'schedule' %}
+                                <a href="{% url 'schedules:detail' approval.related_object.id %}" class="btn btn-outline-info" title="عرض الجدول">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </a>
+                                {% endif %}
                                 <a href="{% url 'approvals:detail' approval.id %}" class="btn btn-outline-primary" title="عرض التفاصيل">
                                     <i class="fas fa-eye"></i>
                                 </a>

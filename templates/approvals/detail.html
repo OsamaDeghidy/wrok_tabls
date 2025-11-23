@@ -7,13 +7,18 @@
 
 {% block page_actions %}
 <div class="btn-group" role="group">
-    {% if approval.status == 'pending' %}
+    {% if can_approve %}
     <button type="button" class="btn btn-success" onclick="approveRequest({{ approval.id }})">
         <i class="fas fa-check me-1"></i>اعتماد
     </button>
     <button type="button" class="btn btn-danger" onclick="rejectRequest({{ approval.id }})">
         <i class="fas fa-times me-1"></i>رفض
     </button>
+    {% endif %}
+    {% if approval.content_type.model == 'schedule' %}
+    <a href="{% url 'schedules:detail' approval.related_object.id %}" class="btn btn-outline-info">
+        <i class="fas fa-eye me-1"></i>عرض الجدول
+    </a>
     {% endif %}
     <a href="{% url 'approvals:list' %}" class="btn btn-outline-secondary">
         <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
@@ -201,6 +206,52 @@
                         {% endif %}
                     </div>
                 </div>
+                {% if notifications %}
+                <div class="mb-4">
+                    <h6 class="text-primary">الإشعارات</h6>
+                    <ul class="list-group">
+                        {% for n in notifications %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>{{ n.message }}</span>
+                            <small class="text-muted">{{ n.at }}</small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                {% if snapshots %}
+                <div class="mb-4">
+                    <h6 class="text-primary">نسخ المراحل</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>الخطوة</th>
+                                    <th>الحالة</th>
+                                    <th>الوقت</th>
+                                    <th>الملخص</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for s in snapshots %}
+                                <tr>
+                                    <td>{{ s.step }}</td>
+                                    <td>{{ s.status }}</td>
+                                    <td>{{ s.at }}</td>
+                                    <td>
+                                        {% if s.object %}
+                                            {{ s.object.model }} #{{ s.object.id }}{% if s.object.branch_name %} - {{ s.object.branch_name }}{% endif %}
+                                        {% else %}
+                                            —
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
 
@@ -332,18 +383,38 @@ function rejectRequest(approvalId) {
 
 function confirmAction() {
     const notes = document.getElementById('approvalNotes').value;
-    
-    // Show loading
     const btn = document.getElementById('approvalModalBtn');
     const originalText = btn.innerHTML;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>جاري المعالجة...';
     btn.disabled = true;
-    
-    // Simulate API call
-    setTimeout(() => {
-        alert(`تم ${currentAction === 'approve' ? 'اعتماد' : 'رفض'} الطلب بنجاح!`);
-        window.location.reload();
-    }, 2000);
+    const url = currentAction === 'approve'
+        ? `/approvals/${currentApprovalId}/approve/`
+        : `/approvals/${currentApprovalId}/reject/`;
+    const formData = new FormData();
+    if (currentAction === 'approve') {
+        formData.append('comment', notes);
+    } else {
+        formData.append('reason', notes);
+    }
+    fetch(url, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') },
+        body: formData
+    }).then(r => r.json()).then(data => {
+        if (data.success) {
+            showSuccessMessage(data.message || 'تم تنفيذ العملية بنجاح');
+            window.location.reload();
+        } else {
+            showErrorMessage(data.error || 'حدث خطأ');
+        }
+    }).catch(err => {
+        console.error(err);
+        showErrorMessage('حدث خطأ فى الاتصال بالخادم');
+    }).finally(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
+    });
 }
 </script>
 {% endblock %}

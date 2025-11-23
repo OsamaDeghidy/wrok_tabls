@@ -31,6 +31,8 @@ urlpatterns = [
     
     # تفعيل الجدول
     path('<int:schedule_id>/activate/', views.schedule_activate_view, name='activate'),
+    # إكمال الجدول
+    path('<int:schedule_id>/complete/', views.schedule_complete_view, name='complete'),
     
     # API Endpoints
     path('api/branches/<int:branch_id>/', views.branch_info_api, name='branch_info_api'),

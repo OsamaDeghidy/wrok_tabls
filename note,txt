@@ -6,3 +6,67 @@ pip install -r requirements.txt
 
  @edit.html   فى صفحه التعديلانت وارث الكود من صفحه الفورم الاصليه ف ب التالى اكون شغالعلى اساس انو بيكريت جدول لا انت قوم ب هيكله صفحه التعديل للتتناسب مع الباك اند  
  يعنى عتقرا  الباك اند و بعدين هتعيد انشاء الصفحه ل للناسب مع التعديل فى الباك اند 
+
+
+
+
+
+
+
+
+ حسب الدور
+
+- موظف
+  
+  - تسجيل الدخول: /login/ و لوحة المستخدم: /dashboard/ (apps/users/urls.py:8,13)
+  - الملف الشخصي: /profile/ , تعديل الملف: /profile/edit/ , تغيير كلمة المرور: /change-password/ (apps/users/urls.py:23–25)
+  - الإجازات: قائمة /leaves/ , طلب جديد /leaves/create/ , تفاصيل /leaves/<id>/ , رصيد الإجازات /leaves/balance/ (apps/leaves/urls.py:8–29)
+  - الجداول التشغيلية: عرض القائمة /schedules/ ، تفاصيل جدول الفرع فقط /schedules/<id>/ (apps/schedules/urls.py:9,15) مع تحقق الصلاحية في عرض التفاصيل (apps/schedules/views.py:186–189)
+  - موافقاتي: /approvals/my-approvals/ (apps/approvals/urls.py:6–13, apps/approvals/views.py:248–279)
+  - مرجِع الأدوار والصلاحيات: تعريف الأدوار في apps/users/models.py:11–19 ، وخواص الصلاحيات مثل can_manage_employees و can_create_schedules في apps/users/models.py:225–245
+- مدير معرض
+  
+  - كل ما سبق للموظف
+  - إنشاء الجداول: /schedules/create/ (apps/schedules/urls.py:12) مع تحقق الدور (apps/schedules/views.py:112–116)
+  - تعديل الجداول: /schedules/<id>/edit/ ، إدخالات الجدول: /schedules/<id>/entries/ ، التحليلات: /schedules/<id>/analytics/ (apps/schedules/urls.py:18,21,24)
+  - عرض تفاصيل الجدول محصور بفرعه (apps/schedules/views.py:182–185)
+  - إنشاء طلب موافقة لجدول: /approvals/create-for-schedule/<schedule_id>/ (apps/approvals/urls.py:6–13, apps/approvals/views.py:209–244)
+  - إدارة الفروع ليست ضمن صلاحياته الافتراضية حسب can_manage_branches (apps/users/models.py:227–229)
+- منسق
+  
+  - إنشاء وتعديل الجداول: نفس مسارات المدير ( /schedules/create/ , /schedules/<id>/edit/ ) (apps/schedules/urls.py:12,18) والصلاحية ضمن can_create_schedules (apps/users/models.py:231–233)
+  - الموافقات: قائمة /approvals/ , تفاصيل /approvals/<id>/ ، الموافقة/الرفض بحسب خطوة الدور الحالي (apps/approvals/urls.py:6–13, apps/approvals/views.py:104–109,121–161,165–206)
+  - لا يدير الفروع افتراضياً (apps/users/models.py:227–229)
+- مدير منطقة
+  
+  - إدارة الفروع: قائمة /branches/ , تفاصيل /branches/<id>/ , إنشاء /branches/create/ , تعديل /branches/<id>/edit/ (apps/branches/urls.py, gating في apps/branches/views.py:24–33,83–87,103–107,179–187)
+  - الشفتات للفرع: إنشاء/تعديل/حذف عبر مسارات الشفتات تحت الفرع (apps/branches/views.py:277–349)
+  - الجداول التشغيلية: إنشاء/تعديل/تفاصيل كما في الأعلى (apps/schedules/urls.py:9–24)
+  - الموافقات: حسب الدور ضمن خطوات السلسلة (apps/approvals/views.py:31–43,104–109)
+- مدير عمليات
+  
+  - نفس صلاحيات مدير المنطقة لإدارة الفروع والجداول والموافقات (apps/users/models.py:227–237)
+  - استخدام نفس مسارات الفروع والجداول المذكورة أعلاه
+- مدير إدارة
+  
+  - إدارة الفروع والجداول والموافقات كما سبق
+  - إدارة المستخدمين:
+    - قائمة وإنشاء وتعديل عبر مسارات المستخدمين في apps/users/urls.py:16–20 ؛ الحذف يتطلب superuser فقط (apps/users/views.py:310–319)
+    - ملاحظة: ربط مسار قائمة المستخدمين على الجذر قد يتأثر بتحويل الجذر إلى الإدارة (worktable_system/urls.py:24–36)، لكن بقية المسارات ( /login/ , /dashboard/ , /create/ , /edit/ ) تعمل كما هي (apps/users/urls.py:8–20)
+  - إنشاء المستخدمين مسموح عبر can_manage_employees (apps/users/models.py:239–241، apps/users/views.py:246–252)
+- مدير عام (super_admin)
+  
+  - وصول كامل لجميع المسارات أعلاه
+  - لوحة الإدارة: /admin/ مع تخصيص عربي (worktable_system/urls.py:14–19,25)
+  - صلاحيات عامة لرؤية وإدارة كل البيانات (apps/users/models.py:243–245)
+  - جميع صفحات الموافقات بما فيها اعتماد نهائي (apps/approvals/views.py:31–43)
+مسارات عامة
+
+- الجذر: يعيد التوجيه إلى لوحة الإدارة (worktable_system/urls.py:27)
+- تسجيل الدخول/الخروج/التسجيل: /login/ , /logout/ , /register/ (apps/users/urls.py:8–10)
+- لوحة المستخدم: /dashboard/ (apps/users/urls.py:13)
+- الفروع: /branches/... (worktable_system/urls.py:38)
+- الإجازات: /leaves/... (worktable_system/urls.py:41)
+- الجداول: /schedules/... (worktable_system/urls.py:44)
+- الموافقات: /approvals/... (worktable_system/urls.py:47)
+إذا أردت، أرتّب لك صفحة “دليل الاستخدام” داخل الموقع تعرض هذه المسارات تلقائياً حسب دور المستخدم، مع روابط مباشرة وآيكونات، أو أفعّل ربط dashboard في الروابط العامة لإتاحة صفحة رئيسية غير إعادة التوجيه إلى الإدارة.

@@ -1052,6 +1052,11 @@ function generateScheduleTable(startDate, endDate) {
                                 <div class="text-center">
                                     <div class="fw-bold">${shift.name}</div>
                                     <small class="text-muted">${shift.start_time} - ${shift.end_time}</small>
+                                    <div class="mt-1">
+                                        <button type="button" class="btn btn-sm btn-outline-success" onclick="openAssignFullShiftModal(${shift.id})">
+                                            <i class="fas fa-user-check me-1"></i>توزيع كامل
+                                        </button>
+                                    </div>
                                 </div>
                             </th>
                         `).join('')}
@@ -1182,6 +1187,103 @@ function openEmployeeModal(dateStr, shiftId) {
     modal.addEventListener('hidden.bs.modal', () => {
         document.body.removeChild(modal);
     });
+}
+
+function openAssignFullShiftModal(shiftId) {
+    if (!selectedEmployees || selectedEmployees.length === 0) {
+        alert('يرجى اختيار الموظفين أولاً في المرحلة الثانية');
+        return;
+    }
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.id = `employee-fullshift-modal-${shiftId}`;
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-users me-2"></i>
+                        توزيع الموظفين على الشفتة كاملة
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        اختر الموظفين الذين سيتم توزيعهم على كل أيام هذه الشفتة
+                    </div>
+                    <div class="row">
+                        ${selectedEmployees.map(emp => `
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input employee-fullshift-checkbox" type="checkbox" value="${emp.id}" id="fs-emp-${emp.id}">
+                                    <label class="form-check-label" for="fs-emp-${emp.id}">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-user-circle me-2 text-success"></i>
+                                            <div>
+                                                <div class="fw-bold">${emp.full_name || emp.username}</div>
+                                                <small class="text-muted">${emp.position || emp.role_display || 'موظف'}</small>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>إلغاء
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="assignSelectedEmployeesToFullShift(${shiftId})">
+                        <i class="fas fa-check me-1"></i>تأكيد التوزيع الكامل
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+    modal.addEventListener('hidden.bs.modal', () => {
+        document.body.removeChild(modal);
+    });
+}
+
+function assignSelectedEmployeesToFullShift(shiftId) {
+    const checkboxes = document.querySelectorAll('.employee-fullshift-checkbox:checked');
+    const employeeIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+    if (employeeIds.length === 0) {
+        alert('يرجى اختيار موظف واحد على الأقل');
+        return;
+    }
+    const startDate = document.getElementById('start_date').value;
+    const endDate = document.getElementById('end_date').value;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const dateStr = new Date(d).toISOString().split('T')[0];
+        if (!scheduleData[dateStr]) {
+            scheduleData[dateStr] = { employees: [], shifts: {}, coverage: 0 };
+        }
+        const existing = scheduleData[dateStr].shifts[shiftId] || [];
+        employeeIds.forEach(id => {
+            if (!existing.includes(id)) {
+                existing.push(id);
+            }
+        });
+        scheduleData[dateStr].shifts[shiftId] = existing;
+    }
+    const modal = document.querySelector('.modal.show');
+    if (modal) {
+        const bsModal = bootstrap.Modal.getInstance(modal);
+        if (bsModal) {
+            bsModal.hide();
+        }
+    }
+    generateScheduleTable(document.getElementById('start_date').value, document.getElementById('end_date').value);
+    saveScheduleDataToStorage();
+    alert(`تم توزيع ${employeeIds.length} موظف على الشفتة كاملة بنجاح`);
 }
 
 // Assign selected employees

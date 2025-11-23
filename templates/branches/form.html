@@ -112,11 +112,11 @@
                                 <label for="id_region" class="form-label">المنطقة</label>
                                 <select class="form-select" id="id_region" name="region">
                                     <option value="">اختر المنطقة</option>
-                                    <option value="riyadh" {% if branch.region == 'riyadh' %}selected{% endif %}>الرياض</option>
-                                    <option value="makkah" {% if branch.region == 'makkah' %}selected{% endif %}>مكة المكرمة</option>
-                                    <option value="eastern" {% if branch.region == 'eastern' %}selected{% endif %}>المنطقة الشرقية</option>
-                                    <option value="asir" {% if branch.region == 'asir' %}selected{% endif %}>عسير</option>
-                                    <option value="jazan" {% if branch.region == 'jazan' %}selected{% endif %}>جازان</option>
+                                    <option value="north" {% if branch.region == 'north' %}selected{% endif %}>المنطقة الشمالية</option>
+                                    <option value="south" {% if branch.region == 'south' %}selected{% endif %}>المنطقة الجنوبية</option>
+                                    <option value="east" {% if branch.region == 'east' %}selected{% endif %}>المنطقة الشرقية</option>
+                                    <option value="center" {% if branch.region == 'center' %}selected{% endif %}>المنطقة الوسطى</option>
+                                    <option value="west" {% if branch.region == 'west' %}selected{% endif %}>المنطقة الغربية</option>
                                 </select>
                             </div>
                         </div>
@@ -226,14 +226,7 @@
                                                         <label class="form-label">ساعة النهاية</label>
                                                         <input type="time" class="form-control" name="shift_end[]" value="{{ shift.end_time }}" required>
                                                     </div>
-                                                    <div class="col-md-2">
-                                                        <label class="form-label">ساعة الاستراحة</label>
-                                                        <input type="time" class="form-control" name="break_start[]" value="{{ shift.break_start|default:'' }}">
-                                                    </div>
-                                                    <div class="col-md-2">
-                                                        <label class="form-label">نهاية الاستراحة</label>
-                                                        <input type="time" class="form-control" name="break_end[]" value="{{ shift.break_end|default:'' }}">
-                                                    </div>
+                                                    <!-- تم إلغاء إدخال الاستراحة -->
                                                     <div class="col-md-1">
                                                         <label class="form-label">&nbsp;</label>
                                                         <button type="button" class="btn btn-danger btn-sm d-block" onclick="removeShift(this)">
@@ -444,14 +437,7 @@ function addShift() {
                 <label class="form-label">ساعة النهاية</label>
                 <input type="time" class="form-control" name="shift_end[]" value="16:00" required>
             </div>
-            <div class="col-md-2">
-                <label class="form-label">ساعة الاستراحة</label>
-                <input type="time" class="form-control" name="break_start[]" value="12:00">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">نهاية الاستراحة</label>
-                <input type="time" class="form-control" name="break_end[]" value="13:00">
-            </div>
+            <!-- تم إلغاء إدخال الاستراحة -->
             <div class="col-md-1">
                 <label class="form-label">&nbsp;</label>
                 <button type="button" class="btn btn-danger btn-sm d-block" onclick="removeShift(this)">

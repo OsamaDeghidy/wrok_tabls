@@ -1,0 +1,29 @@
+/* RTL global overrides */
+html, body {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Ensure headings and paragraphs align right by default */
+h1, h2, h3, h4, h5, h6, p, label, th, td {
+  text-align: right;
+}
+
+/* Bootstrap helpers adjustments where needed */
+.ms-auto { margin-right: auto !important; margin-left: 0 !important; }
+.me-auto { margin-left: auto !important; margin-right: 0 !important; }
+
+/* Form controls and inputs */
+input, select, textarea {
+  text-align: right;
+}
+
+/* Breadcrumbs, pagination, and navs */
+.breadcrumb, .pagination, .nav, .navbar-nav {
+  direction: rtl;
+}
+
+/* Tables */
+table { direction: rtl; }
+
+

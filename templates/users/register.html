@@ -95,6 +95,21 @@
                                     </div>
                                 </div>
                             </div>
+                            <!-- Region (for region_manager) -->
+                            <div class="col-md-6" id="region-wrapper" style="display:none;">
+                                <div class="mb-3">
+                                    <label for="id_region" class="form-label">اختر المنطقة</label>
+                                    <select class="form-select" id="id_region" name="region">
+                                        <option value="">اختر المنطقة</option>
+                                    </select>
+                                    <div class="form-text">
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            يظهر فقط عند اختيار دور مدير منطقة
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         
                         <!-- Role Information -->
@@ -149,6 +164,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const roleSelect = document.getElementById('id_role');
     const branchSelect = document.getElementById('id_branch');
     const phoneInput = document.getElementById('id_phone');
+    const regionWrapper = document.getElementById('region-wrapper');
+    const regionSelect = document.getElementById('id_region');
     
     // Update branch requirement based on role
     roleSelect.addEventListener('change', function() {
@@ -165,6 +182,32 @@ document.addEventListener('DOMContentLoaded', function() {
             branchSelect.required = false;
             branchLabel.innerHTML = 'الفرع';
             branchHelp.innerHTML = '<small class="text-muted"><i class="fas fa-info-circle me-1"></i>اختياري للأدوار الإدارية</small>';
+        }
+
+        // Toggle region field for region_manager
+        if (selectedRole === 'region_manager') {
+            regionWrapper.style.display = '';
+            regionSelect.required = true;
+            // Fetch regions dynamically
+            fetch('/branches/api/regions/')
+                .then(res => res.json())
+                .then(data => {
+                    const regions = data.regions || [];
+                    regionSelect.innerHTML = '<option value="">اختر المنطقة</option>';
+                    regions.forEach(r => {
+                        const opt = document.createElement('option');
+                        opt.value = r.value;
+                        opt.textContent = r.label;
+                        regionSelect.appendChild(opt);
+                    });
+                })
+                .catch(() => {
+                    regionSelect.innerHTML = '<option value="">تعذر تحميل المناطق</option>';
+                });
+        } else {
+            regionWrapper.style.display = 'none';
+            regionSelect.required = false;
+            regionSelect.value = '';
         }
     });
     
@@ -197,11 +240,19 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', function(e) {
         const role = roleSelect.value;
         const branch = branchSelect.value;
+        const region = regionSelect.value;
         
         if ((role === 'employee' || role === 'branch_manager') && !branch) {
             e.preventDefault();
             alert('يرجى اختيار الفرع للدور المحدد');
             branchSelect.focus();
+            return false;
+        }
+
+        if (role === 'region_manager' && !region) {
+            e.preventDefault();
+            alert('يرجى اختيار المنطقة للدور المحدد');
+            regionSelect.focus();
             return false;
         }
         

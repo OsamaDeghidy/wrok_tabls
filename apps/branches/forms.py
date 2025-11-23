@@ -88,13 +88,11 @@ class BranchShiftForm(forms.ModelForm):
     
     class Meta:
         model = BranchShift
-        fields = ['name', 'start_time', 'end_time', 'break_start', 'break_end', 'is_active']
+        fields = ['name', 'start_time', 'end_time', 'is_active']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'start_time': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
             'end_time': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
-            'break_start': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
-            'break_end': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
     
@@ -105,8 +103,6 @@ class BranchShiftForm(forms.ModelForm):
         self.fields['name'].label = 'اسم الشفت'
         self.fields['start_time'].label = 'وقت البداية'
         self.fields['end_time'].label = 'وقت النهاية'
-        self.fields['break_start'].label = 'بداية الاستراحة'
-        self.fields['break_end'].label = 'نهاية الاستراحة'
         self.fields['is_active'].label = 'نشط'
     
     def clean(self):

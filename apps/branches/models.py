@@ -27,20 +27,11 @@ class Branch(models.Model):
     ]
     
     REGION_CHOICES = [
-        ('riyadh', 'الرياض'),
-        ('makkah', 'مكة المكرمة'),
-        ('eastern', 'المنطقة الشرقية'),
-        ('asir', 'عسير'),
-        ('jazan', 'جازان'),
-        ('medina', 'المدينة المنورة'),
-        ('qassim', 'القصيم'),
-        ('hail', 'حائل'),
-        ('tabuk', 'تبوك'),
-        ('northern', 'الحدود الشمالية'),
-        ('jazan', 'جازان'),
-        ('najran', 'نجران'),
-        ('albaha', 'الباحة'),
-        ('jouf', 'الجوف'),
+        ("north", "المنطقة الشمالية"),
+        ("south", "المنطقة الجنوبية"),
+        ("east",  "المنطقة الشرقية"),
+        ("center","المنطقة الوسطى"),
+        ("west",  "المنطقة الغربية"),
     ]
     
     # Fields
@@ -256,7 +247,7 @@ class BranchShift(models.Model):
         return f"{self.branch.name} - {self.name}"
     
     def get_duration(self):
-        """حساب مدة الشفت بالساعات"""
+        """حساب مدة الشفت بالساعات بدون احتساب الاستراحة"""
         from datetime import datetime, timedelta
         
         start = datetime.combine(datetime.today(), self.start_time)
@@ -267,18 +258,6 @@ class BranchShift(models.Model):
             end += timedelta(days=1)
         
         duration = end - start
-        
-        # طرح وقت الاستراحة إذا كان محدداً
-        if self.break_start and self.break_end:
-            break_start = datetime.combine(datetime.today(), self.break_start)
-            break_end = datetime.combine(datetime.today(), self.break_end)
-            
-            # إذا كان وقت نهاية الاستراحة أقل من وقت البداية، فهذا يعني أنه استراحة ليلية
-            if break_end <= break_start:
-                break_end += timedelta(days=1)
-            
-            break_duration = break_end - break_start
-            duration -= break_duration
         
         return duration.total_seconds() / 3600  # تحويل إلى ساعات
     

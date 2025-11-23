@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.core.exceptions import ValidationError
+import json
+from django.utils import timezone
 
 
 class ApprovalFlow(models.Model):
@@ -124,67 +126,132 @@ class ApprovalFlow(models.Model):
             self.status = 'approved'
         
         super().save(*args, **kwargs)
+
+    def _load_notes(self):
+        try:
+            data = json.loads(self.notes) if self.notes else {}
+            if not isinstance(data, dict):
+                data = {}
+        except Exception:
+            data = {}
+        return data
+
+    def _save_notes(self, data):
+        self.notes = json.dumps(data, ensure_ascii=False)
+        self.save(update_fields=['notes', 'updated_at'])
+
+    def _serialize_related_object(self):
+        obj = self.related_object
+        if not obj:
+            return {}
+        data = {
+            'model': self.content_type.model,
+            'id': getattr(obj, 'id', None),
+        }
+        if hasattr(obj, 'status'):
+            data['status'] = getattr(obj, 'status')
+        if hasattr(obj, 'branch') and getattr(obj, 'branch', None):
+            branch = getattr(obj, 'branch')
+            data['branch_id'] = getattr(branch, 'id', None)
+            data['branch_name'] = getattr(branch, 'name', '')
+            data['region'] = getattr(branch, 'region', '')
+        if hasattr(obj, 'start_date'):
+            data['start_date'] = getattr(obj, 'start_date', None).isoformat() if getattr(obj, 'start_date', None) else None
+        if hasattr(obj, 'end_date'):
+            data['end_date'] = getattr(obj, 'end_date', None).isoformat() if getattr(obj, 'end_date', None) else None
+        return data
+
+    def add_snapshot(self, step_order, status_label):
+        data = self._load_notes()
+        snapshots = data.get('snapshots', [])
+        snapshots.append({
+            'step': step_order,
+            'status': status_label,
+            'at': timezone.now().isoformat(),
+            'object': self._serialize_related_object()
+        })
+        data['snapshots'] = snapshots
+        self._save_notes(data)
+
+    def add_notification(self, message, recipients):
+        data = self._load_notes()
+        notifications = data.get('notifications', [])
+        notifications.append({
+            'message': message,
+            'to': list(recipients) if recipients else [],
+            'step': self.current_step,
+            'at': timezone.now().isoformat()
+        })
+        data['notifications'] = notifications
+        self._save_notes(data)
     
     def approve_current_step(self, user, comment=''):
         """الموافقة على الخطوة الحالية"""
-        from django.utils import timezone
+        step = ApprovalStep.objects.get(approval_flow=self, step_order=self.current_step)
+        if step.status == 'pending':
+            step.assigned_to = user
+            step.status = 'approved'
+            step.action = 'approve'
+            step.comment = comment
+            step.acted_at = timezone.now()
+            step.save()
+            self.add_snapshot(step.step_order, 'approved')
         
-        # إنشاء خطوة الموافقة
-        ApprovalStep.objects.create(
-            approval_flow=self,
-            step_order=self.current_step,
-            assigned_to=user,
-            status='approved',
-            action='approve',
-            comment=comment,
-            acted_at=timezone.now()
-        )
-        
-        # الانتقال للخطوة التالية
         self.current_step += 1
         
-        # إذا انتهت جميع الخطوات، قم بالموافقة النهائية
+        # تخطي الخطوات التى لا يوجد لها مستخدمون مؤهلون
+        while self.current_step <= self.total_steps:
+            pending = self.get_pending_users()
+            if pending.exists():
+                self.add_notification('تم ترحيل الطلب إلى المرحلة التالية', pending.values_list('id', flat=True))
+                break
+            auto_step = ApprovalStep.objects.get(approval_flow=self, step_order=self.current_step)
+            if auto_step.status == 'pending':
+                auto_step.assigned_to = None
+                auto_step.status = 'approved'
+                auto_step.action = 'approve'
+                auto_step.comment = ''
+                auto_step.acted_at = timezone.now()
+                auto_step.save()
+                self.add_snapshot(auto_step.step_order, 'auto_approved')
+            self.current_step += 1
+        
         if self.current_step > self.total_steps:
             self.status = 'approved'
             self.approved_by = user
             self.approved_at = timezone.now()
+            self.add_notification('تم اعتماد الطلب نهائياً', [self.created_by.id])
         
         self.save()
     
     def reject(self, user, reason=''):
         """رفض الموافقة"""
-        from django.utils import timezone
-        
-        # إنشاء خطوة الرفض
-        ApprovalStep.objects.create(
-            approval_flow=self,
-            step_order=self.current_step,
-            assigned_to=user,
-            status='rejected',
-            action='reject',
-            comment=reason,
-            acted_at=timezone.now()
-        )
-        
+        step = ApprovalStep.objects.get(approval_flow=self, step_order=self.current_step)
+        if step.status == 'pending':
+            step.assigned_to = user
+            step.status = 'rejected'
+            step.action = 'reject'
+            step.comment = reason
+            step.acted_at = timezone.now()
+            step.save()
+            self.add_snapshot(step.step_order, 'rejected')
+            self.add_notification('تم رفض الطلب', [self.created_by.id])
         self.status = 'rejected'
         self.rejection_reason = reason
         self.save()
     
     def cancel(self, user, reason=''):
         """إلغاء الموافقة"""
-        from django.utils import timezone
-        
-        # إنشاء خطوة الإلغاء
-        ApprovalStep.objects.create(
-            approval_flow=self,
-            step_order=self.current_step,
-            assigned_to=user,
-            status='cancelled',
-            action='cancel',
-            comment=reason,
-            acted_at=timezone.now()
-        )
-        
+        step = ApprovalStep.objects.get(approval_flow=self, step_order=self.current_step)
+        if step.status == 'pending':
+            step.assigned_to = user
+            step.status = 'cancelled'
+            step.action = 'cancel'
+            step.comment = reason
+            step.acted_at = timezone.now()
+            step.save()
+            self.add_snapshot(step.step_order, 'cancelled')
+            self.add_notification('تم إلغاء الطلب', [self.created_by.id])
         self.status = 'cancelled'
         self.notes = reason
         self.save()
@@ -211,13 +278,50 @@ class ApprovalFlow(models.Model):
     def get_pending_users(self):
         """الحصول على المستخدمين المطلوب منهم موافقة"""
         current_role = self.get_current_step_info()
-        if current_role:
-            from apps.users.models import UserProfile
-            return User.objects.filter(
-                profile__role=current_role,
-                profile__status='active'
-            )
-        return User.objects.none()
+        if not current_role:
+            return User.objects.none()
+
+        qs = User.objects.filter(
+            profile__role=current_role,
+            profile__status='active'
+        )
+
+        if current_role == 'region_manager':
+            related = self.related_object
+            region = None
+            if related is not None:
+                if hasattr(related, 'branch') and getattr(related, 'branch', None):
+                    region = related.branch.region
+                elif hasattr(related, 'employee') and getattr(related, 'employee', None):
+                    emp_profile = getattr(related.employee, 'profile', None)
+                    if emp_profile and getattr(emp_profile, 'region', ''):
+                        region = emp_profile.region
+            if region:
+                qs = qs.filter(profile__region=region)
+
+        return qs
+
+    def advance_until_assignable(self):
+        while self.current_step <= self.total_steps:
+            pending = self.get_pending_users()
+            if pending.exists():
+                self.add_notification('تم ترحيل الطلب إلى المرحلة التالية', pending.values_list('id', flat=True))
+                break
+            step = ApprovalStep.objects.get(approval_flow=self, step_order=self.current_step)
+            if step.status == 'pending':
+                step.assigned_to = None
+                step.status = 'approved'
+                step.action = 'approve'
+                step.comment = ''
+                step.acted_at = timezone.now()
+                step.save()
+                self.add_snapshot(step.step_order, 'auto_approved')
+            self.current_step += 1
+        if self.current_step > self.total_steps:
+            self.status = 'approved'
+            self.approved_at = timezone.now()
+            self.add_notification('تم اعتماد الطلب نهائياً', [self.created_by.id])
+        self.save()
 
 
 class ApprovalStep(models.Model):

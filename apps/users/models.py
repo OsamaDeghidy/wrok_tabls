@@ -38,6 +38,14 @@ class UserProfile(models.Model):
         ('sales', 'المبيعات'),
         ('marketing', 'التسويق'),
     ]
+
+    REGION_CHOICES = [
+        ('north', 'المنطقة الشمالية'),
+        ('south', 'المنطقة الجنوبية'),
+        ('east', 'المنطقة الشرقية'),
+        ('center', 'المنطقة الوسطى'),
+        ('west', 'المنطقة الغربية'),
+    ]
     
     # Fields
     user = models.OneToOneField(
@@ -111,6 +119,13 @@ class UserProfile(models.Model):
         choices=DEPARTMENT_CHOICES,
         blank=True, 
         verbose_name='القسم'
+    )
+
+    region = models.CharField(
+        max_length=50,
+        choices=REGION_CHOICES,
+        blank=True,
+        verbose_name='المنطقة'
     )
     
     hire_date = models.DateField(

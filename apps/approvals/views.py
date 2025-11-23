@@ -103,15 +103,17 @@ def approval_detail_view(request, approval_id):
     # التحقق من إمكانية الموافقة/الرفض
     can_approve = False
     if approval_flow.status in ['pending', 'in_progress']:
-        current_role = approval_flow.get_current_step_info()
-        if current_role == user_profile.role:
-            can_approve = True
+        eligible = approval_flow.get_pending_users()
+        can_approve = eligible.filter(id=request.user.id).exists()
     
     context = {
         'approval_flow': approval_flow,
+        'approval': approval_flow,
         'approval_steps': approval_steps,
         'can_approve': can_approve,
         'user_role': user_profile.role,
+        'notifications': (json.loads(approval_flow.notes).get('notifications') if approval_flow.notes else []),
+        'snapshots': (json.loads(approval_flow.notes).get('snapshots') if approval_flow.notes else []),
     }
     
     return render(request, 'approvals/detail.html', context)
@@ -130,8 +132,8 @@ def approve_request_view(request, approval_id):
         return JsonResponse({'success': False, 'error': 'لم يتم العثور على ملف المستخدم'})
     
     # التحقق من إمكانية الموافقة
-    current_role = approval_flow.get_current_step_info()
-    if current_role != user_profile.role:
+    eligible = approval_flow.get_pending_users()
+    if not eligible.filter(id=request.user.id).exists():
         return JsonResponse({'success': False, 'error': 'ليس لديك صلاحية للموافقة على هذه الخطوة'})
     
     if approval_flow.status not in ['pending', 'in_progress']:
@@ -143,6 +145,7 @@ def approve_request_view(request, approval_id):
     try:
         # الموافقة على الخطوة الحالية
         approval_flow.approve_current_step(request.user, comment)
+        approval_flow.advance_until_assignable()
         
         # إذا تمت الموافقة النهائية، تحديث حالة الكائن المرتبط
         if approval_flow.status == 'approved':
@@ -174,8 +177,8 @@ def reject_request_view(request, approval_id):
         return JsonResponse({'success': False, 'error': 'لم يتم العثور على ملف المستخدم'})
     
     # التحقق من إمكانية الرفض
-    current_role = approval_flow.get_current_step_info()
-    if current_role != user_profile.role:
+    eligible = approval_flow.get_pending_users()
+    if not eligible.filter(id=request.user.id).exists():
         return JsonResponse({'success': False, 'error': 'ليس لديك صلاحية لرفض هذه الخطوة'})
     
     if approval_flow.status not in ['pending', 'in_progress']:
@@ -235,6 +238,9 @@ def create_approval_for_schedule(request, schedule_id):
     
     # إنشاء خطوات الموافقة
     ApprovalStep.create_default_steps(approval_flow, request.user)
+    
+    # تخطي تلقائي للخطوات التى لا يوجد بها مستخدمون
+    approval_flow.advance_until_assignable()
     
     # تحديث حالة الجدول
     schedule.status = 'pending_approval'

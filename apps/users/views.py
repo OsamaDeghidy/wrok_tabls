@@ -25,8 +25,20 @@ def login_view(request):
         password = request.POST.get('password')
         remember_me = request.POST.get('remember_me')
         
+        # دعم تسجيل الدخول بالبريد الإلكتروني أو اسم المستخدم
         user = authenticate(request, username=username, password=password)
+        if user is None and '@' in username:
+            try:
+                from django.contrib.auth.models import User as DjangoUser
+                u = DjangoUser.objects.filter(email__iexact=username).first()
+                if u:
+                    user = authenticate(request, username=u.username, password=password)
+            except Exception:
+                pass
         if user is not None:
+            if not user.is_active:
+                messages.error(request, 'الحساب غير نشط. يرجى التواصل مع المسؤول')
+                return render(request, 'users/login.html')
             login(request, user)
             if not remember_me:
                 request.session.set_expiry(0)  # تنتهي الجلسة عند إغلاق المتصفح
@@ -53,6 +65,7 @@ def register_view(request):
         phone = request.POST.get('phone', '')
         role = request.POST.get('role')
         branch = request.POST.get('branch')
+        region = request.POST.get('region', '')
         
         # التحقق من صحة البيانات
         errors = []
@@ -84,9 +97,19 @@ def register_view(request):
         if not role:
             errors.append('الدور مطلوب')
         
-        # التحقق من الفرع حسب الدور
+        # التحقق من الفرع/المنطقة حسب الدور
         if role in ['employee', 'branch_manager'] and not branch:
             errors.append('الفرع مطلوب لهذا الدور')
+        if role == 'region_manager' and not region:
+            errors.append('المنطقة مطلوبة لهذا الدور')
+        if role == 'region_manager' and region:
+            try:
+                from apps.branches.models import Branch
+                valid_regions = {key for key, _ in Branch.REGION_CHOICES}
+                if region not in valid_regions:
+                    errors.append('المنطقة المحددة غير صحيحة')
+            except Exception:
+                pass
         
         if errors:
             for error in errors:
@@ -115,7 +138,8 @@ def register_view(request):
                     user=user,
                     role=role,
                     phone=phone,
-                    branch=branch_obj
+                    branch=branch_obj,
+                    region=region if role == 'region_manager' else ''
                 )
                 
                 messages.success(request, 'تم إنشاء الحساب بنجاح! يمكنك الآن تسجيل الدخول')
@@ -162,34 +186,35 @@ def user_list_view(request):
     status = request.GET.get('status', '')
     department = request.GET.get('department', '')
     
-    # الحصول على المستخدمين حسب الصلاحيات
+    # الحصول على المستخدمين حسب الصلاحيات (عرض UserProfile مع ربط User)
+    base_qs = UserProfile.objects.select_related('user')
     if request.user.is_superuser:
-        users = User.objects.all()
+        users = base_qs
     elif hasattr(request.user, 'profile'):
-        if request.user.profile.can_manage_employees:
-            users = User.objects.all()
+        if getattr(request.user.profile, 'can_manage_employees', False):
+            users = base_qs
         else:
-            users = User.objects.filter(id=request.user.id)
+            users = base_qs.filter(user=request.user)
     else:
-        users = User.objects.none()
+        users = base_qs.none()
     
     # تطبيق الفلاتر
     if search:
         users = users.filter(
-            Q(first_name__icontains=search) |
-            Q(last_name__icontains=search) |
-            Q(username__icontains=search) |
-            Q(email__icontains=search)
+            Q(user__first_name__icontains=search) |
+            Q(user__last_name__icontains=search) |
+            Q(user__username__icontains=search) |
+            Q(user__email__icontains=search)
         )
     
     if role:
-        users = users.filter(profile__role=role)
+        users = users.filter(role=role)
     
     if status:
-        users = users.filter(profile__status=status)
+        users = users.filter(status=status)
     
     if department:
-        users = users.filter(profile__department__icontains=department)
+        users = users.filter(department__icontains=department)
     
     # الترقيم
     paginator = Paginator(users, 20)

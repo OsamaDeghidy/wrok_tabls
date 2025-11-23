@@ -1,9 +1,16 @@
  vercel
  professionaldev.sa@gmail.com
 
- digitalocean
- professionaldev.sa@gmail.com
-Pdt123@#
+degtal osen accunt 
+Dhoom.cr2015@gmail.com     pass : Aa053053@
+
+
+
+work-table
+SFO3 / 0.5GB / 10GB Disk
+143.110.239.198 Copy
+
+
 
  ديجيتال اوشن خش مباشرة بالايميل والباسوورد مو عن طريق قوقل
  تم اشتريت الدومينات
@@ -17,23 +24,34 @@ Professional123@#
 for jorry host and doman 
 degtal ocian 
 pass : osam0Esmael
-ip : 167.172.202.11
+ip : 167.71.153.247
 
-pdt-admin.com
+##pdt-admin.com
 
+python manage.py shell -c "
+from django.contrib.auth.models import User
+from apps.users.models import UserProfile
+admin_manager = User.objects.create_user(username='admin_manager', email='admin_manager@example.com', password='admin123', first_name='مدير', last_name='الإدارة')
+profile = UserProfile.objects.create(user=admin_manager, role='admin_manager', status='active', phone='01234567890')
+print('تم إنشاء مدير الإدارة: admin_manager / admin123')
+"
+python create_admin_manager.py
 
+python create_admin_manager.py
 
 
 #degtal ocean config
 #DB_USER=doadmin
 #DB_PASSWORD= osam0Esmael
-#DB_HOST= 167.172.202.11
+#DB_HOST= 167.71.153.247
 #DB_PORT=5432
 #DB_NAME=defaultdb
-
+  
+  worktable_system
+  
 alisthomepros.com
 ################################## run my server
-# ssh root@167.172.202.11     username
+# ssh root@167.71.153.247     username
 # osam0Esmael                password
  su sammy
  cd ~/myprojectdir
@@ -102,7 +120,7 @@ sudo chmod 755 /home/sammy/myprojectdir
 
 
 sudo -u www-data test -r /home/sammy/myprojectdir/staticfiles/admin/css/base.css && echo "nginx can read file"
-curl -I http://167.172.202.11/static/admin/css/base.css
+curl -I http://167.71.153.247/static/admin/css/base.css
 
 http {
     # ... existing settings ...
@@ -126,7 +144,7 @@ triplesacademy.com  www.triplesacademy.com
 
 server {
     listen 80;
-    server_name 167.172.202.11 ;
+    server_name 167.71.153.247 ;
 
     location = /favicon.ico { access_log off; log_not_found off; }
     # Static files
@@ -290,3 +308,27 @@ git push -u origin main
 git remote add origin https://github.com/OsamaDeghidy/wrok_tabls.git
 git branch -M main
 git push -u origin main
+
+
+
+
+npx create-next-app@latest frontend --typescript --tailwind --eslint --app --src-dir --import-alias "@/*" --yes
+
+
+
+
+  GNU nano 6.2       /etc/nginx/sites-available/myproject  
+server {
+    listen 80;
+    server_name 167.71.153.247;
+
+    location = /favicon.ico { access_log off; log_not_found off; }       
+    location /static/ {
+        root /home/sammy/myprojectdir;
+    }
+
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/run/gunicorn.sock;
+    }
+}

@@ -20,4 +20,5 @@ urlpatterns = [
     path('api/', views.api_branch_list, name='api_list'),
     path('api/<int:branch_id>/', views.api_branch_detail, name='api_detail'),
     path('api/<int:branch_id>/shifts/', views.api_shift_list, name='api_shifts'),
+    path('api/regions/', views.api_regions, name='api_regions'),
 ]

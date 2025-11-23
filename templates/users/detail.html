@@ -7,7 +7,7 @@
 
 {% block page_actions %}
 <div class="btn-group" role="group">
-    <a href="{% url 'users:edit' user_detail.id %}" class="btn btn-warning">
+    <a href="{% url 'users:edit' user.id %}" class="btn btn-warning">
         <i class="fas fa-edit me-1"></i>تعديل
     </a>
     <a href="{% url 'users:list' %}" class="btn btn-outline-secondary">
@@ -29,13 +29,13 @@
                          width="120" 
                          height="120">
                 </div>
-                <h4 class="card-title">{{ user_detail.user.first_name }} {{ user_detail.user.last_name }}</h4>
-                <p class="text-muted">@{{ user_detail.user.username }}</p>
-                <p class="text-muted">{{ user_detail.user.email }}</p>
-                <span class="badge bg-{% if user_detail.user.is_active %}success{% else %}danger{% endif %}">
-                    {% if user_detail.user.is_active %}نشط{% else %}غير نشط{% endif %}
+                <h4 class="card-title">{{ user.first_name }} {{ user.last_name }}</h4>
+                <p class="text-muted">@{{ user.username }}</p>
+                <p class="text-muted">{{ user.email }}</p>
+                <span class="badge bg-{% if user.is_active %}success{% else %}danger{% endif %}">
+                    {% if user.is_active %}نشط{% else %}غير نشط{% endif %}
                 </span>
-                <span class="badge bg-primary ms-1">{{ user_detail.get_role_display }}</span>
+                <span class="badge bg-primary ms-1">{{ profile.get_role_display }}</span>
             </div>
         </div>
 
@@ -65,7 +65,7 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <a href="{% url 'users:edit' user_detail.id %}" class="btn btn-warning btn-sm">
+                    <a href="{% url 'users:edit' user.id %}" class="btn btn-warning btn-sm">
                         <i class="fas fa-edit me-1"></i>تعديل المستخدم
                     </a>
                     <button type="button" class="btn btn-info btn-sm">
@@ -74,9 +74,9 @@
                     <button type="button" class="btn btn-success btn-sm">
                         <i class="fas fa-key me-1"></i>إعادة تعيين كلمة المرور
                     </button>
-                    <button type="button" class="btn btn-{% if user_detail.is_active %}danger{% else %}success{% endif %} btn-sm">
-                        <i class="fas fa-{% if user_detail.is_active %}ban{% else %}check{% endif %} me-1"></i>
-                        {% if user_detail.is_active %}تعطيل الحساب{% else %}تفعيل الحساب{% endif %}
+                    <button type="button" class="btn btn-{% if user.is_active %}danger{% else %}success{% endif %} btn-sm">
+                        <i class="fas fa-{% if user.is_active %}ban{% else %}check{% endif %} me-1"></i>
+                        {% if user.is_active %}تعطيل الحساب{% else %}تفعيل الحساب{% endif %}
                     </button>
                 </div>
             </div>
@@ -94,45 +94,45 @@
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label fw-bold">الاسم الكامل</label>
-                            <p class="form-control-plaintext">{{ user_detail.user.first_name }} {{ user_detail.user.last_name }}</p>
+                            <p class="form-control-plaintext">{{ user.first_name }} {{ user.last_name }}</p>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label fw-bold">اسم المستخدم</label>
-                            <p class="form-control-plaintext">@{{ user_detail.user.username }}</p>
+                            <p class="form-control-plaintext">@{{ user.username }}</p>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label fw-bold">البريد الإلكتروني</label>
-                            <p class="form-control-plaintext">{{ user_detail.user.email }}</p>
+                            <p class="form-control-plaintext">{{ user.email }}</p>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label fw-bold">رقم الهاتف</label>
-                            <p class="form-control-plaintext">{{ user_detail.phone|default:"غير محدد" }}</p>
+                            <p class="form-control-plaintext">{{ profile.phone|default:"غير محدد" }}</p>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label fw-bold">المنصب</label>
-                            <p class="form-control-plaintext">{{ user_detail.position|default:"غير محدد" }}</p>
+                            <p class="form-control-plaintext">{{ profile.position|default:"غير محدد" }}</p>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label fw-bold">القسم</label>
-                            <p class="form-control-plaintext">{{ user_detail.department|default:"غير محدد" }}</p>
+                            <p class="form-control-plaintext">{{ profile.department|default:"غير محدد" }}</p>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label fw-bold">الفرع</label>
                             <p class="form-control-plaintext">
-                                {% if user_detail.branch %}
-                                    <i class="fas fa-building me-2 text-primary"></i>{{ user_detail.branch.name }} - {{ user_detail.branch.get_type_display }}
+                                {% if profile.branch %}
+                                    <i class="fas fa-building me-2 text-primary"></i>{{ profile.branch.name }} - {{ profile.branch.get_type_display }}
                                 {% else %}
                                     <span class="text-muted">غير محدد</span>
                                 {% endif %}
@@ -142,13 +142,13 @@
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label fw-bold">تاريخ الانضمام</label>
-                            <p class="form-control-plaintext">{{ user_detail.created_at|date:"Y/m/d" }}</p>
+                            <p class="form-control-plaintext">{{ profile.created_at|date:"Y/m/d" }}</p>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label fw-bold">آخر تسجيل دخول</label>
-                            <p class="form-control-plaintext">{{ user_detail.user.last_login|date:"Y/m/d H:i"|default:"لم يسجل دخول من قبل" }}</p>
+                            <p class="form-control-plaintext">{{ user.last_login|date:"Y/m/d H:i"|default:"لم يسجل دخول من قبل" }}</p>
                         </div>
                     </div>
                 </div>

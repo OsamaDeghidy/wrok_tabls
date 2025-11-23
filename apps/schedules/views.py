@@ -469,6 +469,24 @@ def schedule_activate_view(request, schedule_id):
 
 
 @login_required
+def schedule_complete_view(request, schedule_id):
+    """إكمال الجدول التشغيلي"""
+    schedule = get_object_or_404(Schedule, id=schedule_id)
+    # التحقق من الصلاحيات
+    if not request.user.is_superuser and hasattr(request.user, 'profile'):
+        user_role = request.user.profile.role
+        if user_role not in ['coordinator', 'region_manager', 'operations_manager', 'admin_manager', 'super_admin']:
+            messages.error(request, 'ليس لديك صلاحية لإكمال الجداول')
+            return redirect('schedules:detail', schedule_id=schedule.id)
+    # يجب أن يكون الجدول في حالة نشطة ليتم إكماله
+    if schedule.status != 'active':
+        messages.error(request, 'يمكن إكمال الجداول النشطة فقط')
+        return redirect('schedules:detail', schedule_id=schedule.id)
+    schedule.status = 'completed'
+    schedule.save()
+    messages.success(request, 'تم إكمال الجدول التشغيلي بنجاح')
+    return redirect('schedules:detail', schedule_id=schedule.id)
+@login_required
 def schedule_entries_view(request, schedule_id):
     """إدارة إدخالات الجدول التشغيلي"""
     

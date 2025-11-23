@@ -12,7 +12,7 @@ class UserProfileInline(admin.StackedInline):
     
     fieldsets = (
         ('المعلومات الوظيفية', {
-            'fields': ('role', 'branch', 'job_id', 'work_hours', 'work_days', 'status')
+            'fields': ('role', 'branch', 'region', 'job_id', 'work_hours', 'work_days', 'status')
         }),
         ('المعلومات الشخصية', {
             'fields': ('phone', 'position', 'department', 'hire_date', 'salary')
@@ -27,7 +27,7 @@ class UserProfileInline(admin.StackedInline):
 class CustomUserAdmin(UserAdmin):
     inlines = (UserProfileInline,)
     list_display = ('username', 'email', 'first_name', 'last_name', 'get_role', 'get_branch', 'get_status', 'is_staff')
-    list_filter = ('is_staff', 'is_superuser', 'is_active', 'date_joined', 'profile__role', 'profile__branch', 'profile__status')
+    list_filter = ('is_staff', 'is_superuser', 'is_active', 'date_joined', 'profile__role', 'profile__branch', 'profile__region', 'profile__status')
     search_fields = ('username', 'first_name', 'last_name', 'email', 'profile__job_id')
     
     def get_role(self, obj):
@@ -56,8 +56,8 @@ class CustomUserAdmin(UserAdmin):
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'get_full_name', 'role', 'branch', 'status', 'job_id', 'work_hours', 'created_at')
-    list_filter = ('role', 'branch', 'status', 'work_hours', 'work_days', 'department', 'created_at')
+    list_display = ('user', 'get_full_name', 'role', 'branch', 'region', 'status', 'job_id', 'work_hours', 'created_at')
+    list_filter = ('role', 'branch', 'region', 'status', 'work_hours', 'work_days', 'department', 'created_at')
     search_fields = ('user__username', 'user__first_name', 'user__last_name', 'job_id', 'phone')
     readonly_fields = ('job_id', 'created_at', 'updated_at')
     
@@ -66,7 +66,7 @@ class UserProfileAdmin(admin.ModelAdmin):
             'fields': ('user',)
         }),
         ('المعلومات الوظيفية', {
-            'fields': ('role', 'branch', 'job_id', 'work_hours', 'work_days', 'status', 'position', 'department', 'hire_date', 'salary')
+            'fields': ('role', 'branch', 'region', 'job_id', 'work_hours', 'work_days', 'status', 'position', 'department', 'hire_date', 'salary')
         }),
         ('المعلومات الشخصية', {
             'fields': ('phone', 'address', 'emergency_contact', 'emergency_phone')

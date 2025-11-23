@@ -9,6 +9,7 @@ from django.views.decorators.http import require_http_methods
 from django.contrib.auth.models import User
 from .models import Branch, BranchShift
 from .forms import BranchForm, BranchShiftForm
+from django.utils.dateparse import parse_date, parse_time
 import json
 
 
@@ -88,7 +89,7 @@ def branch_detail_view(request, branch_id):
     shifts = branch.shifts.all()
     
     # الحصول على الموظفين
-    employees = branch.employees.all()
+    employees = User.objects.filter(profile__branch=branch).select_related('profile')
     
     context = {
         'branch': branch,
@@ -127,7 +128,7 @@ def branch_create_view(request):
                 phone=request.POST.get('phone', ''),
                 email=request.POST.get('email', ''),
                 capacity=int(request.POST.get('capacity', 0)) if request.POST.get('capacity') else 0,
-                opening_date=request.POST.get('opening_date') or None,
+                opening_date=parse_date(request.POST.get('opening_date')) if request.POST.get('opening_date') else None,
                 working_days=request.POST.getlist('working_days'),
                 description=request.POST.get('description', ''),
                 notes=request.POST.get('notes', '')
@@ -154,10 +155,10 @@ def branch_create_view(request):
                     BranchShift.objects.create(
                         branch=branch,
                         name=shift_names[i],
-                        start_time=shift_starts[i],
-                        end_time=shift_ends[i],
-                        break_start=break_starts[i] if i < len(break_starts) and break_starts[i] else None,
-                        break_end=break_ends[i] if i < len(break_ends) and break_ends[i] else None,
+                        start_time=parse_time(shift_starts[i]),
+                        end_time=parse_time(shift_ends[i]),
+                        break_start=parse_time(break_starts[i]) if i < len(break_starts) and break_starts[i] else None,
+                        break_end=parse_time(break_ends[i]) if i < len(break_ends) and break_ends[i] else None,
                         is_active=True
                     )
             
@@ -206,7 +207,7 @@ def branch_edit_view(request, branch_id):
             branch.phone = request.POST.get('phone', '')
             branch.email = request.POST.get('email', '')
             branch.capacity = int(request.POST.get('capacity', 0)) if request.POST.get('capacity') else 0
-            branch.opening_date = request.POST.get('opening_date') or None
+            branch.opening_date = parse_date(request.POST.get('opening_date')) if request.POST.get('opening_date') else None
             branch.working_days = request.POST.getlist('working_days')
             branch.description = request.POST.get('description', '')
             branch.notes = request.POST.get('notes', '')
@@ -237,10 +238,10 @@ def branch_edit_view(request, branch_id):
                     BranchShift.objects.create(
                         branch=branch,
                         name=shift_names[i],
-                        start_time=shift_starts[i],
-                        end_time=shift_ends[i],
-                        break_start=break_starts[i] if i < len(break_starts) and break_starts[i] else None,
-                        break_end=break_ends[i] if i < len(break_ends) and break_ends[i] else None,
+                        start_time=parse_time(shift_starts[i]),
+                        end_time=parse_time(shift_ends[i]),
+                        break_start=parse_time(break_starts[i]) if i < len(break_starts) and break_starts[i] else None,
+                        break_end=parse_time(break_ends[i]) if i < len(break_ends) and break_ends[i] else None,
                         is_active=True
                     )
             
@@ -440,3 +441,13 @@ def api_shift_list(request, branch_id):
         return JsonResponse({'shifts': data})
     except Branch.DoesNotExist:
         return JsonResponse({'error': 'الفرع غير موجود'}, status=404)
+
+
+@require_http_methods(["GET"])
+def api_regions(request):
+    """API لإرجاع قائمة المناطق المتاحة للاستخدام في التسجيل"""
+    regions = [
+        {"value": key, "label": label}
+        for key, label in Branch.REGION_CHOICES
+    ]
+    return JsonResponse({"regions": regions})
