@@ -226,6 +226,13 @@ class BranchShift(models.Model):
         default=True,
         verbose_name='نشط'
     )
+
+    days = models.JSONField(
+        default=list,
+        blank=True,
+        verbose_name='أيام الشفت',
+        help_text='قائمة بالأيام التي ينطبق عليها الشفت (اتركه فارغاً لينطبق على جميع أيام عمل الفرع)'
+    )
     
     created_at = models.DateTimeField(
         auto_now_add=True,

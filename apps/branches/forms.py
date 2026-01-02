@@ -6,6 +6,21 @@ from .models import Branch, BranchShift
 class BranchForm(forms.ModelForm):
     """نموذج إنشاء وتعديل الفرع"""
     
+    working_days = forms.MultipleChoiceField(
+        choices=[
+            ('saturday', 'السبت'),
+            ('sunday', 'الأحد'),
+            ('monday', 'الاثنين'),
+            ('tuesday', 'الثلاثاء'),
+            ('wednesday', 'الأربعاء'),
+            ('thursday', 'الخميس'),
+            ('friday', 'الجمعة'),
+        ],
+        required=False,
+        label='أيام العمل',
+        widget=forms.SelectMultiple(attrs={'class': 'form-select'})
+    )
+
     class Meta:
         model = Branch
         fields = [
@@ -56,7 +71,7 @@ class BranchForm(forms.ModelForm):
         self.fields['manager'].label = 'مدير الفرع'
         self.fields['capacity'].label = 'السعة الاستيعابية للموظفين'
         self.fields['opening_date'].label = 'تاريخ الافتتاح'
-        self.fields['working_days'].label = 'أيام العمل'
+        # self.fields['working_days'].label = 'أيام العمل'
         self.fields['description'].label = 'وصف الفرع'
         self.fields['notes'].label = 'ملاحظات'
     
@@ -86,9 +101,25 @@ class BranchForm(forms.ModelForm):
 class BranchShiftForm(forms.ModelForm):
     """نموذج إنشاء وتعديل شفت الفرع"""
     
+    days = forms.MultipleChoiceField(
+        choices=[
+            ('saturday', 'السبت'),
+            ('sunday', 'الأحد'),
+            ('monday', 'الاثنين'),
+            ('tuesday', 'الثلاثاء'),
+            ('wednesday', 'الأربعاء'),
+            ('thursday', 'الخميس'),
+            ('friday', 'الجمعة'),
+        ],
+        required=False,
+        label='أيام الشفت',
+        widget=forms.SelectMultiple(attrs={'class': 'form-select'}),
+        help_text='اتركه فارغاً لينطبق على جميع أيام عمل الفرع'
+    )
+
     class Meta:
         model = BranchShift
-        fields = ['name', 'start_time', 'end_time', 'is_active']
+        fields = ['name', 'start_time', 'end_time', 'is_active', 'days']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'start_time': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),

@@ -178,25 +178,23 @@ class Schedule(models.Model):
         if not shifts.exists():
             return 0
         
-        # حساب إجمالي ساعات الشفتات في اليوم الواحد
-        daily_hours = sum(shift.get_duration() for shift in shifts)
-        
         while current_date <= self.end_date:
             # التحقق من أن اليوم في أيام عمل الفرع
             day_name = current_date.strftime('%A').lower()
-            day_mapping = {
-                'monday': 'monday',
-                'tuesday': 'tuesday', 
-                'wednesday': 'wednesday',
-                'thursday': 'thursday',
-                'friday': 'friday',
-                'saturday': 'saturday',
-                'sunday': 'sunday'
-            }
             
-            arabic_day = day_mapping.get(day_name)
             # إذا لم تكن أيام العمل محددة، نعتبر كل الأيام أيام عمل
-            if not hasattr(self.branch, 'working_days') or not self.branch.working_days or arabic_day in self.branch.working_days:
+            if not hasattr(self.branch, 'working_days') or not self.branch.working_days or day_name in self.branch.working_days:
+                # حساب ساعات الشفتات لهذا اليوم فقط
+                daily_hours = 0
+                for shift in shifts:
+                    # إذا كان الشفت محدداً لأيام معينة، نتحقق من اليوم
+                    if hasattr(shift, 'days') and shift.days:
+                        if day_name in shift.days:
+                             daily_hours += shift.get_duration()
+                    else:
+                        # إذا لم يحدد أيام، يفترض أنه لكل الأيام
+                        daily_hours += shift.get_duration()
+                
                 total_hours += daily_hours
             
             current_date += timedelta(days=1)

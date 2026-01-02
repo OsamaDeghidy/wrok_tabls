@@ -199,15 +199,7 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="{{ form.working_days.id_for_label }}" class="form-label">{{ form.working_days.label }}</label>
-                                <select class="form-select" id="{{ form.working_days.id_for_label }}" name="working_days" multiple>
-                                    <option value="saturday" {% if branch.working_days and 'saturday' in branch.working_days %}selected{% endif %}>السبت</option>
-                                    <option value="sunday" {% if branch.working_days and 'sunday' in branch.working_days %}selected{% endif %}>الأحد</option>
-                                    <option value="monday" {% if branch.working_days and 'monday' in branch.working_days %}selected{% endif %}>الاثنين</option>
-                                    <option value="tuesday" {% if branch.working_days and 'tuesday' in branch.working_days %}selected{% endif %}>الثلاثاء</option>
-                                    <option value="wednesday" {% if branch.working_days and 'wednesday' in branch.working_days %}selected{% endif %}>الأربعاء</option>
-                                    <option value="thursday" {% if branch.working_days and 'thursday' in branch.working_days %}selected{% endif %}>الخميس</option>
-                                    <option value="friday" {% if branch.working_days and 'friday' in branch.working_days %}selected{% endif %}>الجمعة</option>
-                                </select>
+                                {{ form.working_days }}
                                 <div class="form-text">اضغط Ctrl لاختيار عدة أيام</div>
                                 {% if form.working_days.errors %}
                                     <div class="text-danger small">{{ form.working_days.errors.0 }}</div>

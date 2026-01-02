@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 text-primary">
+                    <i class="fas fa-file-import me-2"></i>
+                    استيراد بيانات المعارض
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6 class="alert-heading"><i class="fas fa-info-circle me-2"></i>تعليمات الاستيراد:</h6>
+                    <ul class="mb-0 small">
+                        <li>يرجى استخدام ملف Excel (.xlsx) أو CSV.</li>
+                        <li>يجب أن يحتوي الملف على الأعمدة المطلوبة (الاسم، الكود، إلخ).</li>
+                        <li>يمكنك تحديد أوقات عمل مختلفة للأيام العادية ويوم الجمعة.</li>
+                        <li>
+                            <strong>الأعمدة الجديدة المدعومة:</strong>
+                            <ul>
+                                <li><code>وقت بداية دوام الأسبوع</code> و <code>وقت نهاية دوام الأسبوع</code> (للأيام من السبت إلى الخميس)</li>
+                                <li><code>وقت بداية دوام الجمعة</code> و <code>وقت نهاية دوام الجمعة</code> (ليوم الجمعة فقط)</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="mb-4 text-center">
+                    <a href="{% url 'branches:import_sample' %}" class="btn btn-outline-success">
+                        <i class="fas fa-file-download me-2"></i>
+                        تحميل ملف نموذج Excel
+                    </a>
+                </div>
+
+                <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <div class="mb-4">
+                        <label for="{{ form.file.id_for_label }}" class="form-label">ملف البيانات</label>
+                        {{ form.file }}
+                        {% if form.file.errors %}
+                            <div class="text-danger small mt-1">{{ form.file.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">امتدادات الملفات المدعومة: .xlsx, .xls, .csv</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="form-check">
+                            {{ form.update_existing }}
+                            <label class="form-check-label" for="{{ form.update_existing.id_for_label }}">
+                                {{ form.update_existing.label }}
+                            </label>
+                        </div>
+                        <div class="form-text text-muted small">
+                            عند التفعيل، سيتم تحديث بيانات المعارض التي لها نفس الكود. إذا لم يتم التفعيل، سيتم تجاهل المعارض الموجودة مسبقاً.
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'branches:list' %}" class="btn btn-secondary me-md-2">إلغاء</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload me-2"></i>
+                            بدء الاستيراد
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
