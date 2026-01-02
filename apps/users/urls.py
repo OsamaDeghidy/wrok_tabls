@@ -27,4 +27,5 @@ urlpatterns = [
     # API URLs
     path('api/users/', views.api_user_list, name='api_list'),
     path('api/users/<int:user_id>/', views.api_user_detail, name='api_detail'),
+    path('api/regions/', views.api_regions, name='api_regions'),
 ]

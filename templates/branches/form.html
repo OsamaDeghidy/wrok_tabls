@@ -35,6 +35,21 @@
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
+                    
+                    <!-- عرض أخطاء الفورم -->
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <h6>يرجى تصحيح الأخطاء التالية:</h6>
+                        <ul class="mb-0">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    <li>{{ field }}: {{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    
                     <div class="row">
                         <!-- Basic Information -->
                         <div class="col-12">
@@ -42,50 +57,47 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_name" class="form-label">اسم الفرع <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="id_name" name="name" 
-                                       value="{{ branch.name|default:'' }}" required>
+                                <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }} <span class="text-danger">*</span></label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger small">{{ form.name.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_code" class="form-label">كود الفرع <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="id_code" name="code" 
-                                       value="{{ branch.code|default:'' }}" required>
+                                <label for="{{ form.code.id_for_label }}" class="form-label">{{ form.code.label }} <span class="text-danger">*</span></label>
+                                {{ form.code }}
+                                {% if form.code.errors %}
+                                    <div class="text-danger small">{{ form.code.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_type" class="form-label">نوع الفرع</label>
-                                <select class="form-select" id="id_type" name="type">
-                                    <option value="">اختر نوع الفرع</option>
-                                    <option value="main" {% if branch.type == 'main' %}selected{% endif %}>الفرع الرئيسي</option>
-                                    <option value="branch" {% if branch.type == 'branch' %}selected{% endif %}>فرع فرعي</option>
-                                    <option value="warehouse" {% if branch.type == 'warehouse' %}selected{% endif %}>مستودع</option>
-                                    <option value="office" {% if branch.type == 'office' %}selected{% endif %}>مكتب</option>
-                                </select>
+                                <label for="{{ form.type.id_for_label }}" class="form-label">{{ form.type.label }}</label>
+                                {{ form.type }}
+                                {% if form.type.errors %}
+                                    <div class="text-danger small">{{ form.type.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_category" class="form-label">فئة الفرع</label>
-                                <select class="form-select" id="id_category" name="category">
-                                    <option value="">اختر فئة الفرع</option>
-                                    <option value="A" {% if branch.category == 'A' %}selected{% endif %}>فئة أ</option>
-                                    <option value="B" {% if branch.category == 'B' %}selected{% endif %}>فئة ب</option>
-                                    <option value="C" {% if branch.category == 'C' %}selected{% endif %}>فئة ج</option>
-                                    <option value="D" {% if branch.category == 'D' %}selected{% endif %}>فئة د</option>
-                                </select>
+                                <label for="{{ form.category.id_for_label }}" class="form-label">{{ form.category.label }}</label>
+                                {{ form.category }}
+                                {% if form.category.errors %}
+                                    <div class="text-danger small">{{ form.category.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_status" class="form-label">الحالة</label>
-                                <select class="form-select" id="id_status" name="status">
-                                    <option value="active" {% if branch.status == 'active' %}selected{% endif %}>نشط</option>
-                                    <option value="inactive" {% if branch.status == 'inactive' %}selected{% endif %}>غير نشط</option>
-                                    <option value="maintenance" {% if branch.status == 'maintenance' %}selected{% endif %}>تحت الصيانة</option>
-                                </select>
+                                <label for="{{ form.status.id_for_label }}" class="form-label">{{ form.status.label }}</label>
+                                {{ form.status }}
+                                {% if form.status.errors %}
+                                    <div class="text-danger small">{{ form.status.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
 
@@ -95,36 +107,38 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_address" class="form-label">العنوان <span class="text-danger">*</span></label>
-                                <textarea class="form-control" id="id_address" name="address" rows="3" 
-                                          required>{{ branch.address|default:'' }}</textarea>
+                                <label for="{{ form.address.id_for_label }}" class="form-label">{{ form.address.label }} <span class="text-danger">*</span></label>
+                                {{ form.address }}
+                                {% if form.address.errors %}
+                                    <div class="text-danger small">{{ form.address.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_city" class="form-label">المدينة</label>
-                                <input type="text" class="form-control" id="id_city" name="city" 
-                                       value="{{ branch.city|default:'' }}">
+                                <label for="{{ form.city.id_for_label }}" class="form-label">{{ form.city.label }}</label>
+                                {{ form.city }}
+                                {% if form.city.errors %}
+                                    <div class="text-danger small">{{ form.city.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_region" class="form-label">المنطقة</label>
-                                <select class="form-select" id="id_region" name="region">
-                                    <option value="">اختر المنطقة</option>
-                                    <option value="north" {% if branch.region == 'north' %}selected{% endif %}>المنطقة الشمالية</option>
-                                    <option value="south" {% if branch.region == 'south' %}selected{% endif %}>المنطقة الجنوبية</option>
-                                    <option value="east" {% if branch.region == 'east' %}selected{% endif %}>المنطقة الشرقية</option>
-                                    <option value="center" {% if branch.region == 'center' %}selected{% endif %}>المنطقة الوسطى</option>
-                                    <option value="west" {% if branch.region == 'west' %}selected{% endif %}>المنطقة الغربية</option>
-                                </select>
+                                <label for="{{ form.region.id_for_label }}" class="form-label">{{ form.region.label }}</label>
+                                {{ form.region }}
+                                {% if form.region.errors %}
+                                    <div class="text-danger small">{{ form.region.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_postal_code" class="form-label">الرمز البريدي</label>
-                                <input type="text" class="form-control" id="id_postal_code" name="postal_code" 
-                                       value="{{ branch.postal_code|default:'' }}">
+                                <label for="{{ form.postal_code.id_for_label }}" class="form-label">{{ form.postal_code.label }}</label>
+                                {{ form.postal_code }}
+                                {% if form.postal_code.errors %}
+                                    <div class="text-danger small">{{ form.postal_code.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
 
@@ -134,36 +148,38 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_phone" class="form-label">رقم الهاتف</label>
-                                <input type="tel" class="form-control" id="id_phone" name="phone" 
-                                       value="{{ branch.phone|default:'' }}">
+                                <label for="{{ form.phone.id_for_label }}" class="form-label">{{ form.phone.label }}</label>
+                                {{ form.phone }}
+                                {% if form.phone.errors %}
+                                    <div class="text-danger small">{{ form.phone.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_email" class="form-label">البريد الإلكتروني</label>
-                                <input type="email" class="form-control" id="id_email" name="email" 
-                                       value="{{ branch.email|default:'' }}">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                    <div class="text-danger small">{{ form.email.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_manager" class="form-label">مدير الفرع</label>
-                                <select class="form-select" id="id_manager" name="manager">
-                                    <option value="">اختر مدير الفرع</option>
-                                    {% for manager in managers %}
-                                    <option value="{{ manager.id }}" {% if branch.manager and branch.manager.id == manager.id %}selected{% endif %}>
-                                        {{ manager.get_full_name }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
+                                <label for="{{ form.manager.id_for_label }}" class="form-label">{{ form.manager.label }}</label>
+                                {{ form.manager }}
+                                {% if form.manager.errors %}
+                                    <div class="text-danger small">{{ form.manager.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_capacity" class="form-label">السعة الاستيعابية</label>
-                                <input type="number" class="form-control" id="id_capacity" name="capacity" 
-                                       value="{{ branch.capacity|default:'' }}" min="1">
+                                <label for="{{ form.capacity.id_for_label }}" class="form-label">{{ form.capacity.label }}</label>
+                                {{ form.capacity }}
+                                {% if form.capacity.errors %}
+                                    <div class="text-danger small">{{ form.capacity.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
 
@@ -173,15 +189,17 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_opening_date" class="form-label">تاريخ الافتتاح</label>
-                                <input type="date" class="form-control" id="id_opening_date" name="opening_date" 
-                                       value="{{ branch.opening_date|default:'' }}">
+                                <label for="{{ form.opening_date.id_for_label }}" class="form-label">{{ form.opening_date.label }}</label>
+                                {{ form.opening_date }}
+                                {% if form.opening_date.errors %}
+                                    <div class="text-danger small">{{ form.opening_date.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_working_days" class="form-label">أيام العمل</label>
-                                <select class="form-select" id="id_working_days" name="working_days" multiple>
+                                <label for="{{ form.working_days.id_for_label }}" class="form-label">{{ form.working_days.label }}</label>
+                                <select class="form-select" id="{{ form.working_days.id_for_label }}" name="working_days" multiple>
                                     <option value="saturday" {% if branch.working_days and 'saturday' in branch.working_days %}selected{% endif %}>السبت</option>
                                     <option value="sunday" {% if branch.working_days and 'sunday' in branch.working_days %}selected{% endif %}>الأحد</option>
                                     <option value="monday" {% if branch.working_days and 'monday' in branch.working_days %}selected{% endif %}>الاثنين</option>
@@ -191,6 +209,9 @@
                                     <option value="friday" {% if branch.working_days and 'friday' in branch.working_days %}selected{% endif %}>الجمعة</option>
                                 </select>
                                 <div class="form-text">اضغط Ctrl لاختيار عدة أيام</div>
+                                {% if form.working_days.errors %}
+                                    <div class="text-danger small">{{ form.working_days.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
 
@@ -199,7 +220,7 @@
                             <h6 class="text-primary mb-3">إعدادات الشفتات وساعات العمل</h6>
                             <div class="alert alert-info">
                                 <i class="fas fa-info-circle me-2"></i>
-                                يمكن للمعرض أن يحتوي على أكثر من شفت واحد. حدد ساعات العمل والاستراحات لكل شفت.
+                                يمكن للمعرض أن يحتوي على أكثر من شفت واحد. حدد ساعات العمل لكل شفت.
                             </div>
                         </div>
                         
@@ -252,14 +273,6 @@
                                                         <label class="form-label">ساعة النهاية</label>
                                                         <input type="time" class="form-control" name="shift_end[]" value="16:00" required>
                                                     </div>
-                                                    <div class="col-md-2">
-                                                        <label class="form-label">ساعة الاستراحة</label>
-                                                        <input type="time" class="form-control" name="break_start[]" value="12:00">
-                                                    </div>
-                                                    <div class="col-md-2">
-                                                        <label class="form-label">نهاية الاستراحة</label>
-                                                        <input type="time" class="form-control" name="break_end[]" value="13:00">
-                                                    </div>
                                                     <div class="col-md-1">
                                                         <label class="form-label">&nbsp;</label>
                                                         <button type="button" class="btn btn-danger btn-sm d-block" onclick="removeShift(this)">
@@ -283,14 +296,6 @@
                                                         <label class="form-label">ساعة النهاية</label>
                                                         <input type="time" class="form-control" name="shift_end[]" value="00:00" required>
                                                     </div>
-                                                    <div class="col-md-2">
-                                                        <label class="form-label">ساعة الاستراحة</label>
-                                                        <input type="time" class="form-control" name="break_start[]" value="20:00">
-                                                    </div>
-                                                    <div class="col-md-2">
-                                                        <label class="form-label">نهاية الاستراحة</label>
-                                                        <input type="time" class="form-control" name="break_end[]" value="21:00">
-                                                    </div>
                                                     <div class="col-md-1">
                                                         <label class="form-label">&nbsp;</label>
                                                         <button type="button" class="btn btn-danger btn-sm d-block" onclick="removeShift(this)">
@@ -311,16 +316,20 @@
                         
                         <div class="col-12">
                             <div class="mb-3">
-                                <label for="id_description" class="form-label">وصف الفرع</label>
-                                <textarea class="form-control" id="id_description" name="description" rows="3" 
-                                          placeholder="اكتب وصفاً مختصراً للفرع...">{{ branch.description|default:'' }}</textarea>
+                                <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                    <div class="text-danger small">{{ form.description.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-12">
                             <div class="mb-3">
-                                <label for="id_notes" class="form-label">ملاحظات</label>
-                                <textarea class="form-control" id="id_notes" name="notes" rows="3" 
-                                          placeholder="أي ملاحظات إضافية...">{{ branch.notes|default:'' }}</textarea>
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">{{ form.notes.label }}</label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}
+                                    <div class="text-danger small">{{ form.notes.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>

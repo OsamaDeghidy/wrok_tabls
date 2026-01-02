@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.models import User
 from .models import Branch, BranchShift
-from .forms import BranchForm, BranchShiftForm
+from .forms import BranchForm, BranchShiftForm, BranchImportForm
 from django.utils.dateparse import parse_date, parse_time
 import json
 
@@ -28,6 +28,9 @@ def branch_list_view(request):
     elif hasattr(request.user, 'profile'):
         if request.user.profile.can_manage_branches:
             branches = Branch.objects.all()
+        elif request.user.profile.role == 'branch_manager' and request.user.profile.branch:
+            # مدير المعرض يرى فرعه فقط
+            branches = Branch.objects.filter(id=request.user.profile.branch.id)
         else:
             branches = Branch.objects.none()
     else:
@@ -59,6 +62,13 @@ def branch_list_view(request):
     page_number = request.GET.get('page')
     branches = paginator.get_page(page_number)
     
+    # التحقق من الصلاحيات للعرض في القالب
+    can_manage = False
+    if request.user.is_superuser:
+        can_manage = True
+    elif hasattr(request.user, 'profile'):
+        can_manage = request.user.profile.can_manage_branches
+    
     context = {
         'branches': branches,
         'search_query': search_query,
@@ -70,6 +80,7 @@ def branch_list_view(request):
         'category_choices': Branch.CATEGORY_CHOICES,
         'status_choices': Branch.STATUS_CHOICES,
         'region_choices': Branch.REGION_CHOICES,
+        'can_manage': can_manage,
     }
     
     return render(request, 'branches/list.html', context)
@@ -81,7 +92,17 @@ def branch_detail_view(request, branch_id):
     branch = get_object_or_404(Branch, id=branch_id)
     
     # التحقق من الصلاحيات
-    if not request.user.is_superuser and not (hasattr(request.user, 'profile') and request.user.profile.can_manage_branches):
+    can_view = False
+    if request.user.is_superuser:
+        can_view = True
+    elif hasattr(request.user, 'profile'):
+        if request.user.profile.can_manage_branches:
+            can_view = True
+        elif request.user.profile.role == 'branch_manager' and request.user.profile.branch == branch:
+            # مدير المعرض يرى فرعه فقط
+            can_view = True
+    
+    if not can_view:
         messages.error(request, 'ليس لديك صلاحية لعرض هذا الفرع')
         return redirect('branches:list')
     
@@ -89,12 +110,20 @@ def branch_detail_view(request, branch_id):
     shifts = branch.shifts.all()
     
     # الحصول على الموظفين
-    employees = User.objects.filter(profile__branch=branch).select_related('profile')
+    employees = User.objects.filter(profile__branch=branch, is_active=True).select_related('profile')
+    
+    # التحقق من صلاحيات التعديل
+    can_edit = False
+    if request.user.is_superuser:
+        can_edit = True
+    elif hasattr(request.user, 'profile'):
+        can_edit = request.user.profile.can_manage_branches
     
     context = {
         'branch': branch,
         'shifts': shifts,
         'employees': employees,
+        'can_edit': can_edit,
     }
     
     return render(request, 'branches/detail.html', context)
@@ -109,68 +138,51 @@ def branch_create_view(request):
     
     # الحصول على المديرين المؤهلين
     managers = User.objects.filter(
-        profile__role__in=['branch_manager', 'coordinator', 'region_manager', 'operations_manager', 'admin_manager', 'super_admin']
-    )
+        profile__role__in=['branch_manager', 'coordinator', 'region_manager', 'operations_manager', 'admin_manager', 'super_admin'],
+        is_active=True
+    ).select_related('profile')
     
     if request.method == 'POST':
-        try:
-            # إنشاء الفرع
-            branch = Branch.objects.create(
-                name=request.POST.get('name', ''),
-                code=request.POST.get('code', ''),
-                type=request.POST.get('type', 'branch'),
-                category=request.POST.get('category', 'B'),
-                status=request.POST.get('status', 'active'),
-                address=request.POST.get('address', ''),
-                city=request.POST.get('city', ''),
-                region=request.POST.get('region', ''),
-                postal_code=request.POST.get('postal_code', ''),
-                phone=request.POST.get('phone', ''),
-                email=request.POST.get('email', ''),
-                capacity=int(request.POST.get('capacity', 0)) if request.POST.get('capacity') else 0,
-                opening_date=parse_date(request.POST.get('opening_date')) if request.POST.get('opening_date') else None,
-                working_days=request.POST.getlist('working_days'),
-                description=request.POST.get('description', ''),
-                notes=request.POST.get('notes', '')
-            )
-            
-            # تعيين المدير
-            manager_id = request.POST.get('manager')
-            if manager_id:
-                try:
-                    branch.manager = User.objects.get(id=manager_id)
-                    branch.save()
-                except User.DoesNotExist:
-                    pass
-            
-            # إنشاء الشفتات
-            shift_names = request.POST.getlist('shift_name[]')
-            shift_starts = request.POST.getlist('shift_start[]')
-            shift_ends = request.POST.getlist('shift_end[]')
-            break_starts = request.POST.getlist('break_start[]')
-            break_ends = request.POST.getlist('break_end[]')
-            
-            for i in range(len(shift_names)):
-                if shift_names[i] and shift_starts[i] and shift_ends[i]:
-                    BranchShift.objects.create(
-                        branch=branch,
-                        name=shift_names[i],
-                        start_time=parse_time(shift_starts[i]),
-                        end_time=parse_time(shift_ends[i]),
-                        break_start=parse_time(break_starts[i]) if i < len(break_starts) and break_starts[i] else None,
-                        break_end=parse_time(break_ends[i]) if i < len(break_ends) and break_ends[i] else None,
-                        is_active=True
-                    )
-            
-            messages.success(request, f'تم إنشاء الفرع {branch.name} بنجاح')
-            return redirect('branches:detail', branch_id=branch.id)
-            
-        except Exception as e:
-            messages.error(request, f'حدث خطأ في إنشاء الفرع: {str(e)}')
-            print(f"Error in branch_create_view: {e}")
+        form = BranchForm(request.POST)
+        if form.is_valid():
+            try:
+                branch = form.save(commit=False)
+                branch.save()
+                
+                # إنشاء الشفتات
+                shift_names = request.POST.getlist('shift_name[]')
+                shift_starts = request.POST.getlist('shift_start[]')
+                shift_ends = request.POST.getlist('shift_end[]')
+                
+                for i in range(len(shift_names)):
+                    if shift_names[i] and shift_starts[i] and shift_ends[i]:
+                        BranchShift.objects.create(
+                            branch=branch,
+                            name=shift_names[i],
+                            start_time=parse_time(shift_starts[i]),
+                            end_time=parse_time(shift_ends[i]),
+                            is_active=True
+                        )
+                
+                messages.success(request, f'تم إنشاء الفرع {branch.name} بنجاح')
+                return redirect('branches:detail', branch_id=branch.id)
+                
+            except Exception as e:
+                messages.error(request, f'حدث خطأ في إنشاء الفرع: {str(e)}')
+                print(f"Error in branch_create_view: {e}")
+        else:
+            # عرض أخطاء الفورم
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
+    else:
+        form = BranchForm()
     
+    # فلترة المديرين حسب الفرع المحدد (إذا كان تعديل)
+    # في حالة التعديل، نعرض مديري الفروع الأخرى أيضاً
     context = {
         'title': 'إنشاء فرع جديد',
+        'form': form,
         'managers': managers,
         'branch': None  # للتمييز بين إنشاء وتعديل
     }
@@ -183,77 +195,68 @@ def branch_edit_view(request, branch_id):
     branch = get_object_or_404(Branch, id=branch_id)
     
     # التحقق من الصلاحيات
-    if not request.user.is_superuser and not (hasattr(request.user, 'profile') and request.user.profile.can_manage_branches):
+    can_edit = False
+    if request.user.is_superuser:
+        can_edit = True
+    elif hasattr(request.user, 'profile'):
+        if request.user.profile.can_manage_branches:
+            can_edit = True
+        elif request.user.profile.role == 'branch_manager' and request.user.profile.branch == branch:
+            # مدير المعرض يمكنه تعديل فرعه فقط
+            can_edit = True
+    
+    if not can_edit:
         messages.error(request, 'ليس لديك صلاحية لتعديل هذا الفرع')
         return redirect('branches:list')
     
     # الحصول على المديرين المؤهلين
     managers = User.objects.filter(
-        profile__role__in=['branch_manager', 'coordinator', 'region_manager', 'operations_manager', 'admin_manager', 'super_admin']
-    )
+        profile__role__in=['branch_manager', 'coordinator', 'region_manager', 'operations_manager', 'admin_manager', 'super_admin'],
+        is_active=True
+    ).select_related('profile')
     
     if request.method == 'POST':
-        try:
-            # تحديث بيانات الفرع
-            branch.name = request.POST.get('name', '')
-            branch.code = request.POST.get('code', '')
-            branch.type = request.POST.get('type', 'branch')
-            branch.category = request.POST.get('category', 'B')
-            branch.status = request.POST.get('status', 'active')
-            branch.address = request.POST.get('address', '')
-            branch.city = request.POST.get('city', '')
-            branch.region = request.POST.get('region', '')
-            branch.postal_code = request.POST.get('postal_code', '')
-            branch.phone = request.POST.get('phone', '')
-            branch.email = request.POST.get('email', '')
-            branch.capacity = int(request.POST.get('capacity', 0)) if request.POST.get('capacity') else 0
-            branch.opening_date = parse_date(request.POST.get('opening_date')) if request.POST.get('opening_date') else None
-            branch.working_days = request.POST.getlist('working_days')
-            branch.description = request.POST.get('description', '')
-            branch.notes = request.POST.get('notes', '')
-            
-            # تحديث المدير
-            manager_id = request.POST.get('manager')
-            if manager_id:
-                try:
-                    branch.manager = User.objects.get(id=manager_id)
-                except User.DoesNotExist:
-                    branch.manager = None
-            else:
-                branch.manager = None
-            
-            branch.save()
-            
-            # تحديث الشفتات (حذف القديمة وإنشاء الجديدة)
-            branch.shifts.all().delete()
-            
-            shift_names = request.POST.getlist('shift_name[]')
-            shift_starts = request.POST.getlist('shift_start[]')
-            shift_ends = request.POST.getlist('shift_end[]')
-            break_starts = request.POST.getlist('break_start[]')
-            break_ends = request.POST.getlist('break_end[]')
-            
-            for i in range(len(shift_names)):
-                if shift_names[i] and shift_starts[i] and shift_ends[i]:
-                    BranchShift.objects.create(
-                        branch=branch,
-                        name=shift_names[i],
-                        start_time=parse_time(shift_starts[i]),
-                        end_time=parse_time(shift_ends[i]),
-                        break_start=parse_time(break_starts[i]) if i < len(break_starts) and break_starts[i] else None,
-                        break_end=parse_time(break_ends[i]) if i < len(break_ends) and break_ends[i] else None,
-                        is_active=True
-                    )
-            
-            messages.success(request, f'تم تحديث الفرع {branch.name} بنجاح')
-            return redirect('branches:detail', branch_id=branch.id)
-            
-        except Exception as e:
-            messages.error(request, f'حدث خطأ في تحديث الفرع: {str(e)}')
-            print(f"Error in branch_edit_view: {e}")
+        form = BranchForm(request.POST, instance=branch)
+        if form.is_valid():
+            try:
+                branch = form.save()
+                
+                # تحديث الشفتات (حذف القديمة وإنشاء الجديدة)
+                branch.shifts.all().delete()
+                
+                shift_names = request.POST.getlist('shift_name[]')
+                shift_starts = request.POST.getlist('shift_start[]')
+                shift_ends = request.POST.getlist('shift_end[]')
+                
+                for i in range(len(shift_names)):
+                    if shift_names[i] and shift_starts[i] and shift_ends[i]:
+                        BranchShift.objects.create(
+                            branch=branch,
+                            name=shift_names[i],
+                            start_time=parse_time(shift_starts[i]),
+                            end_time=parse_time(shift_ends[i]),
+                            is_active=True
+                        )
+                
+                messages.success(request, f'تم تحديث الفرع {branch.name} بنجاح')
+                return redirect('branches:detail', branch_id=branch.id)
+                
+            except Exception as e:
+                messages.error(request, f'حدث خطأ في تحديث الفرع: {str(e)}')
+                print(f"Error in branch_edit_view: {e}")
+        else:
+            # عرض أخطاء الفورم
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
+    else:
+        form = BranchForm(instance=branch)
     
+    # فلترة المديرين حسب الفرع المحدد
+    # إذا كان هناك فرع محدد، نعرض مديري الفروع الأخرى أيضاً
     context = {
         'title': 'تعديل الفرع', 
+        'form': form,
         'branch': branch,
         'managers': managers
     }
@@ -451,3 +454,280 @@ def api_regions(request):
         for key, label in Branch.REGION_CHOICES
     ]
     return JsonResponse({"regions": regions})
+
+
+@login_required
+def branch_import_view(request):
+    """استيراد المعارض من Excel"""
+    import pandas as pd
+    from datetime import datetime
+    
+    if not request.user.is_superuser and not (hasattr(request.user, 'profile') and request.user.profile.can_manage_branches):
+        messages.error(request, 'ليس لديك صلاحية لاستيراد المعارض')
+        return redirect('branches:list')
+    
+    if request.method == 'POST':
+        form = BranchImportForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                file = request.FILES['file']
+                update_existing = form.cleaned_data.get('update_existing', False)
+                
+                # قراءة الملف
+                if file.name.endswith('.xlsx') or file.name.endswith('.xls'):
+                    df = pd.read_excel(file)
+                elif file.name.endswith('.csv'):
+                    df = pd.read_csv(file)
+                else:
+                    messages.error(request, 'نوع الملف غير مدعوم. يرجى رفع ملف Excel أو CSV')
+                    return redirect('branches:import')
+                
+                created_count = 0
+                updated_count = 0
+                errors = []
+                
+                # تحويل أسماء الأعمدة إلى lowercase للتوافق
+                df.columns = df.columns.str.strip().str.lower()
+                
+                # معالجة كل صف
+                for index, row in df.iterrows():
+                    try:
+                        # دعم الأسماء بالإنجليزية والعربية
+                        name = str(row.get('name', row.get('اسم الفرع', ''))).strip()
+                        code = str(row.get('code', row.get('كود الفرع', ''))).strip()
+                        
+                        if not name or not code:
+                            errors.append(f'الصف {index + 2}: اسم الفرع أو كود الفرع مفقود')
+                            continue
+                        
+                        # التحقق من وجود الفرع
+                        branch = Branch.objects.filter(code=code).first()
+                        
+                        if branch and update_existing:
+                            # تحديث الفرع الموجود
+                            branch.name = name
+                            branch.type = str(row.get('type', row.get('نوع الفرع', 'branch'))).strip() or 'branch'
+                            branch.category = str(row.get('category', row.get('فئة الفرع', 'B'))).strip() or 'B'
+                            branch.status = str(row.get('status', row.get('الحالة', 'active'))).strip() or 'active'
+                            branch.address = str(row.get('address', row.get('العنوان', ''))).strip()
+                            branch.city = str(row.get('city', row.get('المدينة', ''))).strip()
+                            branch.region = str(row.get('region', row.get('المنطقة', ''))).strip()
+                            branch.postal_code = str(row.get('postal_code', row.get('الرمز البريدي', ''))).strip()
+                            branch.phone = str(row.get('phone', row.get('رقم الهاتف', ''))).strip()
+                            branch.email = str(row.get('email', row.get('البريد الإلكتروني', ''))).strip()
+                            
+                            capacity = row.get('capacity', row.get('السعة الاستيعابية', 0))
+                            if pd.notna(capacity):
+                                try:
+                                    branch.capacity = int(capacity)
+                                except:
+                                    branch.capacity = 0
+                            
+                            opening_date_value = row.get('opening_date', row.get('تاريخ الافتتاح', None))
+                            if pd.notna(opening_date_value) and opening_date_value != '':
+                                try:
+                                    if isinstance(opening_date_value, str):
+                                        branch.opening_date = parse_date(opening_date_value)
+                                    else:
+                                        branch.opening_date = opening_date_value
+                                except:
+                                    branch.opening_date = None
+                            
+                            # أيام العمل
+                            working_days_str = str(row.get('working_days', row.get('أيام العمل', ''))).strip()
+                            if working_days_str and working_days_str != 'nan':
+                                # تحويل أيام العمل من نص إلى قائمة
+                                days_map = {
+                                    'السبت': 'saturday', 'saturday': 'saturday',
+                                    'الأحد': 'sunday', 'sunday': 'sunday',
+                                    'الاثنين': 'monday', 'monday': 'monday',
+                                    'الثلاثاء': 'tuesday', 'tuesday': 'tuesday',
+                                    'الأربعاء': 'wednesday', 'wednesday': 'wednesday',
+                                    'الخميس': 'thursday', 'thursday': 'thursday',
+                                    'الجمعة': 'friday', 'friday': 'friday',
+                                }
+                                working_days = []
+                                for day in working_days_str.split(','):
+                                    day = day.strip()
+                                    if day in days_map:
+                                        working_days.append(days_map[day])
+                                branch.working_days = working_days
+                            
+                            branch.description = str(row.get('description', row.get('الوصف', ''))).strip()
+                            branch.notes = str(row.get('notes', row.get('ملاحظات', ''))).strip()
+                            branch.save()
+                            
+                            # تحديث الشفتات
+                            branch.shifts.all().delete()
+                            
+                            # الشفتات - يمكن أن تكون في أعمدة منفصلة أو في عمود واحد
+                            shift_name = str(row.get('shift_name', row.get('اسم الشفت', ''))).strip()
+                            shift_start = str(row.get('shift_start', row.get('وقت بداية الشفت', ''))).strip()
+                            shift_end = str(row.get('shift_end', row.get('وقت نهاية الشفت', ''))).strip()
+                            
+                            if shift_name and shift_start and shift_end and shift_name != 'nan':
+                                try:
+                                    start_time = parse_time(shift_start)
+                                    end_time = parse_time(shift_end)
+                                    BranchShift.objects.create(
+                                        branch=branch,
+                                        name=shift_name,
+                                        start_time=start_time,
+                                        end_time=end_time,
+                                        is_active=True
+                                    )
+                                except:
+                                    pass
+                            
+                            updated_count += 1
+                        elif not branch:
+                            # إنشاء فرع جديد
+                            branch = Branch.objects.create(
+                                name=name,
+                                code=code,
+                                type=str(row.get('type', row.get('نوع الفرع', 'branch'))).strip() or 'branch',
+                                category=str(row.get('category', row.get('فئة الفرع', 'B'))).strip() or 'B',
+                                status=str(row.get('status', row.get('الحالة', 'active'))).strip() or 'active',
+                                address=str(row.get('address', row.get('العنوان', ''))).strip(),
+                                city=str(row.get('city', row.get('المدينة', ''))).strip(),
+                                region=str(row.get('region', row.get('المنطقة', ''))).strip(),
+                                postal_code=str(row.get('postal_code', row.get('الرمز البريدي', ''))).strip(),
+                                phone=str(row.get('phone', row.get('رقم الهاتف', ''))).strip(),
+                                email=str(row.get('email', row.get('البريد الإلكتروني', ''))).strip(),
+                            )
+                            
+                            capacity = row.get('capacity', row.get('السعة الاستيعابية', 0))
+                            if pd.notna(capacity):
+                                try:
+                                    branch.capacity = int(capacity)
+                                except:
+                                    branch.capacity = 0
+                            
+                            opening_date_value = row.get('opening_date', row.get('تاريخ الافتتاح', None))
+                            if pd.notna(opening_date_value) and opening_date_value != '':
+                                try:
+                                    if isinstance(opening_date_value, str):
+                                        branch.opening_date = parse_date(opening_date_value)
+                                    else:
+                                        branch.opening_date = opening_date_value
+                                except:
+                                    branch.opening_date = None
+                            
+                            # أيام العمل
+                            working_days_str = str(row.get('working_days', row.get('أيام العمل', ''))).strip()
+                            if working_days_str and working_days_str != 'nan':
+                                days_map = {
+                                    'السبت': 'saturday', 'saturday': 'saturday',
+                                    'الأحد': 'sunday', 'sunday': 'sunday',
+                                    'الاثنين': 'monday', 'monday': 'monday',
+                                    'الثلاثاء': 'tuesday', 'tuesday': 'tuesday',
+                                    'الأربعاء': 'wednesday', 'wednesday': 'wednesday',
+                                    'الخميس': 'thursday', 'thursday': 'thursday',
+                                    'الجمعة': 'friday', 'friday': 'friday',
+                                }
+                                working_days = []
+                                for day in working_days_str.split(','):
+                                    day = day.strip()
+                                    if day in days_map:
+                                        working_days.append(days_map[day])
+                                branch.working_days = working_days
+                            
+                            branch.description = str(row.get('description', row.get('الوصف', ''))).strip()
+                            branch.notes = str(row.get('notes', row.get('ملاحظات', ''))).strip()
+                            branch.save()
+                            
+                            # إنشاء الشفتات
+                            shift_name = str(row.get('shift_name', row.get('اسم الشفت', ''))).strip()
+                            shift_start = str(row.get('shift_start', row.get('وقت بداية الشفت', ''))).strip()
+                            shift_end = str(row.get('shift_end', row.get('وقت نهاية الشفت', ''))).strip()
+                            
+                            if shift_name and shift_start and shift_end and shift_name != 'nan':
+                                try:
+                                    start_time = parse_time(shift_start)
+                                    end_time = parse_time(shift_end)
+                                    BranchShift.objects.create(
+                                        branch=branch,
+                                        name=shift_name,
+                                        start_time=start_time,
+                                        end_time=end_time,
+                                        is_active=True
+                                    )
+                                except:
+                                    pass
+                            
+                            created_count += 1
+                        else:
+                            if not update_existing:
+                                errors.append(f'الصف {index + 2}: الفرع {code} موجود بالفعل (فعّل خيار "تحديث المعارض الموجودة" لتحديثه)')
+                            else:
+                                errors.append(f'الصف {index + 2}: الفرع {code} موجود ولكن لم يتم تحديثه')
+                    
+                    except Exception as e:
+                        errors.append(f'الصف {index + 2}: {str(e)}')
+                
+                # رسائل النتائج
+                if created_count > 0:
+                    messages.success(request, f'تم إنشاء {created_count} فرع جديد')
+                if updated_count > 0:
+                    messages.success(request, f'تم تحديث {updated_count} فرع')
+                if errors:
+                    for error in errors[:5]:  # عرض أول 5 أخطاء فقط
+                        messages.warning(request, error)
+                    if len(errors) > 5:
+                        messages.warning(request, f'و {len(errors) - 5} أخطاء أخرى...')
+                
+                return redirect('branches:list')
+                
+            except Exception as e:
+                messages.error(request, f'حدث خطأ أثناء استيراد الملف: {str(e)}')
+                print(f"Error in branch_import_view: {e}")
+    else:
+        form = BranchImportForm()
+    
+    context = {
+        'form': form,
+        'title': 'استيراد المعارض'
+    }
+    
+    return render(request, 'branches/import.html', context)
+
+
+@login_required
+def download_branch_sample_file(request):
+    """تحميل ملف Excel نموذجي لاستيراد المعارض"""
+    import pandas as pd
+    from django.http import HttpResponse
+    
+    # إنشاء بيانات نموذجية
+    sample_data = {
+        'اسم الفرع': ['فرع الرياض', 'فرع جدة', 'فرع الدمام'],
+        'كود الفرع': ['RYD001', 'JED001', 'DMM001'],
+        'نوع الفرع': ['branch', 'branch', 'branch'],
+        'فئة الفرع': ['A', 'B', 'C'],
+        'الحالة': ['active', 'active', 'active'],
+        'العنوان': ['شارع الملك فهد، الرياض', 'شارع التحلية، جدة', 'شارع الكورنيش، الدمام'],
+        'المدينة': ['الرياض', 'جدة', 'الدمام'],
+        'المنطقة': ['center', 'west', 'east'],
+        'الرمز البريدي': ['12345', '23456', '34567'],
+        'رقم الهاتف': ['+966112345678', '+966122345678', '+966133345678'],
+        'البريد الإلكتروني': ['riyadh@company.com', 'jeddah@company.com', 'dammam@company.com'],
+        'السعة الاستيعابية': [50, 40, 30],
+        'تاريخ الافتتاح': ['2024-01-01', '2024-01-15', '2024-02-01'],
+        'أيام العمل': ['السبت, الأحد, الاثنين, الثلاثاء, الأربعاء, الخميس', 'السبت, الأحد, الاثنين, الثلاثاء, الأربعاء, الخميس', 'السبت, الأحد, الاثنين, الثلاثاء, الأربعاء, الخميس'],
+        'اسم الشفت': ['الشفت الأول', 'الشفت الأول', 'الشفت الأول'],
+        'وقت بداية الشفت': ['08:00', '08:00', '08:00'],
+        'وقت نهاية الشفت': ['16:00', '16:00', '16:00'],
+    }
+    
+    # إنشاء DataFrame
+    df = pd.DataFrame(sample_data)
+    
+    # إنشاء ملف Excel
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="sample_branches.xlsx"'
+    
+    # كتابة DataFrame إلى Excel
+    with pd.ExcelWriter(response, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='المعارض')
+    
+    return response

@@ -7,12 +7,14 @@
 
 {% block page_actions %}
 <div class="btn-group" role="group">
+    {% if request.user.is_superuser or request.user.profile.can_manage_branches %}
     <a href="{% url 'branches:create' %}" class="btn btn-primary">
         <i class="fas fa-plus me-1"></i>إضافة فرع
     </a>
-    <button type="button" class="btn btn-outline-secondary">
-        <i class="fas fa-download me-1"></i>تصدير
-    </button>
+    <a href="{% url 'branches:import' %}" class="btn btn-success">
+        <i class="fas fa-file-excel me-1"></i>استيراد من Excel
+    </a>
+    {% endif %}
 </div>
 {% endblock %}
 
@@ -105,8 +107,9 @@
             <div class="card-footer">
                 <div class="btn-group w-100" role="group">
                     <a href="{% url 'branches:detail' branch.id %}" class="btn btn-outline-primary btn-sm">عرض</a>
+                    {% if request.user.is_superuser or request.user.profile.can_manage_branches %}
                     <a href="{% url 'branches:edit' branch.id %}" class="btn btn-outline-warning btn-sm">تعديل</a>
-                    <button class="btn btn-outline-danger btn-sm" onclick="deleteBranch({{ branch.id }})">حذف</button>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -198,30 +201,5 @@ document.getElementById('search').addEventListener('keyup', function() {
     });
 });
 
-// Delete branch function
-function deleteBranch(branchId) {
-    if (confirm('هل أنت متأكد من حذف هذا الفرع؟')) {
-        fetch(`/branches/${branchId}/delete/`, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                'Content-Type': 'application/json',
-            },
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert(data.message);
-                location.reload();
-            } else {
-                alert('حدث خطأ: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('حدث خطأ في حذف الفرع');
-        });
-    }
-}
 </script>
 {% endblock %}

@@ -123,6 +123,18 @@
                                 </select>
                             </div>
                         </div>
+                        <div class="col-md-6" id="region-wrapper" style="display:none;">
+                            <div class="mb-3">
+                                <label for="id_region" class="form-label">المنطقة <span class="text-danger">*</span></label>
+                                <div class="d-flex align-items-center gap-2">
+                                  <select class="form-select" id="id_region">
+                                      <option value="">اختر المنطقة</option>
+                                  </select>
+                                  <div id="region-loading" class="spinner-border spinner-border-sm text-primary" role="status" style="display:none;"></div>
+                                </div>
+                                <div id="region-error" class="alert alert-danger mt-2 p-2" style="display:none;"></div>
+                            </div>
+                        </div>
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="id_branch" class="form-label">الفرع</label>
@@ -298,4 +310,104 @@
         </div>
     </div>
 </div>
+<script>
+var REGIONS_FALLBACK = [
+  {% for k, v in regions_choices %}{ value: '{{ k }}', label: '{{ v }}' }{% if not forloop.last %},{% endif %}{% endfor %}
+];
+document.addEventListener('DOMContentLoaded', function() {
+  var roleEl = document.getElementById('id_role');
+  var regionWrapper = document.getElementById('region-wrapper');
+  var regionEl = document.getElementById('id_region');
+  var regionLoading = document.getElementById('region-loading');
+  var regionError = document.getElementById('region-error');
+  function setRegionNameAttr(enabled){
+    if(enabled){
+      regionEl.setAttribute('name','region');
+      regionEl.removeAttribute('disabled');
+    } else {
+      regionEl.removeAttribute('name');
+      regionEl.value = '';
+      regionEl.setAttribute('disabled','disabled');
+    }
+  }
+  function loadRegions(selected){
+    regionLoading.style.display = '';
+    regionError.style.display = 'none';
+    regionError.textContent = '';
+    var controller = new AbortController();
+    var timeout = setTimeout(function(){ controller.abort(); }, 7000);
+    fetch('/users/api/regions/', { signal: controller.signal }).then(function(r){
+      return r.json();
+    }).then(function(data){
+      clearTimeout(timeout);
+      var regions = Array.isArray(data && data.regions) ? data.regions : [];
+      if(!regions.length){
+        regions = REGIONS_FALLBACK;
+      }
+      regionEl.innerHTML = '';
+      var opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = 'اختر المنطقة';
+      regionEl.appendChild(opt);
+      regions.forEach(function(item){
+        var o = document.createElement('option');
+        o.value = item.value;
+        o.textContent = item.label;
+        regionEl.appendChild(o);
+      });
+      if(selected){
+        regionEl.value = selected;
+      }
+      if(data && data.db_ok === false){
+        regionError.textContent = 'تعذر الاتصال بقاعدة البيانات. تم استخدام قائمة افتراضية للمناطق.';
+        regionError.style.display = '';
+      }
+    }).catch(function(){
+      clearTimeout(timeout);
+      regionEl.innerHTML = '';
+      var opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = 'اختر المنطقة';
+      regionEl.appendChild(opt);
+      REGIONS_FALLBACK.forEach(function(item){
+        var o = document.createElement('option');
+        o.value = item.value;
+        o.textContent = item.label;
+        regionEl.appendChild(o);
+      });
+      regionError.textContent = 'حدث خطأ أثناء تحميل المناطق. تم عرض قائمة افتراضية.';
+      regionError.style.display = '';
+    }).finally(function(){
+      regionLoading.style.display = 'none';
+    });
+  }
+  function toggleRegion(){
+    var role = roleEl.value;
+    if(role === 'region_manager'){
+      regionWrapper.style.display = '';
+      setRegionNameAttr(true);
+      var initial = '';
+      try{initial = '{{ user_detail.region|default:"" }}';}catch(e){}
+      loadRegions(initial);
+    } else {
+      regionWrapper.style.display = 'none';
+      setRegionNameAttr(false);
+    }
+  }
+  roleEl.addEventListener('change', toggleRegion);
+  toggleRegion();
+  var form = document.querySelector('form');
+  form.addEventListener('submit', function(e){
+    var role = roleEl.value;
+    if(role === 'region_manager'){
+      if(!regionEl.value){
+        e.preventDefault();
+        alert('يرجى اختيار المنطقة لمدير المنطقة');
+      }
+    } else {
+      setRegionNameAttr(false);
+    }
+  });
+});
+</script>
 {% endblock %}

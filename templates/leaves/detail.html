@@ -1,15 +1,17 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}تفاصيل طلب الإجازة - {{ leave.employee_name }}{% endblock %}
+{% block title %}تفاصيل طلب الإجازة - {{ leave.employee.get_full_name }}{% endblock %}
 
 {% block page_title %}تفاصيل طلب الإجازة{% endblock %}
 
 {% block page_actions %}
 <div class="btn-group" role="group">
+    {% if leave.employee == request.user and leave.status == 'pending' %}
     <a href="{% url 'leaves:edit' leave.id %}" class="btn btn-warning">
         <i class="fas fa-edit me-1"></i>تعديل
     </a>
+    {% endif %}
     <a href="{% url 'leaves:list' %}" class="btn btn-outline-secondary">
         <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
     </a>
@@ -49,7 +51,7 @@
             </div>
             <div class="card-body">
                 <div class="mb-2">
-                    <strong>نوع الإجازة:</strong> {{ leave.leave_type_display }}
+                    <strong>نوع الإجازة:</strong> {{ leave.get_leave_type_display }}
                 </div>
                 <div class="mb-2">
                     <strong>تاريخ البداية:</strong> {{ leave.start_date }}
@@ -66,12 +68,6 @@
                 <div class="mb-2">
                     <strong>رقم الطوارئ:</strong> {{ leave.emergency_contact|default:"غير محدد" }}
                 </div>
-                <div class="mb-2">
-                    <strong>المدير المباشر:</strong> {{ leave.manager_name|default:"غير محدد" }}
-                </div>
-                <div class="mb-2">
-                    <strong>تاريخ المراجعة:</strong> {{ leave.reviewed_at|default:"لم يتم المراجعة بعد" }}
-                </div>
             </div>
         </div>
 
@@ -82,26 +78,52 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
+                    {% if leave.employee == request.user and leave.status == 'pending' %}
                     <a href="{% url 'leaves:edit' leave.id %}" class="btn btn-warning btn-sm">
                         <i class="fas fa-edit me-1"></i>تعديل الطلب
                     </a>
-                    {% if leave.status == 'pending' %}
-                    <button type="button" class="btn btn-success btn-sm">
-                        <i class="fas fa-check me-1"></i>اعتماد الطلب
-                    </button>
-                    <button type="button" class="btn btn-danger btn-sm">
-                        <i class="fas fa-times me-1"></i>رفض الطلب
-                    </button>
+                    <a href="{% url 'leaves:cancel' leave.id %}" class="btn btn-secondary btn-sm" onclick="return confirm('هل أنت متأكد من إلغاء هذا الطلب؟')">
+                        <i class="fas fa-times me-1"></i>إلغاء الطلب
+                    </a>
                     {% endif %}
-                    <button type="button" class="btn btn-info btn-sm">
-                        <i class="fas fa-print me-1"></i>طباعة الطلب
-                    </button>
-                    <button type="button" class="btn btn-primary btn-sm">
-                        <i class="fas fa-copy me-1"></i>نسخ الطلب
-                    </button>
                 </div>
             </div>
         </div>
+        
+        <!-- Approval Form (for managers only) -->
+        {% if can_approve and leave.status == 'pending' and approval_form %}
+        <div class="card shadow-sm mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-check-circle me-2"></i>الموافقة / الرفض</h6>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'leaves:approve' leave.id %}" id="approvalForm" class="mb-3">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_manager_notes" class="form-label">ملاحظات المدير (اختياري)</label>
+                        <textarea class="form-control" id="id_manager_notes" name="manager_notes" rows="3" placeholder="أدخل ملاحظاتك هنا...">{{ approval_form.manager_notes.value|default:'' }}</textarea>
+                    </div>
+                    <div class="d-grid gap-2 d-md-flex">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check me-1"></i>الموافقة على الطلب
+                        </button>
+                    </div>
+                </form>
+                <form method="post" action="{% url 'leaves:reject' leave.id %}" id="rejectionForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_manager_notes_reject" class="form-label">ملاحظات المدير (اختياري)</label>
+                        <textarea class="form-control" id="id_manager_notes_reject" name="manager_notes" rows="3" placeholder="أدخل سبب الرفض..."></textarea>
+                    </div>
+                    <div class="d-grid gap-2 d-md-flex">
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('هل أنت متأكد من رفض هذا الطلب؟')">
+                            <i class="fas fa-times me-1"></i>رفض الطلب
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Leave Content -->
@@ -159,19 +181,19 @@
                             <div class="timeline-marker bg-primary"></div>
                             <div class="timeline-content">
                                 <h6 class="timeline-title">تم تقديم الطلب</h6>
-                                <p class="timeline-text">{{ leave.created_at }} - {{ leave.employee_name }}</p>
+                                <p class="timeline-text">{{ leave.created_at|date:"Y-m-d H:i" }} - {{ leave.employee.get_full_name }}</p>
                             </div>
                         </div>
-                        {% if leave.reviewed_at %}
+                        {% if leave.approved_at %}
                         <div class="timeline-item">
                             <div class="timeline-marker bg-{% if leave.status == 'approved' %}success{% elif leave.status == 'rejected' %}danger{% else %}warning{% endif %}"></div>
                             <div class="timeline-content">
                                 <h6 class="timeline-title">
                                     {% if leave.status == 'approved' %}تم اعتماد الطلب{% elif leave.status == 'rejected' %}تم رفض الطلب{% else %}تم مراجعة الطلب{% endif %}
                                 </h6>
-                                <p class="timeline-text">{{ leave.reviewed_at }} - {{ leave.manager_name|default:"المدير" }}</p>
-                                {% if leave.review_notes %}
-                                <p class="timeline-text">{{ leave.review_notes }}</p>
+                                <p class="timeline-text">{{ leave.approved_at|date:"Y-m-d H:i" }} - {{ leave.approved_by.get_full_name|default:"المدير" }}</p>
+                                {% if leave.manager_notes %}
+                                <p class="timeline-text">{{ leave.manager_notes }}</p>
                                 {% endif %}
                             </div>
                         </div>
@@ -196,20 +218,20 @@
                                  width="50" 
                                  height="50">
                             <div>
-                                <h6 class="mb-0">{{ leave.employee_name }}</h6>
-                                <small class="text-muted">{{ leave.employee_position }}</small>
+                                <h6 class="mb-0">{{ leave.employee.get_full_name }}</h6>
+                                <small class="text-muted">{% if leave.employee.profile.position %}{{ leave.employee.profile.position }}{% else %}موظف{% endif %}</small>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="mb-2">
-                            <strong>القسم:</strong> {{ leave.employee_department }}
+                            <strong>القسم:</strong> {% if leave.employee.profile.department %}{{ leave.employee.profile.get_department_display }}{% else %}غير محدد{% endif %}
                         </div>
                         <div class="mb-2">
-                            <strong>رقم الهاتف:</strong> {{ leave.employee_phone }}
+                            <strong>رقم الهاتف:</strong> {% if leave.employee.profile.phone %}{{ leave.employee.profile.phone }}{% else %}غير محدد{% endif %}
                         </div>
                         <div class="mb-2">
-                            <strong>البريد الإلكتروني:</strong> {{ leave.employee_email }}
+                            <strong>البريد الإلكتروني:</strong> {{ leave.employee.email }}
                         </div>
                     </div>
                 </div>

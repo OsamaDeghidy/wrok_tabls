@@ -200,3 +200,20 @@ class BranchShiftFilterForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields['search'].widget.attrs.update({'class': 'form-control'})
         self.fields['is_active'].widget.attrs.update({'class': 'form-control'})
+
+
+class BranchImportForm(forms.Form):
+    """نموذج استيراد المعارض من Excel"""
+    
+    file = forms.FileField(
+        label='ملف Excel',
+        help_text='يرجى رفع ملف Excel يحتوي على بيانات المعارض',
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': '.xlsx,.xls'})
+    )
+    
+    update_existing = forms.BooleanField(
+        label='تحديث المعارض الموجودة',
+        required=False,
+        help_text='إذا تم تحديد هذا الخيار، سيتم تحديث بيانات المعارض الموجودة',
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )

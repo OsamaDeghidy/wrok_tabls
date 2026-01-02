@@ -6,28 +6,56 @@ from django.db.models import Q, Count
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.core.exceptions import PermissionDenied
 from .models import LeaveRequest, LeaveBalance
-from .forms import LeaveRequestForm
+from .forms import LeaveRequestForm, LeaveApprovalForm
+
+
+def can_approve_leaves(user):
+    """التحقق من صلاحية المستخدم للموافقة على الإجازات"""
+    if not user.is_authenticated:
+        return False
+    if user.is_superuser:
+        return True
+    if hasattr(user, 'profile'):
+        return user.profile.can_approve_leaves
+    return False
+
+
+def can_view_leave(user, leave):
+    """التحقق من صلاحية المستخدم لعرض الإجازة"""
+    if not user.is_authenticated:
+        return False
+    # صاحب الإجازة يمكنه رؤيتها
+    if leave.employee == user:
+        return True
+    # المدراء يمكنهم رؤيتها
+    return can_approve_leaves(user)
 
 
 @login_required
 def leave_list_view(request):
     """قائمة طلبات الإجازات"""
-    # إحصائيات
+    # بناء الاستعلام - الإجازات تظهر فقط لصاحبها والمدراء
+    leaves = LeaveRequest.objects.select_related('employee', 'approved_by').all()
+    
+    # إذا كان موظف عادي، يرى إجازاته فقط
+    if not can_approve_leaves(request.user):
+        leaves = leaves.filter(employee=request.user)
+    # المدراء يرون جميع الإجازات
+    
+    # إحصائيات - بناءً على الإجازات المرئية فقط
     stats = {
-        'pending': LeaveRequest.objects.filter(status='pending').count(),
-        'approved': LeaveRequest.objects.filter(status='approved').count(),
-        'rejected': LeaveRequest.objects.filter(status='rejected').count(),
-        'total': LeaveRequest.objects.count(),
+        'pending': leaves.filter(status='pending').count(),
+        'approved': leaves.filter(status='approved').count(),
+        'rejected': leaves.filter(status='rejected').count(),
+        'total': leaves.count(),
     }
     
     # فلترة وبحث
     search = request.GET.get('search', '')
     status_filter = request.GET.get('status', '')
     leave_type_filter = request.GET.get('leave_type', '')
-    
-    # بناء الاستعلام
-    leaves = LeaveRequest.objects.select_related('employee', 'approved_by').all()
     
     if search:
         leaves = leaves.filter(
@@ -55,6 +83,7 @@ def leave_list_view(request):
         'leave_type_filter': leave_type_filter,
         'leave_types': LeaveRequest.TYPE_CHOICES,
         'status_choices': LeaveRequest.STATUS_CHOICES,
+        'can_approve': can_approve_leaves(request.user),
     }
     
     return render(request, 'leaves/list.html', context)
@@ -145,12 +174,19 @@ def leave_detail_view(request, leave_id):
     leave = get_object_or_404(LeaveRequest, id=leave_id)
     
     # التحقق من الصلاحيات
-    if not request.user.is_superuser and not request.user.is_staff and leave.employee != request.user:
+    if not can_view_leave(request.user, leave):
         messages.error(request, 'ليس لديك صلاحية لعرض هذا الطلب')
         return redirect('leaves:list')
     
+    # فورم الموافقة (للمدراء فقط)
+    approval_form = None
+    if can_approve_leaves(request.user) and leave.status == 'pending':
+        approval_form = LeaveApprovalForm()
+    
     context = {
         'leave': leave,
+        'can_approve': can_approve_leaves(request.user),
+        'approval_form': approval_form,
     }
     
     return render(request, 'leaves/detail.html', context)
@@ -161,14 +197,14 @@ def leave_edit_view(request, leave_id):
     """تعديل طلب الإجازة"""
     leave = get_object_or_404(LeaveRequest, id=leave_id)
     
-    # التحقق من الصلاحيات
-    if not request.user.is_superuser and not request.user.is_staff and leave.employee != request.user:
+    # التحقق من الصلاحيات - فقط صاحب الإجازة يمكنه تعديلها
+    if leave.employee != request.user:
         messages.error(request, 'ليس لديك صلاحية لتعديل هذا الطلب')
         return redirect('leaves:list')
     
     # لا يمكن تعديل الطلبات المعتمدة أو المرفوضة
-    if leave.status in ['approved', 'rejected']:
-        messages.error(request, 'لا يمكن تعديل الطلبات المعتمدة أو المرفوضة')
+    if leave.status in ['approved', 'rejected', 'cancelled']:
+        messages.error(request, 'لا يمكن تعديل الطلبات المعتمدة أو المرفوضة أو الملغاة')
         return redirect('leaves:detail', leave_id=leave.id)
     
     if request.method == 'POST':
@@ -248,7 +284,7 @@ def leave_edit_view(request, leave_id):
 @login_required
 def leave_approve_view(request, leave_id):
     """موافقة على طلب الإجازة"""
-    if not request.user.is_superuser and not request.user.is_staff:
+    if not can_approve_leaves(request.user):
         messages.error(request, 'ليس لديك صلاحية للموافقة على الطلبات')
         return redirect('leaves:list')
     
@@ -258,7 +294,14 @@ def leave_approve_view(request, leave_id):
         messages.error(request, 'يمكن الموافقة على الطلبات المعلقة فقط')
         return redirect('leaves:detail', leave_id=leave.id)
     
+    # الحصول على ملاحظات المدير من POST
+    manager_notes = request.POST.get('manager_notes', '')
+    
     leave.approve(request.user)
+    if manager_notes:
+        leave.manager_notes = manager_notes
+        leave.save()
+    
     messages.success(request, 'تم الموافقة على طلب الإجازة')
     
     return redirect('leaves:detail', leave_id=leave.id)
@@ -267,7 +310,7 @@ def leave_approve_view(request, leave_id):
 @login_required
 def leave_reject_view(request, leave_id):
     """رفض طلب الإجازة"""
-    if not request.user.is_superuser and not request.user.is_staff:
+    if not can_approve_leaves(request.user):
         messages.error(request, 'ليس لديك صلاحية لرفض الطلبات')
         return redirect('leaves:list')
     
@@ -289,12 +332,12 @@ def leave_cancel_view(request, leave_id):
     """إلغاء طلب الإجازة"""
     leave = get_object_or_404(LeaveRequest, id=leave_id)
     
-    # التحقق من الصلاحيات
-    if not request.user.is_superuser and not request.user.is_staff and leave.employee != request.user:
+    # التحقق من الصلاحيات - فقط صاحب الإجازة يمكنه إلغاؤها
+    if leave.employee != request.user:
         messages.error(request, 'ليس لديك صلاحية لإلغاء هذا الطلب')
         return redirect('leaves:list')
     
-    if leave.status not in ['pending']:
+    if leave.status != 'pending':
         messages.error(request, 'يمكن إلغاء الطلبات المعلقة فقط')
         return redirect('leaves:detail', leave_id=leave.id)
     

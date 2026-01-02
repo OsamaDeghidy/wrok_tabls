@@ -258,6 +258,11 @@ class UserProfile(models.Model):
     def can_view_all_data(self):
         return self.role in ['super_admin', 'admin_manager', 'operations_manager']
     
+    @property
+    def can_approve_leaves(self):
+        """التحقق من صلاحية الموافقة على الإجازات"""
+        return self.role in ['super_admin', 'branch_manager', 'coordinator', 'region_manager', 'operations_manager', 'admin_manager']
+    
     def get_managed_branches(self):
         """الحصول على الفروع التي يمكن للمستخدم إدارتها"""
         if self.is_super_admin or self.is_admin_manager or self.is_operations_manager:

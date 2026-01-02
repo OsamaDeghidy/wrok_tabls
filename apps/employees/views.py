@@ -650,4 +650,33 @@ def api_employee_detail(request, employee_id):
     }
     
     return JsonResponse(data)
-    return JsonResponse(data)
+
+
+@login_required
+def api_branch_managers(request, branch_id):
+    """API للحصول على مديري الفرع"""
+    try:
+        from apps.branches.models import Branch
+        branch = Branch.objects.get(id=branch_id)
+        
+        # الحصول على مديري الفرع (branch_manager role مع نفس الفرع)
+        managers = User.objects.filter(
+            profile__role='branch_manager',
+            profile__branch=branch,
+            is_active=True
+        ).select_related('profile')
+        
+        data = []
+        for manager in managers:
+            data.append({
+                'id': manager.id,
+                'name': manager.get_full_name(),
+                'username': manager.username,
+                'email': manager.email,
+            })
+        
+        return JsonResponse({'managers': data})
+    except Branch.DoesNotExist:
+        return JsonResponse({'error': 'الفرع غير موجود'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

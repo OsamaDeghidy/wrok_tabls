@@ -67,7 +67,7 @@
                 <div class="d-flex justify-content-between">
                     <div>
                         <h6 class="card-title">الفروع</h6>
-                        <h3 class="mb-0">0</h3>
+                        <h3 class="mb-0">{{ total_branches }}</h3>
                     </div>
                     <div class="align-self-center">
                         <i class="fas fa-building fa-2x"></i>
@@ -83,7 +83,7 @@
                 <div class="d-flex justify-content-between">
                     <div>
                         <h6 class="card-title">الجداول النشطة</h6>
-                        <h3 class="mb-0">0</h3>
+                        <h3 class="mb-0">{{ active_schedules }}</h3>
                     </div>
                     <div class="align-self-center">
                         <i class="fas fa-calendar fa-2x"></i>
@@ -93,42 +93,6 @@
         </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="col-lg-8 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="mb-0"><i class="fas fa-bolt me-2"></i>إجراءات سريعة</h6>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <a href="{% url 'users:create' %}" class="btn btn-outline-primary w-100 h-100 d-flex flex-column justify-content-center align-items-center">
-                            <i class="fas fa-user-plus fa-2x mb-2"></i>
-                            <span>إضافة مستخدم</span>
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="{% url 'branches:list' %}" class="btn btn-outline-success w-100 h-100 d-flex flex-column justify-content-center align-items-center">
-                            <i class="fas fa-building fa-2x mb-2"></i>
-                            <span>إدارة الفروع</span>
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="#" class="btn btn-outline-info w-100 h-100 d-flex flex-column justify-content-center align-items-center">
-                            <i class="fas fa-calendar-plus fa-2x mb-2"></i>
-                            <span>إنشاء جدول</span>
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="{% url 'users:list' %}" class="btn btn-outline-warning w-100 h-100 d-flex flex-column justify-content-center align-items-center">
-                            <i class="fas fa-users fa-2x mb-2"></i>
-                            <span>عرض المستخدمين</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Recent Activity -->
     <div class="col-lg-4 mb-4">

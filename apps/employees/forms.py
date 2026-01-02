@@ -62,6 +62,12 @@ class EmployeeForm(forms.ModelForm):
         widget=forms.Select(attrs={'class': 'form-control'}),
         empty_label="---------"
     )
+    region = forms.ChoiceField(
+        choices=[('', '---------')] + UserProfile.REGION_CHOICES,
+        required=False,
+        label='المنطقة',
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
     work_hours = forms.ChoiceField(
         choices=UserProfile.WORK_HOURS_CHOICES,
         label='عدد ساعات العمل',
@@ -169,6 +175,7 @@ class EmployeeForm(forms.ModelForm):
                 self.fields['phone'].initial = profile.phone
                 self.fields['role'].initial = profile.role
                 self.fields['branch'].initial = profile.branch
+                self.fields['region'].initial = profile.region
                 self.fields['work_hours'].initial = profile.work_hours
                 self.fields['position'].initial = profile.position
                 self.fields['department'].initial = profile.department
@@ -241,11 +248,13 @@ class EmployeeForm(forms.ModelForm):
                 last_name=self.cleaned_data['last_name'],
                 email=self.cleaned_data['email'],
                 password=password,
-                is_staff=True
+                is_staff=True,
+                is_active=True  # ضمان تفعيل الحساب
             )
             
             # الـ signal سينشئ UserProfile تلقائياً، فقط نحدثه
-            profile = user.profile
+            # استخدام get_or_create للتأكد من وجود Profile
+            profile, created = UserProfile.objects.get_or_create(user=user)
             profile.phone = self.cleaned_data.get('phone', '')
             profile.role = self.cleaned_data['role']
             profile.branch = self.cleaned_data.get('branch')
@@ -260,6 +269,7 @@ class EmployeeForm(forms.ModelForm):
             profile.emergency_phone = self.cleaned_data.get('emergency_phone', '')
             profile.notes = self.cleaned_data.get('notes', '')
             profile.status = self.cleaned_data.get('profile_status', 'active')
+            profile.region = self.cleaned_data.get('region', '')
             profile.save()
             
             employee.user = user
@@ -291,6 +301,7 @@ class EmployeeForm(forms.ModelForm):
             profile.phone = self.cleaned_data.get('phone', '')
             profile.role = self.cleaned_data['role']
             profile.branch = self.cleaned_data.get('branch')
+            profile.region = self.cleaned_data.get('region', '')
             profile.work_hours = int(self.cleaned_data.get('work_hours', 8))
             profile.work_days = 6 if profile.work_hours == 8 else 5
             profile.position = self.cleaned_data.get('position', '')

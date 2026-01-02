@@ -8,7 +8,7 @@ Dhoom.cr2015@gmail.com     pass : Aa053053@
 
 work-table
 SFO3 / 0.5GB / 10GB Disk
-143.110.239.198 Copy
+64.227.108.135 Copy
 
 
 
@@ -43,7 +43,7 @@ python create_admin_manager.py
 #degtal ocean config
 #DB_USER=doadmin
 #DB_PASSWORD= osam0Esmael
-#DB_HOST= 167.71.153.247
+#DB_HOST= 64.227.108.135
 #DB_PORT=5432
 #DB_NAME=defaultdb
   
@@ -51,7 +51,7 @@ python create_admin_manager.py
   
 alisthomepros.com
 ################################## run my server
-# ssh root@167.71.153.247     username
+# ssh root@64.227.108.135    username
 # osam0Esmael                password
  su sammy
  cd ~/myprojectdir
@@ -170,6 +170,28 @@ server {
 
 #########
 
+server {
+    listen 80;
+    server_name 64.227.108.135;
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location /static/ {
+        root /home/sammy/myprojectdir;
+    }
+
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/run/gunicorn.sock;
+    }
+}
+
+
+
+
+
+
+
+##########
 
 # إنشاء مجلدات media
 sudo mkdir -p /home/sammy/myprojectdir/media/courses/images

@@ -7,6 +7,8 @@ urlpatterns = [
     # Branch URLs
     path('', views.branch_list_view, name='list'),
     path('create/', views.branch_create_view, name='create'),
+    path('import/', views.branch_import_view, name='import'),
+    path('import/sample/', views.download_branch_sample_file, name='import_sample'),
     path('<int:branch_id>/', views.branch_detail_view, name='detail'),
     path('<int:branch_id>/edit/', views.branch_edit_view, name='edit'),
     path('<int:branch_id>/delete/', views.branch_delete_view, name='delete'),

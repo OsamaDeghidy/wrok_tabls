@@ -167,14 +167,6 @@
                         <td>{{ leave.created_at|date:"Y-m-d" }}</td>
                         <td>
                             <div class="btn-group btn-group-sm" role="group">
-                                {% if leave.status == 'pending' and request.user.is_staff %}
-                                <a href="{% url 'leaves:approve' leave.id %}" class="btn btn-success" title="موافقة" onclick="return confirm('هل أنت متأكد من الموافقة على هذا الطلب؟')">
-                                    <i class="fas fa-check"></i>
-                                </a>
-                                <a href="{% url 'leaves:reject' leave.id %}" class="btn btn-danger" title="رفض" onclick="return confirm('هل أنت متأكد من رفض هذا الطلب؟')">
-                                    <i class="fas fa-times"></i>
-                                </a>
-                                {% endif %}
                                 <a href="{% url 'leaves:detail' leave.id %}" class="btn btn-outline-primary" title="عرض">
                                     <i class="fas fa-eye"></i>
                                 </a>

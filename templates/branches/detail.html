@@ -7,9 +7,11 @@
 
 {% block page_actions %}
 <div class="btn-group" role="group">
+    {% if request.user.is_superuser or request.user.profile.can_manage_branches %}
     <a href="{% url 'branches:edit' branch.id %}" class="btn btn-warning">
         <i class="fas fa-edit me-1"></i>تعديل
     </a>
+    {% endif %}
     <a href="{% url 'branches:list' %}" class="btn btn-outline-secondary">
         <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
     </a>

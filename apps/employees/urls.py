@@ -17,4 +17,5 @@ urlpatterns = [
     # API URLs
     path('api/', views.api_employee_list, name='api_list'),
     path('api/<int:employee_id>/', views.api_employee_detail, name='api_detail'),
+    path('api/branches/<int:branch_id>/managers/', views.api_branch_managers, name='api_branch_managers'),
 ]

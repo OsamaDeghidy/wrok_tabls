@@ -165,14 +165,76 @@ def logout_view(request):
 
 
 @login_required
+@login_required
 def dashboard_view(request):
     """لوحة التحكم الرئيسية"""
+    from apps.branches.models import Branch
+    from apps.schedules.models import Schedule
+    from apps.leaves.models import LeaveRequest
+    from apps.approvals.models import ApprovalFlow
+    from apps.employees.models import Employee
+    
     user_profile = getattr(request.user, 'profile', None)
+    
+    # إحصائيات عامة
+    total_users = User.objects.filter(is_active=True).count()
+    active_users = UserProfile.objects.filter(status='active', user__is_active=True).count()
+    
+    # إحصائيات الفروع
+    if request.user.is_superuser or (hasattr(request.user, 'profile') and request.user.profile.can_manage_branches):
+        total_branches = Branch.objects.count()
+    elif hasattr(request.user, 'profile') and request.user.profile.role == 'branch_manager' and request.user.profile.branch:
+        total_branches = 1  # مدير المعرض يرى فرعه فقط
+    else:
+        total_branches = 0
+    
+    # إحصائيات الجداول
+    if request.user.is_superuser or (hasattr(request.user, 'profile') and request.user.profile.can_create_schedules):
+        active_schedules = Schedule.objects.filter(status__in=['active', 'approved']).count()
+    elif hasattr(request.user, 'profile') and request.user.profile.role == 'branch_manager' and request.user.profile.branch:
+        active_schedules = Schedule.objects.filter(
+            branch=request.user.profile.branch,
+            status__in=['active', 'approved']
+        ).count()
+    else:
+        active_schedules = 0
+    
+    # إحصائيات الإجازات المعلقة
+    if request.user.is_superuser or (hasattr(request.user, 'profile') and request.user.profile.can_approve_leaves):
+        pending_leaves = LeaveRequest.objects.filter(status='pending').count()
+    elif hasattr(request.user, 'profile') and request.user.profile.role == 'branch_manager' and request.user.profile.branch:
+        # مدير المعرض يرى إجازات موظفي فرعه فقط
+        pending_leaves = LeaveRequest.objects.filter(
+            employee__profile__branch=request.user.profile.branch,
+            status='pending'
+        ).count()
+    else:
+        # الموظف يرى إجازاته فقط
+        try:
+            employee = Employee.objects.get(user=request.user)
+            pending_leaves = LeaveRequest.objects.filter(employee=employee, status='pending').count()
+        except Employee.DoesNotExist:
+            pending_leaves = 0
+    
+    # إحصائيات الموافقات المعلقة
+    if request.user.is_superuser or (hasattr(request.user, 'profile') and request.user.profile.can_approve_schedules):
+        pending_approvals = ApprovalFlow.objects.filter(status='pending').count()
+    else:
+        # الموافقات المخصصة للمستخدم
+        pending_approvals = ApprovalFlow.objects.filter(
+            steps__assigned_to=request.user,
+            steps__status='pending',
+            status='in_progress'
+        ).distinct().count()
     
     context = {
         'user_profile': user_profile,
-        'total_users': User.objects.count(),
-        'active_users': UserProfile.objects.filter(status='active').count(),
+        'total_users': total_users,
+        'active_users': active_users,
+        'total_branches': total_branches,
+        'active_schedules': active_schedules,
+        'pending_leaves': pending_leaves,
+        'pending_approvals': pending_approvals,
     }
     
     return render(request, 'users/dashboard.html', context)
@@ -264,6 +326,7 @@ def user_create_view(request):
     # الحصول على الفروع المتاحة
     from apps.branches.models import Branch
     branches = Branch.objects.all()
+    regions_choices = Branch.REGION_CHOICES
     
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
@@ -277,7 +340,8 @@ def user_create_view(request):
     context = {
         'form': form, 
         'title': 'إنشاء مستخدم جديد',
-        'branches': branches
+        'branches': branches,
+        'regions_choices': regions_choices
     }
     return render(request, 'users/form.html', context)
 
@@ -504,3 +568,19 @@ def change_password_view(request):
         form = PasswordChangeForm(request.user)
     
     return render(request, 'users/change_password.html', {'form': form})
+
+@login_required
+def api_regions(request):
+    choices = []
+    try:
+        from apps.branches.models import Branch
+        choices = [{'value': k, 'label': v} for k, v in Branch.REGION_CHOICES]
+        db_ok = True
+        try:
+            Branch.objects.exists()
+        except Exception:
+            db_ok = False
+    except Exception:
+        choices = [{'value': k, 'label': v} for k, v in UserProfile.REGION_CHOICES]
+        db_ok = False
+    return JsonResponse({'regions': choices, 'db_ok': db_ok})

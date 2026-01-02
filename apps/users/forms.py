@@ -43,6 +43,12 @@ class UserRegistrationForm(UserCreationForm):
         widget=forms.Select(attrs={'class': 'form-control'}),
         empty_label="اختر الفرع"
     )
+    region = forms.ChoiceField(
+        choices=UserProfile.REGION_CHOICES,
+        required=False,
+        label='المنطقة',
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
     
     class Meta:
         model = User
@@ -60,6 +66,11 @@ class UserRegistrationForm(UserCreationForm):
         # إضافة classes للـ widgets
         self.fields['password1'].widget.attrs.update({'class': 'form-control'})
         self.fields['password2'].widget.attrs.update({'class': 'form-control'})
+        role_val = self.data.get('role') if hasattr(self, 'data') else None
+        if role_val == 'region_manager':
+            self.fields['region'].required = True
+        else:
+            self.fields['region'].required = False
     
     def clean_email(self):
         email = self.cleaned_data.get('email')
@@ -79,6 +90,8 @@ class UserRegistrationForm(UserCreationForm):
             profile.phone = self.cleaned_data.get('phone', '')
             profile.role = self.cleaned_data.get('role', 'employee')
             profile.branch = self.cleaned_data.get('branch')
+            role = self.cleaned_data.get('role', 'employee')
+            profile.region = self.cleaned_data.get('region') if role == 'region_manager' else ''
             profile.save()
         return user
 
@@ -225,6 +238,13 @@ class UserProfileForm(forms.ModelForm):
                     widget=forms.Select(attrs={'class': 'form-control'}),
                     empty_label="اختر الفرع"
                 ),
+                'region': forms.ChoiceField(
+                    choices=UserProfile.REGION_CHOICES,
+                    required=(profile.role == 'region_manager'),
+                    label='المنطقة',
+                    initial=profile.region,
+                    widget=forms.Select(attrs={'class': 'form-control'})
+                ),
             })
     
     def save(self, commit=True):
@@ -254,6 +274,8 @@ class UserProfileForm(forms.ModelForm):
                 profile.emergency_phone = self.cleaned_data.get('emergency_phone', '')
                 profile.notes = self.cleaned_data.get('notes', '')
                 profile.branch = self.cleaned_data.get('branch')
+                role = self.cleaned_data.get('role', profile.role)
+                profile.region = self.cleaned_data.get('region') if role == 'region_manager' else ''
                 profile.save()
         
         return user
