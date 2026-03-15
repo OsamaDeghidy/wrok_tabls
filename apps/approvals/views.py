@@ -239,12 +239,8 @@ def create_approval_for_schedule(request, schedule_id):
     # إنشاء خطوات الموافقة
     ApprovalStep.create_default_steps(approval_flow, request.user)
     
-    # تخطي تلقائي للخطوات التى لا يوجد بها مستخدمون
-    approval_flow.advance_until_assignable()
-    
-    # تحديث حالة الجدول
-    schedule.status = 'pending_approval'
-    schedule.save()
+    # تحديث وضع الجدول تلقائياً من خلال مسار الموافقة
+    approval_flow.sync_related_object_status()
     
     messages.success(request, 'تم إنشاء طلب الموافقة بنجاح')
     return redirect('approvals:detail', approval_id=approval_flow.id)

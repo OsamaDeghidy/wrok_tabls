@@ -68,7 +68,8 @@
         <div class="card shadow h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h6 class="m-0 font-weight-bold text-primary">{{ branch.name }}</h6>
-                <span class="badge bg-{% if branch.category == 'A' %}success{% elif branch.category == 'B' %}warning{% elif branch.category == 'C' %}info{% else %}secondary{% endif %}">
+                <span
+                    class="badge bg-{% if branch.category == 'A' %}success{% elif branch.category == 'B' %}warning{% elif branch.category == 'C' %}info{% else %}secondary{% endif %}">
                     فئة {{ branch.category }}
                 </span>
             </div>
@@ -94,10 +95,6 @@
                 <div class="mb-3">
                     <i class="fas fa-map-marker-alt me-2 text-muted"></i>
                     <span>{{ branch.city|default:"غير محدد" }}, {{ branch.get_region_display|default:"غير محدد" }}</span>
-                </div>
-                <div class="mb-3">
-                    <i class="fas fa-phone me-2 text-muted"></i>
-                    <span>{{ branch.phone|default:"غير محدد" }}</span>
                 </div>
                 <div class="mb-3">
                     <i class="fas fa-calendar me-2 text-muted"></i>
@@ -140,10 +137,10 @@
                 <h5 class="card-title">إجمالي الموظفين</h5>
                 <h2 class="card-text">
                     {% with total_employees=0 %}
-                        {% for branch in branches %}
-                            {% with total_employees=total_employees|add:branch.get_employees_count %}{% endwith %}
-                        {% endfor %}
-                        {{ total_employees }}
+                    {% for branch in branches %}
+                    {% with total_employees=total_employees|add:branch.get_employees_count %}{% endwith %}
+                    {% endfor %}
+                    {{ total_employees }}
                     {% endwith %}
                 </h2>
             </div>
@@ -155,12 +152,12 @@
                 <h5 class="card-title">الفروع النشطة</h5>
                 <h2 class="card-text">
                     {% with active_branches=0 %}
-                        {% for branch in branches %}
-                            {% if branch.status == 'active' %}
-                                {% with active_branches=active_branches|add:1 %}{% endwith %}
-                            {% endif %}
-                        {% endfor %}
-                        {{ active_branches }}
+                    {% for branch in branches %}
+                    {% if branch.status == 'active' %}
+                    {% with active_branches=active_branches|add:1 %}{% endwith %}
+                    {% endif %}
+                    {% endfor %}
+                    {{ active_branches }}
                     {% endwith %}
                 </h2>
             </div>
@@ -172,10 +169,10 @@
                 <h5 class="card-title">إجمالي الشفتات</h5>
                 <h2 class="card-text">
                     {% with total_shifts=0 %}
-                        {% for branch in branches %}
-                            {% with total_shifts=total_shifts|add:branch.get_active_shifts_count %}{% endwith %}
-                        {% endfor %}
-                        {{ total_shifts }}
+                    {% for branch in branches %}
+                    {% with total_shifts=total_shifts|add:branch.get_active_shifts_count %}{% endwith %}
+                    {% endfor %}
+                    {{ total_shifts }}
                     {% endwith %}
                 </h2>
             </div>
@@ -186,20 +183,20 @@
 
 {% block scripts %}
 <script>
-// Search functionality
-document.getElementById('search').addEventListener('keyup', function() {
-    const searchTerm = this.value.toLowerCase();
-    const cards = document.querySelectorAll('.card');
-    
-    cards.forEach(card => {
-        const text = card.textContent.toLowerCase();
-        if (text.indexOf(searchTerm) > -1) {
-            card.closest('.col-lg-4, .col-md-6').style.display = '';
-        } else {
-            card.closest('.col-lg-4, .col-md-6').style.display = 'none';
-        }
+    // Search functionality
+    document.getElementById('search').addEventListener('keyup', function () {
+        const searchTerm = this.value.toLowerCase();
+        const cards = document.querySelectorAll('.card');
+
+        cards.forEach(card => {
+            const text = card.textContent.toLowerCase();
+            if (text.indexOf(searchTerm) > -1) {
+                card.closest('.col-lg-4, .col-md-6').style.display = '';
+            } else {
+                card.closest('.col-lg-4, .col-md-6').style.display = 'none';
+            }
+        });
     });
-});
 
 </script>
 {% endblock %}

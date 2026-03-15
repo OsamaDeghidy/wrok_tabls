@@ -134,13 +134,13 @@ def register_view(request):
                     except Branch.DoesNotExist:
                         pass
                 
-                UserProfile.objects.create(
-                    user=user,
-                    role=role,
-                    phone=phone,
-                    branch=branch_obj,
-                    region=region if role == 'region_manager' else ''
-                )
+                # استخدام ملف المستخدم الذي تم إنشاؤه بواسطة Signal
+                profile = user.profile
+                profile.role = role
+                profile.phone = phone
+                profile.branch = branch_obj
+                profile.region = region if role == 'region_manager' else ''
+                profile.save()
                 
                 messages.success(request, 'تم إنشاء الحساب بنجاح! يمكنك الآن تسجيل الدخول')
                 return redirect('users:login')
@@ -375,7 +375,8 @@ def user_edit_view(request, user_id):
         'title': 'تعديل المستخدم', 
         'user': user,
         'user_detail': user.profile if hasattr(user, 'profile') else None,
-        'branches': branches
+        'branches': branches,
+        'regions_choices': Branch.REGION_CHOICES
     }
     return render(request, 'users/form.html', context)
 

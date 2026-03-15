@@ -313,24 +313,53 @@ def employee_import_view(request):
                 updated_count = 0
                 errors = []
                 
-                # تحويل أسماء الأعمدة إلى lowercase للتوافق
-                df.columns = df.columns.str.strip().str.lower()
+                # تحسين الكشف عن الأعمدة - تحويل العناوين لنصوص منظفة وموحدة
+                actual_columns = {str(col).strip().lower(): col for col in df.columns}
+                
+                # دالة داخلية للحصول على القيمة من أسماء محتملة متعددة
+                def get_val(row_data, *names):
+                    for name in names:
+                        name_lower = name.lower()
+                        if name_lower in actual_columns:
+                            val = row_data[actual_columns[name_lower]]
+                            if pd.notna(val):
+                                return str(val).strip()
+                    return ''
                 
                 # معالجة كل صف
                 for index, row in df.iterrows():
                     try:
-                        # دعم الأسماء بالإنجليزية والعربية
-                        username = str(row.get('username', row.get('اسم المستخدم', ''))).strip()
-                        email = str(row.get('email', row.get('البريد الإلكتروني', ''))).strip()
-                        first_name = str(row.get('first_name', row.get('الاسم الأول', ''))).strip()
-                        last_name = str(row.get('last_name', row.get('الاسم الأخير', ''))).strip()
+                        # دعم التسميات المتعددة بالعربية والإنجليزية
+                        employee_number = get_val(row, 'employee_number', 'الرقم الوظيفي', 'الرقم', 'رقم الموظف', 'id')
+                        username = get_val(row, 'username', 'اسم المستخدم', 'user')
+                        email = get_val(row, 'email', 'البريد الإلكتروني', 'البريد', 'email address')
+                        full_name = get_val(row, 'full_name', 'الاسم الكامل', 'الاسم', 'name', 'employee name')
                         
-                        if not username or not email:
-                            errors.append(f'الصف {index + 2}: اسم المستخدم أو البريد الإلكتروني مفقود')
+                        if not employee_number or employee_number.lower() == 'nan':
+                            errors.append(f'الصف {index + 2}: الرقم الوظيفي مفقود')
                             continue
                         
-                        # التحقق من وجود المستخدم
-                        user = User.objects.filter(username=username).first()
+                        # تعيين قيم افتراضية إذا كانت مفقودة
+                        if not username or username.lower() == 'nan':
+                            username = f"user_{employee_number}"
+                        if not email or email.lower() == 'nan':
+                            email = f"{username}@company.com"
+                        
+                        # تقسيم الاسم الكامل إلى اسم أول وأخير لـ Django User
+                        if full_name and ' ' in full_name:
+                            name_parts = full_name.split(' ', 1)
+                            first_name = name_parts[0]
+                            last_name = name_parts[1]
+                        else:
+                            first_name = full_name
+                            last_name = ''
+                        
+                        # التحقق من وجود المستخدم عبر الرقم الوظيفي
+                        employee_obj = Employee.objects.filter(employee_number=employee_number).first()
+                        user = employee_obj.user if employee_obj else None
+                        
+                        if not user:
+                            user = User.objects.filter(username=username).first()
                         
                         if user and update_existing:
                             # تحديث المستخدم الموجود
@@ -342,20 +371,22 @@ def employee_import_view(request):
                             # تحديث UserProfile
                             if hasattr(user, 'profile'):
                                 profile = user.profile
-                                phone = str(row.get('phone', row.get('رقم الهاتف', ''))).strip()
-                                if phone and phone != 'nan':
-                                    profile.phone = phone
+                                # إزالة رقم الهاتف من الاستيراد كما طلب العميل
+                                # phone = str(row.get('phone', row.get('رقم الهاتف', ''))).strip()
+                                # if phone and phone != 'nan':
+                                #     profile.phone = phone
                                 
-                                role = str(row.get('role', row.get('الدور', ''))).strip()
-                                if role and role != 'nan':
+                                # الحصول على الحقول الإضافية
+                                role = get_val(row, 'role', 'الدور', 'الصلاحية')
+                                if role:
                                     profile.role = role
                                 
-                                job_title = str(row.get('job_title', row.get('المسمى الوظيفي', ''))).strip()
-                                if job_title and job_title != 'nan':
+                                job_title = get_val(row, 'job_title', 'المسمى الوظيفي', 'الوظيفة')
+                                if job_title:
                                     profile.position = job_title
                                 
-                                branch_name = str(row.get('branch', row.get('الفرع', ''))).strip()
-                                if branch_name and branch_name != 'nan':
+                                branch_name = get_val(row, 'branch', 'الفرع', 'المعرض')
+                                if branch_name:
                                     from apps.branches.models import Branch
                                     branch = Branch.objects.filter(name=branch_name).first()
                                     if branch:
@@ -365,30 +396,33 @@ def employee_import_view(request):
                             
                             # تحديث Employee إذا كان موجوداً
                             try:
-                                employee = Employee.objects.get(user=user)
-                                job_title = str(row.get('job_title', row.get('المسمى الوظيفي', ''))).strip()
-                                if job_title and job_title != 'nan':
-                                    employee.job_title = job_title
+                                employee_inst = Employee.objects.get(user=user)
+                                job_title = get_val(row, 'job_title', 'المسمى الوظيفي', 'الوظيفة')
+                                if job_title:
+                                    employee_inst.job_title = job_title
                                 
-                                hire_date_value = row.get('hire_date', row.get('تاريخ التعيين', None))
-                                if pd.notna(hire_date_value) and hire_date_value != '':
+                                # معالجة تاريخ التعيين
+                                hire_date_raw = get_val(row, 'hire_date', 'تاريخ التعيين', 'التاريخ')
+                                if hire_date_raw:
                                     try:
-                                        if isinstance(hire_date_value, str):
-                                            employee.hire_date = datetime.strptime(hire_date_value, '%Y-%m-%d').date()
-                                        else:
-                                            employee.hire_date = hire_date_value
+                                        from django.utils.dateparse import parse_date
+                                        hire_date = parse_date(hire_date_raw)
+                                        if not hire_date:
+                                            hire_date = datetime.strptime(hire_date_raw, '%Y-%m-%d').date()
+                                        employee_inst.hire_date = hire_date
                                     except:
                                         pass
                                 
-                                employee.save()
+                                employee_inst.save()
                             except Employee.DoesNotExist:
                                 pass
                             
                             updated_count += 1
                         elif not user:
+
                             # الحصول على كلمة المرور من الملف أو استخدام الافتراضية
-                            password = str(row.get('password', row.get('كلمة المرور', 'password123'))).strip()
-                            if not password or password == 'nan':
+                            password = get_val(row, 'password', 'كلمة المرور', 'الباسورد')
+                            if not password:
                                 password = 'password123'
                             
                             # إنشاء مستخدم جديد
@@ -402,16 +436,15 @@ def employee_import_view(request):
                             
                             # تحديث UserProfile
                             profile = user.profile
-                            profile.phone = str(row.get('phone', row.get('رقم الهاتف', ''))).strip()
-                            profile.role = str(row.get('role', row.get('الدور', 'employee'))).strip()
+                            profile.role = get_val(row, 'role', 'الدور', 'employee')
                             
                             # المسمى الوظيفي
-                            job_title = str(row.get('job_title', row.get('المسمى الوظيفي', 'موظف'))).strip()
+                            job_title = get_val(row, 'job_title', 'المسمى الوظيفي', 'الوظيفة') or 'موظف'
                             profile.position = job_title
                             
                             # محاولة ربط الفرع
-                            branch_name = str(row.get('branch', row.get('الفرع', ''))).strip()
-                            if branch_name and branch_name != 'nan':
+                            branch_name = get_val(row, 'branch', 'الفرع', 'المعرض')
+                            if branch_name:
                                 from apps.branches.models import Branch
                                 branch = Branch.objects.filter(name=branch_name).first()
                                 if branch:
@@ -437,6 +470,7 @@ def employee_import_view(request):
                             # إنشاء Employee
                             employee = Employee.objects.create(
                                 user=user,
+                                employee_number=employee_number,
                                 job_title=job_title,
                                 employment_type='full_time',
                                 status='active',
@@ -446,9 +480,9 @@ def employee_import_view(request):
                             created_count += 1
                         else:
                             if not update_existing:
-                                errors.append(f'الصف {index + 2}: المستخدم {username} موجود بالفعل (فعّل خيار "تحديث الموظفين الموجودين" لتحديثه)')
+                                errors.append(f'الصف {index + 2}: الموظف صاحب الرقم المرجعي {employee_number} موجود بالفعل (فعّل خيار "تحديث الموظفين الموجودين" لتحديثه)')
                             else:
-                                errors.append(f'الصف {index + 2}: المستخدم {username} موجود ولكن لم يتم تحديثه')
+                                errors.append(f'الصف {index + 2}: الموظف صاحب الرقم المرجعي {employee_number} موجود ولكن لم يتم تحديثه')
                     
                     except Exception as e:
                         errors.append(f'الصف {index + 2}: {str(e)}')
@@ -504,11 +538,9 @@ def employee_export_view(request):
         profile = employee.user.profile if hasattr(employee.user, 'profile') else None
         data.append({
             'الرقم الوظيفي': employee.employee_number,
-            'الاسم الأول': employee.user.first_name,
-            'الاسم الأخير': employee.user.last_name,
+            'الاسم الكامل': employee.user.get_full_name(),
             'اسم المستخدم': employee.user.username,
             'البريد الإلكتروني': employee.user.email,
-            'رقم الهاتف': profile.phone if profile else '',
             'المسمى الوظيفي': employee.job_title,
             'الدور': profile.get_role_display() if profile else '',
             'الفرع': profile.branch.name if profile and profile.branch else '',
@@ -541,16 +573,15 @@ def download_sample_file(request):
     
     # إنشاء بيانات نموذجية
     sample_data = {
-        'first_name': ['أحمد', 'فاطمة', 'محمد'],
-        'last_name': ['محمد', 'علي', 'خالد'],
+        'الرقم الوظيفي': ['EMP-1001', 'EMP-1002', 'EMP-1003'],
+        'الاسم الكامل': ['أحمد محمد', 'فاطمة علي', 'محمد خالد'],
         'username': ['ahmed.mohamed', 'fatima.ali', 'mohamed.khaled'],
         'email': ['ahmed@company.com', 'fatima@company.com', 'mohamed@company.com'],
         'password': ['password123', 'password123', 'password123'],
-        'phone': ['+966501234567', '+966501234568', '+966501234569'],
         'job_title': ['مطور', 'مدير مشروع', 'محلل'],
         'role': ['employee', 'branch_manager', 'coordinator'],
         'branch': ['الفرع الرئيسي', 'فرع الرياض', 'فرع جدة'],
-        'hire_date': ['2024-01-01', '2024-01-15', '2024-02-01']
+        'hire_date': ['2024-01-10', '2024-01-15', '2024-02-01']
     }
     
     # إنشاء DataFrame

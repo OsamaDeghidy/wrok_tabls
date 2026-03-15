@@ -2,11 +2,11 @@
 {% load static %}
 
 {% block title %}
-    {% if employee %}تعديل الموظف - {{ employee.user.get_full_name }}{% else %}إضافة موظف جديد{% endif %}
+{% if employee %}تعديل الموظف - {{ employee.user.get_full_name }}{% else %}إضافة موظف جديد{% endif %}
 {% endblock %}
 
 {% block page_title %}
-    {% if employee %}تعديل الموظف{% else %}إضافة موظف جديد{% endif %}
+{% if employee %}تعديل الموظف{% else %}إضافة موظف جديد{% endif %}
 {% endblock %}
 
 {% block page_actions %}
@@ -27,389 +27,189 @@
     <div class="col-lg-10 mx-auto">
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
-            
+
             <!-- عرض الأخطاء العامة -->
             {% if form.non_field_errors %}
-                <div class="alert alert-danger">
-                    {{ form.non_field_errors }}
-                </div>
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
             {% endif %}
-            
+
             <!-- معلومات المستخدم -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h6 class="mb-0"><i class="fas fa-user me-2"></i>معلومات المستخدم</h6>
+            <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+                <div class="card-header bg-primary text-white py-3">
+                    <h6 class="mb-0 d-flex align-items-center">
+                        <i class="fas fa-user-circle fa-lg me-2"></i>معلومات الحساب والدخول
+                    </h6>
                 </div>
-                <div class="card-body">
-                    <div class="row">
+                <div class="card-body p-4">
+                    <div class="row g-3">
                         <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.username.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.username.label }} <span class="text-danger">*</span>
-                                </label>
-                                {{ form.username }}
-                                {% if form.username.help_text %}
-                                    <div class="form-text">{{ form.username.help_text }}</div>
-                                {% endif %}
-                                {% if form.username.errors %}
-                                    <div class="text-danger mt-1">{{ form.username.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
+                            <label class="form-label fw-bold">{{ form.username.label }} <span
+                                    class="text-danger">*</span></label>
+                            {{ form.username }}
+                            <div class="form-text small">{{ form.username.help_text }}</div>
+                            {% if form.username.errors %}<div class="text-danger mt-1 small">{{ form.username.errors.0
+                                }}</div>{% endif %}
                         </div>
                         <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.email.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.email.label }} <span class="text-danger">*</span>
-                                </label>
-                                {{ form.email }}
-                                {% if form.email.errors %}
-                                    <div class="text-danger mt-1">{{ form.email.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
+                            <label class="form-label fw-bold">{{ form.email.label }} <span
+                                    class="text-danger">*</span></label>
+                            {{ form.email }}
+                            {% if form.email.errors %}<div class="text-danger mt-1 small">{{ form.email.errors.0 }}
+                            </div>{% endif %}
                         </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">{{ form.full_name.label }} <span
+                                    class="text-danger">*</span></label>
+                            {{ form.full_name }}
+                            {% if form.full_name.errors %}<div class="text-danger mt-1 small">{{ form.full_name.errors.0
+                                }}</div>{% endif %}
+                        </div>
+
+                        {% if not employee %}
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">{{ form.password1.label }}</label>
+                            {{ form.password1 }}
+                            <div class="form-text small">{{ form.password1.help_text }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">{{ form.password2.label }}</label>
+                            {{ form.password2 }}
+                        </div>
+                        {% endif %}
                     </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.first_name.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.first_name.label }} <span class="text-danger">*</span>
-                                </label>
-                                {{ form.first_name }}
-                                {% if form.first_name.errors %}
-                                    <div class="text-danger mt-1">{{ form.first_name.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.last_name.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.last_name.label }} <span class="text-danger">*</span>
-                                </label>
-                                {{ form.last_name }}
-                                {% if form.last_name.errors %}
-                                    <div class="text-danger mt-1">{{ form.last_name.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    {% if not employee %}
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.password1.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.password1.label }}
-                                </label>
-                                {{ form.password1 }}
-                                {% if form.password1.help_text %}
-                                    <div class="form-text">{{ form.password1.help_text }}</div>
-                                {% endif %}
-                                {% if form.password1.errors %}
-                                    <div class="text-danger mt-1">{{ form.password1.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.password2.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.password2.label }}
-                                </label>
-                                {{ form.password2 }}
-                                {% if form.password2.errors %}
-                                    <div class="text-danger mt-1">{{ form.password2.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
                 </div>
             </div>
-            
-            <!-- ملف المستخدم -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-info text-white">
-                    <h6 class="mb-0"><i class="fas fa-id-card me-2"></i>ملف المستخدم</h6>
+
+            <!-- ملف الموظف والفرع -->
+            <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+                <div class="card-header bg-success text-white py-3">
+                    <h6 class="mb-0 d-flex align-items-center">
+                        <i class="fas fa-id-badge fa-lg me-2"></i>التخصيص والفرع
+                    </h6>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.role.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.role.label }} <span class="text-danger">*</span>
-                                </label>
-                                {{ form.role }}
-                                {% if form.role.errors %}
-                                    <div class="text-danger mt-1">{{ form.role.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">{{ form.role.label }} <span
+                                    class="text-danger">*</span></label>
+                            {{ form.role }}
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.branch.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.branch.label }}
-                                </label>
-                                {{ form.branch }}
-                                {% if form.branch.errors %}
-                                    <div class="text-danger mt-1">{{ form.branch.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">{{ form.branch.label }}</label>
+                            {{ form.branch }}
                         </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.region.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.region.label }}
-                                </label>
-                                {{ form.region }}
-                                {% if form.region.errors %}
-                                    <div class="text-danger mt-1">{{ form.region.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">{{ form.region.label }}</label>
+                            {{ form.region }}
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="id_employee_number" class="form-label fw-bold">
-                                    الرقم الوظيفي
-                                </label>
-                                <input type="text" class="form-control" id="id_employee_number" name="employee_number" 
-                                       value="{% if employee %}{{ employee.employee_number }}{% endif %}" 
-                                       placeholder="EMP-xxxx أو اتركه فارغاً">
-                                <div class="form-text">سيتم إنشاؤه تلقائياً إذا تركته فارغاً</div>
-                            </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">الرقم الوظيفي</label>
+                            <input type="text" class="form-control" name="employee_number"
+                                value="{% if employee %}{{ employee.employee_number }}{% endif %}"
+                                placeholder="EMP-xxxx">
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.work_hours.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.work_hours.label }} <span class="text-danger">*</span>
-                                </label>
-                                {{ form.work_hours }}
-                                {% if form.work_hours.errors %}
-                                    <div class="text-danger mt-1">{{ form.work_hours.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">ساعات العمل</label>
+                            {{ form.work_hours }}
                         </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.profile_status.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.profile_status.label }} <span class="text-danger">*</span>
-                                </label>
-                                {{ form.profile_status }}
-                                {% if form.profile_status.errors %}
-                                    <div class="text-danger mt-1">{{ form.profile_status.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">حالة الملف</label>
+                            {{ form.profile_status }}
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- المعلومات الوظيفية -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-success text-white">
-                    <h6 class="mb-0"><i class="fas fa-briefcase me-2"></i>المعلومات الوظيفية</h6>
+
+            <!-- التفاصيل الوظيفية -->
+            <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+                <div class="card-header bg-info text-dark py-3">
+                    <h6 class="mb-0 d-flex align-items-center">
+                        <i class="fas fa-briefcase fa-lg me-2"></i>التفاصيل الوظيفية والمالية
+                    </h6>
                 </div>
-                <div class="card-body">
-                    <div class="row">
+                <div class="card-body p-4">
+                    <div class="row g-3">
                         <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.position.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.position.label }}
-                                </label>
-                                {{ form.position }}
-                                {% if form.position.errors %}
-                                    <div class="text-danger mt-1">{{ form.position.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
+                            <label class="form-label fw-bold">المسمى الوظيفي</label>
+                            {{ form.job_title }}
                         </div>
                         <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.department.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.department.label }}
-                                </label>
-                                {{ form.department }}
-                                {% if form.department.errors %}
-                                    <div class="text-danger mt-1">{{ form.department.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.hire_date.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.hire_date.label }}
-                                </label>
-                                {{ form.hire_date }}
-                                {% if form.hire_date.errors %}
-                                    <div class="text-danger mt-1">{{ form.hire_date.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
+                            <label class="form-label fw-bold">نوع التوظيف</label>
+                            {{ form.employment_type }}
                         </div>
                         <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.salary.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.salary.label }}
-                                </label>
+                            <label class="form-label fw-bold">القسم</label>
+                            {{ form.department }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">تاريخ التعيين</label>
+                            {{ form.hire_date }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">الراتب</label>
+                            <div class="input-group">
                                 {{ form.salary }}
-                                {% if form.salary.errors %}
-                                    <div class="text-danger mt-1">{{ form.salary.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.job_title.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.job_title.label }} <span class="text-danger">*</span>
-                                </label>
-                                {{ form.job_title }}
-                                {% if form.job_title.errors %}
-                                    <div class="text-danger mt-1">{{ form.job_title.errors|striptags }}</div>
-                                {% endif %}
+                                <span class="input-group-text">SAR</span>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.employment_type.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.employment_type.label }} <span class="text-danger">*</span>
-                                </label>
-                                {{ form.employment_type }}
-                                {% if form.employment_type.errors %}
-                                    <div class="text-danger mt-1">{{ form.employment_type.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.status.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.status.label }} <span class="text-danger">*</span>
-                                </label>
-                                {{ form.status }}
-                                {% if form.status.errors %}
-                                    <div class="text-danger mt-1">{{ form.status.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
+                            <label class="form-label fw-bold">الموقع</label>
+                            {{ form.work_location }}
                         </div>
                         <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.work_location.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.work_location.label }}
-                                </label>
-                                {{ form.work_location }}
-                                {% if form.work_location.errors %}
-                                    <div class="text-danger mt-1">{{ form.work_location.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
+                            <label class="form-label fw-bold">المدير المباشر</label>
+                            {{ form.direct_manager }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">حالة التوظيف</label>
+                            {{ form.status }}
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- معلومات إضافية -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-secondary text-white">
-                    <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>معلومات إضافية</h6>
+
+            <!-- الموقع والمعلومات الإضافية -->
+            <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+                <div class="card-header bg-secondary text-white py-3">
+                    <h6 class="mb-0 d-flex align-items-center">
+                        <i class="fas fa-map-marked-alt fa-lg me-2"></i>العنوان والطوارئ
+                    </h6>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.phone.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.phone.label }}
-                                </label>
-                                {{ form.phone }}
-                                {% if form.phone.errors %}
-                                    <div class="text-danger mt-1">{{ form.phone.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.direct_manager.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.direct_manager.label }}
-                                </label>
-                                {{ form.direct_manager }}
-                                {% if form.direct_manager.errors %}
-                                    <div class="text-danger mt-1">{{ form.direct_manager.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
+                <div class="card-body p-4">
+                    <div class="row g-3">
                         <div class="col-12">
-                            <div class="mb-3">
-                                <label for="{{ form.address.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.address.label }}
-                                </label>
-                                {{ form.address }}
-                                {% if form.address.errors %}
-                                    <div class="text-danger mt-1">{{ form.address.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.emergency_contact.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.emergency_contact.label }}
-                                </label>
-                                {{ form.emergency_contact }}
-                                {% if form.emergency_contact.errors %}
-                                    <div class="text-danger mt-1">{{ form.emergency_contact.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
+                            <label class="form-label fw-bold">العنوان التفصيلي</label>
+                            {{ form.address }}
                         </div>
                         <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.emergency_phone.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.emergency_phone.label }}
-                                </label>
-                                {{ form.emergency_phone }}
-                                {% if form.emergency_phone.errors %}
-                                    <div class="text-danger mt-1">{{ form.emergency_phone.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
+                            <label class="form-label fw-bold">جهة اتصال الطوارئ</label>
+                            {{ form.emergency_contact }}
                         </div>
-                    </div>
-                    
-                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">رقم هاتف الطوارئ</label>
+                            {{ form.emergency_phone }}
+                        </div>
                         <div class="col-12">
-                            <div class="mb-3">
-                                <label for="{{ form.notes.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.notes.label }}
-                                </label>
-                                {{ form.notes }}
-                                {% if form.notes.errors %}
-                                    <div class="text-danger mt-1">{{ form.notes.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
+                            <label class="form-label fw-bold">ملاحظات</label>
+                            {{ form.notes }}
                         </div>
                     </div>
                 </div>
             </div>
-            
+
             <!-- أزرار الحفظ -->
-            <div class="d-flex justify-content-end gap-2 mb-4">
-                <a href="{% url 'employees:list' %}" class="btn btn-secondary">إلغاء</a>
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save me-1"></i>
-                    {% if employee %}حفظ التغييرات{% else %}إضافة الموظف{% endif %}
-                </button>
+            <div class="d-flex justify-content-between align-items-center mb-5 p-4 bg-light rounded-3 border">
+                <span class="text-muted small"><i class="fas fa-info-circle me-1"></i> تأكد من صحة البيانات قبل
+                    الحفظ</span>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'employees:list' %}" class="btn btn-outline-secondary px-4">إلغاء</a>
+                    <button type="submit" class="btn btn-primary px-5 shadow-sm">
+                        <i class="fas fa-save me-2"></i>
+                        {% if employee %}حفظ التغييرات{% else %}إضافة الموظف{% endif %}
+                    </button>
+                </div>
             </div>
         </form>
     </div>
@@ -419,69 +219,69 @@
 
 {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // إخفاء/إظهار حقل الفرع حسب الدور
-    const roleField = document.getElementById('id_role');
-    const branchField = document.getElementById('id_branch');
-    const directManagerField = document.getElementById('id_direct_manager');
-    
-    if (roleField && branchField) {
-        function toggleBranchField() {
-            const selectedRole = roleField.value;
-            const branchContainer = branchField.closest('.mb-3');
-            
-            if (selectedRole === 'super_admin' || selectedRole === 'coordinator' || 
-                selectedRole === 'region_manager' || selectedRole === 'operations_manager' || 
-                selectedRole === 'admin_manager') {
-                branchContainer.style.display = 'none';
-                branchField.value = '';
-            } else {
-                branchContainer.style.display = 'block';
-            }
-        }
-        
-        roleField.addEventListener('change', toggleBranchField);
-        toggleBranchField(); // Run on load
-    }
-    
-    // تحديث مديري الفروع عند اختيار الفرع
-    if (branchField && directManagerField) {
-        function updateBranchManagers() {
-            const branchId = branchField.value;
-            if (!branchId) {
-                directManagerField.innerHTML = '<option value="">---------</option>';
-                return;
-            }
-            
-            fetch(`{% url 'employees:api_branch_managers' 0 %}`.replace('0', branchId), {
-                method: 'GET',
-                headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                },
-            })
-            .then(response => response.json())
-            .then(data => {
-                directManagerField.innerHTML = '<option value="">---------</option>';
-                if (data.managers && data.managers.length > 0) {
-                    data.managers.forEach(manager => {
-                        const option = document.createElement('option');
-                        option.value = manager.id;
-                        option.textContent = manager.name;
-                        directManagerField.appendChild(option);
-                    });
-                    // إذا كان هناك مدير واحد فقط، اختره تلقائياً
-                    if (data.managers.length === 1) {
-                        directManagerField.value = data.managers[0].id;
-                    }
+    document.addEventListener('DOMContentLoaded', function () {
+        // إخفاء/إظهار حقل الفرع حسب الدور
+        const roleField = document.getElementById('id_role');
+        const branchField = document.getElementById('id_branch');
+        const directManagerField = document.getElementById('id_direct_manager');
+
+        if (roleField && branchField) {
+            function toggleBranchField() {
+                const selectedRole = roleField.value;
+                const branchContainer = branchField.closest('.mb-3');
+
+                if (selectedRole === 'super_admin' || selectedRole === 'coordinator' ||
+                    selectedRole === 'region_manager' || selectedRole === 'operations_manager' ||
+                    selectedRole === 'admin_manager') {
+                    branchContainer.style.display = 'none';
+                    branchField.value = '';
+                } else {
+                    branchContainer.style.display = 'block';
                 }
-            })
-            .catch(error => {
-                console.error('خطأ في جلب مديري الفروع:', error);
-            });
+            }
+
+            roleField.addEventListener('change', toggleBranchField);
+            toggleBranchField(); // Run on load
         }
-        
-        branchField.addEventListener('change', updateBranchManagers);
-    }
-});
+
+        // تحديث مديري الفروع عند اختيار الفرع
+        if (branchField && directManagerField) {
+            function updateBranchManagers() {
+                const branchId = branchField.value;
+                if (!branchId) {
+                    directManagerField.innerHTML = '<option value="">---------</option>';
+                    return;
+                }
+
+                fetch(`{% url 'employees:api_branch_managers' 0 %}`.replace('0', branchId), {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    },
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        directManagerField.innerHTML = '<option value="">---------</option>';
+                        if (data.managers && data.managers.length > 0) {
+                            data.managers.forEach(manager => {
+                                const option = document.createElement('option');
+                                option.value = manager.id;
+                                option.textContent = manager.name;
+                                directManagerField.appendChild(option);
+                            });
+                            // إذا كان هناك مدير واحد فقط، اختره تلقائياً
+                            if (data.managers.length === 1) {
+                                directManagerField.value = data.managers[0].id;
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('خطأ في جلب مديري الفروع:', error);
+                    });
+            }
+
+            branchField.addEventListener('change', updateBranchManagers);
+        }
+    });
 </script>
 {% endblock %}

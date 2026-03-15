@@ -281,6 +281,10 @@ class ScheduleEntry(models.Model):
     def __str__(self):
         return f"{self.employee.get_full_name()} - {self.date} ({self.start_time} - {self.end_time})"
     
+    def get_duration(self):
+        """الحصول على مدة الشفت بالساعات"""
+        return float(self.hours) if self.hours else 0.0
+    
     def clean(self):
         """التحقق من صحة البيانات"""
         super().clean()
@@ -317,6 +321,76 @@ class ScheduleEntry(models.Model):
             if overlapping_leaves.exists():
                 raise ValidationError({
                     'employee': 'الموظف في إجازة معتمدة في هذا التاريخ'
+                })
+        
+        # حساب الساعات لهذا الإدخال إذا لم تكن موجودة
+        temp_hours = self.hours
+        if not temp_hours and self.start_time and self.end_time:
+            from datetime import datetime, timedelta
+            start = datetime.combine(datetime.today(), self.start_time)
+            end = datetime.combine(datetime.today(), self.end_time)
+            if end <= start:
+                end += timedelta(days=1)
+            temp_hours = (end - start).total_seconds() / 3600
+
+        # 1. التحقق من الحد الأقصى لساعات العمل اليومية (9 ساعات)
+        from django.db.models import Sum, Q
+        daily_total = ScheduleEntry.objects.filter(
+            employee=self.employee,
+            date=self.date
+        ).filter(
+            Q(schedule__status__in=['approved', 'active']) | Q(schedule=self.schedule)
+        ).exclude(pk=self.pk).aggregate(total=Sum('hours'))['total'] or 0
+        
+        if float(daily_total) + float(temp_hours or 0) > 9.0:
+            raise ValidationError({
+                'hours': f'لا يمكن للموظف العمل أكثر من 9 ساعات في اليوم الواحد. إجمالي الساعات الحالية في جداول معتمدة: {daily_total}'
+            })
+
+        # 2. التحقق من الحد الأقصى لساعات العمل وأيام العمل الأسبوعية
+        import datetime as dt
+        start_of_week = self.date - dt.timedelta(days=self.date.weekday())
+        end_of_week = start_of_week + dt.timedelta(days=6)
+        
+        # Checking weekly hours
+        weekly_total = ScheduleEntry.objects.filter(
+            employee=self.employee,
+            date__range=[start_of_week, end_of_week]
+        ).filter(
+            Q(schedule__status__in=['approved', 'active']) | Q(schedule=self.schedule)
+        ).exclude(pk=self.pk).aggregate(total=Sum('hours'))['total'] or 0
+        
+        if float(weekly_total) + float(temp_hours or 0) > 48.0:
+            raise ValidationError({
+                'hours': f'لا يمكن للموظف العمل أكثر من 48 ساعة في الأسبوع الواحد. إجمالي الساعات الحالية: {weekly_total}'
+            })
+            
+        # Checking weekly working days
+        if hasattr(self.employee, 'profile'):
+            work_hours = getattr(self.employee.profile, 'work_hours', 8)
+            work_days_limit = getattr(self.employee.profile, 'work_days', 6)
+            
+            # If work_days is somehow missing or default, align with the rule (9 hours=5 days, 8 hours=6 days)
+            if not getattr(self.employee.profile, 'work_days', None):
+                work_days_limit = 5 if work_hours >= 9 else 6
+                
+            worked_days_count = ScheduleEntry.objects.filter(
+                employee=self.employee,
+                date__range=[start_of_week, end_of_week]
+            ).filter(
+                Q(schedule__status__in=['approved', 'active']) | Q(schedule=self.schedule)
+            ).exclude(pk=self.pk).values('date').distinct().count()
+            
+            current_date_exists = ScheduleEntry.objects.filter(
+                employee=self.employee,
+                date=self.date
+            ).filter(
+                Q(schedule__status__in=['approved', 'active']) | Q(schedule=self.schedule)
+            ).exclude(pk=self.pk).exists()
+            
+            if not current_date_exists and worked_days_count >= work_days_limit:
+                raise ValidationError({
+                    'date': f'لقد تجاوز الموظف الحد الأقصى لأيام العمل في الأسبوع ({work_days_limit} أيام بناءً على ساعات عمله: {work_hours} ساعات يومياً)'
                 })
     
     def save(self, *args, **kwargs):

@@ -23,10 +23,13 @@
                         <li>يجب أن يحتوي الملف على الأعمدة المطلوبة (الاسم، الكود، إلخ).</li>
                         <li>يمكنك تحديد أوقات عمل مختلفة للأيام العادية ويوم الجمعة.</li>
                         <li>
-                            <strong>الأعمدة الجديدة المدعومة:</strong>
+                            <strong>الأعمدة المدعومة:</strong>
                             <ul>
-                                <li><code>وقت بداية دوام الأسبوع</code> و <code>وقت نهاية دوام الأسبوع</code> (للأيام من السبت إلى الخميس)</li>
-                                <li><code>وقت بداية دوام الجمعة</code> و <code>وقت نهاية دوام الجمعة</code> (ليوم الجمعة فقط)</li>
+                                <li><code>الاسم</code>، <code>الكود</code> (4 أرقام)، <code>المدينة</code>،
+                                    <code>العنوان</code></li>
+                                <li><code>وقت بداية الشفت 1</code> إلى <code>وقت نهاية الشفت 4</code> (للأيام العادية)
+                                </li>
+                                <li><code>بدايه الجمعة</code> و <code>نهاية الجمعة</code> (ليوم الجمعة)</li>
                             </ul>
                         </li>
                     </ul>
@@ -41,18 +44,18 @@
 
                 <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
                     {% csrf_token %}
-                    
+
                     {% if form.non_field_errors %}
-                        <div class="alert alert-danger">
-                            {{ form.non_field_errors }}
-                        </div>
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
                     {% endif %}
 
                     <div class="mb-4">
                         <label for="{{ form.file.id_for_label }}" class="form-label">ملف البيانات</label>
                         {{ form.file }}
                         {% if form.file.errors %}
-                            <div class="text-danger small mt-1">{{ form.file.errors.0 }}</div>
+                        <div class="text-danger small mt-1">{{ form.file.errors.0 }}</div>
                         {% endif %}
                         <div class="form-text">امتدادات الملفات المدعومة: .xlsx, .xls, .csv</div>
                     </div>
@@ -65,7 +68,8 @@
                             </label>
                         </div>
                         <div class="form-text text-muted small">
-                            عند التفعيل، سيتم تحديث بيانات المعارض التي لها نفس الكود. إذا لم يتم التفعيل، سيتم تجاهل المعارض الموجودة مسبقاً.
+                            عند التفعيل، سيتم تحديث بيانات المعارض التي لها نفس الكود. إذا لم يتم التفعيل، سيتم تجاهل
+                            المعارض الموجودة مسبقاً.
                         </div>
                     </div>
 

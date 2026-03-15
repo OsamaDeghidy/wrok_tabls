@@ -25,8 +25,8 @@ class BranchForm(forms.ModelForm):
         model = Branch
         fields = [
             'name', 'code', 'type', 'category', 'status', 'address', 'city', 'region', 
-            'postal_code', 'phone', 'email', 'manager', 'capacity', 
-            'opening_date', 'working_days', 'description', 'notes'
+            'manager', 'capacity', 
+            'working_days', 'description', 'notes'
         ]
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -37,12 +37,8 @@ class BranchForm(forms.ModelForm):
             'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'city': forms.TextInput(attrs={'class': 'form-control'}),
             'region': forms.Select(attrs={'class': 'form-control'}),
-            'postal_code': forms.TextInput(attrs={'class': 'form-control'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'manager': forms.Select(attrs={'class': 'form-control'}),
             'capacity': forms.NumberInput(attrs={'class': 'form-control'}),
-            'opening_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
@@ -65,12 +61,8 @@ class BranchForm(forms.ModelForm):
         self.fields['address'].label = 'العنوان'
         self.fields['city'].label = 'المدينة'
         self.fields['region'].label = 'المنطقة'
-        self.fields['postal_code'].label = 'الرمز البريدي'
-        self.fields['phone'].label = 'رقم الهاتف'
-        self.fields['email'].label = 'البريد الإلكتروني'
         self.fields['manager'].label = 'مدير الفرع'
         self.fields['capacity'].label = 'السعة الاستيعابية للموظفين'
-        self.fields['opening_date'].label = 'تاريخ الافتتاح'
         # self.fields['working_days'].label = 'أيام العمل'
         self.fields['description'].label = 'وصف الفرع'
         self.fields['notes'].label = 'ملاحظات'
@@ -78,6 +70,10 @@ class BranchForm(forms.ModelForm):
     def clean_code(self):
         code = self.cleaned_data.get('code')
         if code:
+            # التحقق من أن الكود 4 خانات
+            if not (code.isdigit() and len(code) == 4):
+                raise forms.ValidationError('كود الفرع يجب أن يكون مكوناً من 4 أرقام')
+            
             # التحقق من عدم تكرار الكود
             queryset = Branch.objects.filter(code=code)
             if self.instance.pk:

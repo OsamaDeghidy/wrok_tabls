@@ -47,6 +47,7 @@ LOCAL_APPS = [
     'apps.reports.apps.ReportsConfig',
     'apps.integrations.apps.IntegrationsConfig',
     'apps.dashboard.apps.DashboardConfig',
+    'apps.notifications.apps.NotificationsConfig',
     # 'apps.auditlog',
 ]
 

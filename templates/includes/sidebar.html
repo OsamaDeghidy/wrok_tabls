@@ -77,22 +77,27 @@
                 </a>
             </li>
             
-            <!-- Approvals (Disabled) -->
-            <!--
             <li class="nav-item">
                 <a class="nav-link {% if 'approvals' in request.path and 'guide' not in request.path %}active{% endif %}" href="{% url 'approvals:list' %}">
                     <i class="fas fa-check-circle me-2"></i>
                     الموافقات
+                    {% if pending_approvals_count > 0 %}
+                    <span class="badge rounded-pill bg-danger ms-1">{{ pending_approvals_count }}</span>
+                    {% endif %}
                 </a>
             </li>
             
             <li class="nav-item">
-                <a class="nav-link {% if 'approvals/guide' in request.path %}active{% endif %}" href="{% url 'approvals:guide' %}">
-                    <i class="fas fa-book-reader me-2"></i>
-                    شرح الموافقات
+                <a class="nav-link {% if 'notifications' in request.path %}active{% endif %}" href="{% url 'notifications:list' %}">
+                    <i class="fas fa-bell me-2"></i>
+                    تنبيهاتي
+                    {% if unread_notifications_count and unread_notifications_count > 0 %}
+                    <span class="badge bg-danger rounded-pill ms-auto">
+                        {{ unread_notifications_count }}
+                    </span>
+                    {% endif %}
                 </a>
             </li>
-            -->
             
             <!-- Violations -->
             <li class="nav-item">

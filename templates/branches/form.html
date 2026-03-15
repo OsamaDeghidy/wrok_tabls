@@ -2,11 +2,11 @@
 {% load static %}
 
 {% block title %}
-    {% if branch %}تعديل الفرع - {{ branch.name }}{% else %}إضافة فرع جديد{% endif %}
+{% if branch %}تعديل الفرع - {{ branch.name }}{% else %}إضافة فرع جديد{% endif %}
 {% endblock %}
 
 {% block page_title %}
-    {% if branch %}تعديل الفرع{% else %}إضافة فرع جديد{% endif %}
+{% if branch %}تعديل الفرع{% else %}إضافة فرع جديد{% endif %}
 {% endblock %}
 
 {% block page_actions %}
@@ -35,303 +35,240 @@
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
-                    
+
                     <!-- عرض أخطاء الفورم -->
                     {% if form.errors %}
                     <div class="alert alert-danger">
                         <h6>يرجى تصحيح الأخطاء التالية:</h6>
                         <ul class="mb-0">
                             {% for field, errors in form.errors.items %}
-                                {% for error in errors %}
-                                    <li>{{ field }}: {{ error }}</li>
-                                {% endfor %}
+                            {% for error in errors %}
+                            <li>{{ field }}: {{ error }}</li>
+                            {% endfor %}
                             {% endfor %}
                         </ul>
                     </div>
                     {% endif %}
-                    
-                    <div class="row">
-                        <!-- Basic Information -->
+
+                    <!-- معلومات أساسية -->
+                    <div class="row g-4 mb-5">
+                        <div class="col-12 border-bottom pb-2 mb-3">
+                            <h5 class="text-primary d-flex align-items-center">
+                                <i class="fas fa-info-circle me-2"></i> المعلومات الأساسية
+                            </h5>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">{{ form.name.label }} <span
+                                    class="text-danger">*</span></label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                            <div class="text-danger small">{{ form.name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">{{ form.code.label }} <span
+                                    class="text-danger">*</span></label>
+                            {{ form.code }}
+                            {% if form.code.errors %}
+                            <div class="text-danger small">{{ form.code.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">نوع الفرع</label>
+                            {{ form.type }}
+                            {% if form.type.errors %}
+                            <div class="text-danger small">{{ form.type.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">الفئة</label>
+                            {{ form.category }}
+                            {% if form.category.errors %}
+                            <div class="text-danger small">{{ form.category.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">الحالة</label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                            <div class="text-danger small">{{ form.status.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- الموقع -->
+                    <div class="row g-4 mb-5">
+                        <div class="col-12 border-bottom pb-2 mb-3">
+                            <h5 class="text-success d-flex align-items-center">
+                                <i class="fas fa-map-marker-alt me-2"></i> بيانات الموقع والمسؤول
+                            </h5>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">{{ form.address.label }} <span
+                                    class="text-danger">*</span></label>
+                            {{ form.address }}
+                            {% if form.address.errors %}
+                            <div class="text-danger small">{{ form.address.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">المدينة</label>
+                            {{ form.city }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">المنطقة</label>
+                            {{ form.region }}
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold">مدير الفرع</label>
+                            {{ form.manager }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">السعة الاستيعابية</label>
+                            {{ form.capacity }}
+                        </div>
+                    </div>
+
+                    <!-- المواعيد والشفتات -->
+                    <div class="row g-4 mb-5">
+                        <div class="col-12 border-bottom pb-2 mb-3">
+                            <h5 class="text-warning d-flex align-items-center">
+                                <i class="fas fa-calendar-alt me-2"></i> أيام العمل والمناوبات
+                            </h5>
+                        </div>
                         <div class="col-12">
-                            <h6 class="text-primary mb-3">المعلومات الأساسية</h6>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }} <span class="text-danger">*</span></label>
-                                {{ form.name }}
-                                {% if form.name.errors %}
-                                    <div class="text-danger small">{{ form.name.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.code.id_for_label }}" class="form-label">{{ form.code.label }} <span class="text-danger">*</span></label>
-                                {{ form.code }}
-                                {% if form.code.errors %}
-                                    <div class="text-danger small">{{ form.code.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.type.id_for_label }}" class="form-label">{{ form.type.label }}</label>
-                                {{ form.type }}
-                                {% if form.type.errors %}
-                                    <div class="text-danger small">{{ form.type.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.category.id_for_label }}" class="form-label">{{ form.category.label }}</label>
-                                {{ form.category }}
-                                {% if form.category.errors %}
-                                    <div class="text-danger small">{{ form.category.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.status.id_for_label }}" class="form-label">{{ form.status.label }}</label>
-                                {{ form.status }}
-                                {% if form.status.errors %}
-                                    <div class="text-danger small">{{ form.status.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <!-- Location Information -->
-                        <div class="col-12 mt-4">
-                            <h6 class="text-primary mb-3">معلومات الموقع</h6>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.address.id_for_label }}" class="form-label">{{ form.address.label }} <span class="text-danger">*</span></label>
-                                {{ form.address }}
-                                {% if form.address.errors %}
-                                    <div class="text-danger small">{{ form.address.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.city.id_for_label }}" class="form-label">{{ form.city.label }}</label>
-                                {{ form.city }}
-                                {% if form.city.errors %}
-                                    <div class="text-danger small">{{ form.city.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.region.id_for_label }}" class="form-label">{{ form.region.label }}</label>
-                                {{ form.region }}
-                                {% if form.region.errors %}
-                                    <div class="text-danger small">{{ form.region.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.postal_code.id_for_label }}" class="form-label">{{ form.postal_code.label }}</label>
-                                {{ form.postal_code }}
-                                {% if form.postal_code.errors %}
-                                    <div class="text-danger small">{{ form.postal_code.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <!-- Contact Information -->
-                        <div class="col-12 mt-4">
-                            <h6 class="text-primary mb-3">معلومات الاتصال</h6>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.phone.id_for_label }}" class="form-label">{{ form.phone.label }}</label>
-                                {{ form.phone }}
-                                {% if form.phone.errors %}
-                                    <div class="text-danger small">{{ form.phone.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
-                                {{ form.email }}
-                                {% if form.email.errors %}
-                                    <div class="text-danger small">{{ form.email.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.manager.id_for_label }}" class="form-label">{{ form.manager.label }}</label>
-                                {{ form.manager }}
-                                {% if form.manager.errors %}
-                                    <div class="text-danger small">{{ form.manager.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.capacity.id_for_label }}" class="form-label">{{ form.capacity.label }}</label>
-                                {{ form.capacity }}
-                                {% if form.capacity.errors %}
-                                    <div class="text-danger small">{{ form.capacity.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <!-- Additional Information -->
-                        <div class="col-12 mt-4">
-                            <h6 class="text-primary mb-3">معلومات إضافية</h6>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.opening_date.id_for_label }}" class="form-label">{{ form.opening_date.label }}</label>
-                                {{ form.opening_date }}
-                                {% if form.opening_date.errors %}
-                                    <div class="text-danger small">{{ form.opening_date.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.working_days.id_for_label }}" class="form-label">{{ form.working_days.label }}</label>
+                            <div class="bg-light p-4 rounded-3 border">
+                                <label class="form-label fw-bold mb-3">أيام العمل الأسبوعية</label>
                                 {{ form.working_days }}
-                                <div class="form-text">اضغط Ctrl لاختيار عدة أيام</div>
-                                {% if form.working_days.errors %}
-                                    <div class="text-danger small">{{ form.working_days.errors.0 }}</div>
-                                {% endif %}
+                                <div class="form-text mt-2"><i class="fas fa-info-circle me-1"></i> اضغط Ctrl لاختيار
+                                    عدة أيام. سيتم توزيع الموظفين على هذه الأيام.</div>
                             </div>
                         </div>
-
-                        <!-- Shifts Configuration -->
-                        <div class="col-12 mt-4">
-                            <h6 class="text-primary mb-3">إعدادات الشفتات وساعات العمل</h6>
-                            <div class="alert alert-info">
-                                <i class="fas fa-info-circle me-2"></i>
-                                يمكن للمعرض أن يحتوي على أكثر من شفت واحد. حدد ساعات العمل لكل شفت.
-                            </div>
-                        </div>
-                        
                         <div class="col-12">
-                            <div class="card bg-light">
-                                <div class="card-header">
-                                    <h6 class="mb-0">الشفتات</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div id="shiftsContainer">
-                                        {% if branch and branch.shifts.exists %}
-                                            {% for shift in branch.shifts.all %}
-                                            <div class="shift-item mb-3 p-3 border rounded">
-                                                <div class="row">
-                                                    <div class="col-md-3">
-                                                        <label class="form-label">اسم الشفت</label>
-                                                        <input type="text" class="form-control" name="shift_name[]" value="{{ shift.name }}" required>
-                                                    </div>
-                                                    <div class="col-md-2">
-                                                        <label class="form-label">ساعة البداية</label>
-                                                        <input type="time" class="form-control" name="shift_start[]" value="{{ shift.start_time }}" required>
-                                                    </div>
-                                                    <div class="col-md-2">
-                                                        <label class="form-label">ساعة النهاية</label>
-                                                        <input type="time" class="form-control" name="shift_end[]" value="{{ shift.end_time }}" required>
-                                                    </div>
-                                                    <!-- تم إلغاء إدخال الاستراحة -->
-                                                    <div class="col-md-1">
-                                                        <label class="form-label">&nbsp;</label>
-                                                        <button type="button" class="btn btn-danger btn-sm d-block" onclick="removeShift(this)">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            {% endfor %}
-                                        {% else %}
-                                            <!-- Default shifts for new branch -->
-                                            <div class="shift-item mb-3 p-3 border rounded">
-                                                <div class="row">
-                                                    <div class="col-md-3">
-                                                        <label class="form-label">اسم الشفت</label>
-                                                        <input type="text" class="form-control" name="shift_name[]" value="الشفت الأول" required>
-                                                    </div>
-                                                    <div class="col-md-2">
-                                                        <label class="form-label">ساعة البداية</label>
-                                                        <input type="time" class="form-control" name="shift_start[]" value="08:00" required>
-                                                    </div>
-                                                    <div class="col-md-2">
-                                                        <label class="form-label">ساعة النهاية</label>
-                                                        <input type="time" class="form-control" name="shift_end[]" value="16:00" required>
-                                                    </div>
-                                                    <div class="col-md-1">
-                                                        <label class="form-label">&nbsp;</label>
-                                                        <button type="button" class="btn btn-danger btn-sm d-block" onclick="removeShift(this)">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="shift-item mb-3 p-3 border rounded">
-                                                <div class="row">
-                                                    <div class="col-md-3">
-                                                        <label class="form-label">اسم الشفت</label>
-                                                        <input type="text" class="form-control" name="shift_name[]" value="الشفت الثاني" required>
-                                                    </div>
-                                                    <div class="col-md-2">
-                                                        <label class="form-label">ساعة البداية</label>
-                                                        <input type="time" class="form-control" name="shift_start[]" value="16:00" required>
-                                                    </div>
-                                                    <div class="col-md-2">
-                                                        <label class="form-label">ساعة النهاية</label>
-                                                        <input type="time" class="form-control" name="shift_end[]" value="00:00" required>
-                                                    </div>
-                                                    <div class="col-md-1">
-                                                        <label class="form-label">&nbsp;</label>
-                                                        <button type="button" class="btn btn-danger btn-sm d-block" onclick="removeShift(this)">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                    
-                                    <button type="button" class="btn btn-outline-primary" onclick="addShift()">
-                                        <i class="fas fa-plus me-2"></i>إضافة شفت جديد
+                            <div class="card border shadow-sm">
+                                <div
+                                    class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                                    <h6 class="mb-0 fw-bold">إعدادات الشفتات (المناوبات)</h6>
+                                    <button type="button" class="btn btn-sm btn-primary rounded-pill px-3"
+                                        onclick="addShift()">
+                                        <i class="fas fa-plus me-1"></i> إضافة شفت
                                     </button>
                                 </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-12">
-                            <div class="mb-3">
-                                <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
-                                {{ form.description }}
-                                {% if form.description.errors %}
-                                    <div class="text-danger small">{{ form.description.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div class="mb-3">
-                                <label for="{{ form.notes.id_for_label }}" class="form-label">{{ form.notes.label }}</label>
-                                {{ form.notes }}
-                                {% if form.notes.errors %}
-                                    <div class="text-danger small">{{ form.notes.errors.0 }}</div>
-                                {% endif %}
+                                <div class="card-body bg-light">
+                                    <div id="shiftsContainer">
+                                        {% if branch and branch.shifts.exists %}
+                                        {% for shift in branch.shifts.all %}
+                                        <div class="shift-item mb-3 bg-white p-3 border rounded-3 shadow-sm">
+                                            <div class="row g-3">
+                                                <div class="col-md-5">
+                                                    <label class="form-label small text-muted">اسم الشفت</label>
+                                                    <input type="text" class="form-control" name="shift_name[]"
+                                                        value="{{ shift.name }}" required>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label small text-muted">وقت البداية</label>
+                                                    <input type="time" class="form-control" name="shift_start[]"
+                                                        value="{{ shift.start_time|time:'H:i' }}" required>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label small text-muted">وقت النهاية</label>
+                                                    <input type="time" class="form-control" name="shift_end[]"
+                                                        value="{{ shift.end_time|time:'H:i' }}" required>
+                                                </div>
+                                                <div class="col-md-1 d-flex align-items-end justify-content-center">
+                                                    <button type="button" class="btn btn-outline-danger border-0"
+                                                        onclick="removeShift(this)">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                        {% else %}
+                                        <div class="shift-item mb-3 bg-white p-3 border rounded-3 shadow-sm">
+                                            <div class="row g-3">
+                                                <div class="col-md-5">
+                                                    <label class="form-label small text-muted">اسم الشفت</label>
+                                                    <input type="text" class="form-control" name="shift_name[]"
+                                                        value="الشفت الأول" required>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label small text-muted">وقت البداية</label>
+                                                    <input type="time" class="form-control" name="shift_start[]"
+                                                        value="08:00" required>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label small text-muted">وقت النهاية</label>
+                                                    <input type="time" class="form-control" name="shift_end[]"
+                                                        value="16:00" required>
+                                                </div>
+                                                <div class="col-md-1 d-flex align-items-end justify-content-center">
+                                                    <button type="button" class="btn btn-outline-danger border-0"
+                                                        onclick="removeShift(this)">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="shift-item mb-3 bg-white p-3 border rounded-3 shadow-sm">
+                                            <div class="row g-3">
+                                                <div class="col-md-5">
+                                                    <label class="form-label small text-muted">اسم الشفت</label>
+                                                    <input type="text" class="form-control" name="shift_name[]"
+                                                        value="الشفت الثاني" required>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label small text-muted">وقت البداية</label>
+                                                    <input type="time" class="form-control" name="shift_start[]"
+                                                        value="16:00" required>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label small text-muted">وقت النهاية</label>
+                                                    <input type="time" class="form-control" name="shift_end[]"
+                                                        value="00:00" required>
+                                                </div>
+                                                <div class="col-md-1 d-flex align-items-end justify-content-center">
+                                                    <button type="button" class="btn btn-outline-danger border-0"
+                                                        onclick="removeShift(this)">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="d-flex justify-content-end gap-2 mt-4">
-                        <a href="{% url 'branches:list' %}" class="btn btn-secondary">إلغاء</a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save me-1"></i>
-                            {% if branch %}حفظ التغييرات{% else %}إضافة الفرع{% endif %}
-                        </button>
+
+                    <!-- ملاحظات -->
+                    <div class="row g-4 mb-5">
+                        <div class="col-12 border-bottom pb-2 mb-3">
+                            <h5 class="text-secondary d-flex align-items-center">
+                                <i class="fas fa-sticky-note me-2"></i> ملاحظات إضافية
+                            </h5>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">{{ form.description.label }}</label>
+                            {{ form.description }}
+                        </div>
+                        <div class="col-12 mt-3">
+                            <label class="form-label fw-bold">{{ form.notes.label }}</label>
+                            {{ form.notes }}
+                        </div>
+                    </div>
+
+                    <div class="bg-light p-4 rounded-3 d-flex justify-content-between align-items-center border">
+                        <span class="text-muted small"><i class="fas fa-asterisk text-danger me-1"></i> حقول
+                            مطلوبة</span>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'branches:list' %}" class="btn btn-outline-secondary px-4">إلغاء</a>
+                            <button type="submit" class="btn btn-primary px-5 shadow-sm">
+                                <i class="fas fa-save me-2"></i>
+                                {% if branch %}حفظ التعديلات{% else %}إنشاء الفرع{% endif %}
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -417,14 +354,14 @@
 
 {% block scripts %}
 <script>
-let shiftCounter = 2; // Starting from 2 since we have 2 default shifts
+    let shiftCounter = 2; // Starting from 2 since we have 2 default shifts
 
-function addShift() {
-    shiftCounter++;
-    const shiftsContainer = document.getElementById('shiftsContainer');
-    const newShift = document.createElement('div');
-    newShift.className = 'shift-item mb-3 p-3 border rounded';
-    newShift.innerHTML = `
+    function addShift() {
+        shiftCounter++;
+        const shiftsContainer = document.getElementById('shiftsContainer');
+        const newShift = document.createElement('div');
+        newShift.className = 'shift-item mb-3 p-3 border rounded';
+        newShift.innerHTML = `
         <div class="row">
             <div class="col-md-3">
                 <label class="form-label">اسم الشفت</label>
@@ -447,34 +384,34 @@ function addShift() {
             </div>
         </div>
     `;
-    shiftsContainer.appendChild(newShift);
-}
-
-function removeShift(button) {
-    const shiftItem = button.closest('.shift-item');
-    const shiftsContainer = document.getElementById('shiftsContainer');
-    
-    // Don't allow removing if only one shift remains
-    if (shiftsContainer.children.length <= 1) {
-        alert('يجب أن يحتوي المعرض على شفت واحد على الأقل');
-        return;
+        shiftsContainer.appendChild(newShift);
     }
-    
-    shiftItem.remove();
-}
 
-// Set default working days
-document.addEventListener('DOMContentLoaded', function() {
-    const workingDaysSelect = document.getElementById('id_working_days');
-    if (workingDaysSelect && !workingDaysSelect.value) {
-        // Set default working days (Saturday to Thursday)
-        const defaultDays = ['saturday', 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday'];
-        Array.from(workingDaysSelect.options).forEach(option => {
-            if (defaultDays.includes(option.value)) {
-                option.selected = true;
-            }
-        });
+    function removeShift(button) {
+        const shiftItem = button.closest('.shift-item');
+        const shiftsContainer = document.getElementById('shiftsContainer');
+
+        // Don't allow removing if only one shift remains
+        if (shiftsContainer.children.length <= 1) {
+            alert('يجب أن يحتوي المعرض على شفت واحد على الأقل');
+            return;
+        }
+
+        shiftItem.remove();
     }
-});
+
+    // Set default working days
+    document.addEventListener('DOMContentLoaded', function () {
+        const workingDaysSelect = document.getElementById('id_working_days');
+        if (workingDaysSelect && !workingDaysSelect.value) {
+            // Set default working days (Saturday to Thursday)
+            const defaultDays = ['saturday', 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday'];
+            Array.from(workingDaysSelect.options).forEach(option => {
+                if (defaultDays.includes(option.value)) {
+                    option.selected = true;
+                }
+            });
+        }
+    });
 </script>
 {% endblock %}

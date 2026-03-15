@@ -1,12 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}
-    {% if user_detail %}تعديل المستخدم - {{ user_detail.user.first_name }} {{ user_detail.user.last_name }}{% else %}إضافة مستخدم جديد{% endif %}
-{% endblock %}
+{% if user_detail %}تعديل المستخدم - {{ user_detail.user.get_full_name }}{% else %}إضافة مستخدم جديد{% endif %}
 
 {% block page_title %}
-    {% if user_detail %}تعديل المستخدم{% else %}إضافة مستخدم جديد{% endif %}
+{% if user_detail %}تعديل المستخدم{% else %}إضافة مستخدم جديد{% endif %}
 {% endblock %}
 
 {% block page_actions %}
@@ -42,44 +40,52 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_first_name" class="form-label">الاسم الأول <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="id_first_name" name="first_name" 
-                                       value="{% if user_detail %}{{ user_detail.user.first_name|default:'' }}{% endif %}" required>
+                                <label for="id_first_name" class="form-label">الاسم الأول <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="id_first_name" name="first_name"
+                                    value="{% if user_detail %}{{ user_detail.user.first_name|default:'' }}{% endif %}"
+                                    required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_last_name" class="form-label">الاسم الأخير <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="id_last_name" name="last_name" 
-                                       value="{% if user_detail %}{{ user_detail.user.last_name|default:'' }}{% endif %}" required>
+                                <label for="id_last_name" class="form-label">الاسم الأخير <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="id_last_name" name="last_name"
+                                    value="{% if user_detail %}{{ user_detail.user.last_name|default:'' }}{% endif %}"
+                                    required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_username" class="form-label">اسم المستخدم <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="id_username" name="username" 
-                                       value="{% if user_detail %}{{ user_detail.user.username|default:'' }}{% endif %}" required>
+                                <label for="id_username" class="form-label">اسم المستخدم <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="id_username" name="username"
+                                    value="{% if user_detail %}{{ user_detail.user.username|default:'' }}{% endif %}"
+                                    required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_email" class="form-label">البريد الإلكتروني <span class="text-danger">*</span></label>
-                                <input type="email" class="form-control" id="id_email" name="email" 
-                                       value="{% if user_detail %}{{ user_detail.user.email|default:'' }}{% endif %}" required>
+                                <label for="id_email" class="form-label">البريد الإلكتروني <span
+                                        class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="id_email" name="email"
+                                    value="{% if user_detail %}{{ user_detail.user.email|default:'' }}{% endif %}"
+                                    required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="id_phone" class="form-label">رقم الهاتف</label>
-                                <input type="tel" class="form-control" id="id_phone" name="phone" 
-                                       value="{% if user_detail %}{{ user_detail.phone|default:'' }}{% endif %}">
+                                <input type="tel" class="form-control" id="id_phone" name="phone"
+                                    value="{% if user_detail %}{{ user_detail.phone|default:'' }}{% endif %}">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="id_national_id" class="form-label">رقم الهوية</label>
-                                <input type="text" class="form-control" id="id_national_id" name="national_id" 
-                                       value="{{ user_detail.national_id|default:'' }}">
+                                <input type="text" class="form-control" id="id_national_id" name="national_id"
+                                    value="{{ user_detail.national_id|default:'' }}">
                             </div>
                         </div>
 
@@ -90,8 +96,8 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="id_position" class="form-label">المنصب</label>
-                                <input type="text" class="form-control" id="id_position" name="position" 
-                                       value="{% if user_detail %}{{ user_detail.position|default:'' }}{% endif %}">
+                                <input type="text" class="form-control" id="id_position" name="position"
+                                    value="{% if user_detail %}{{ user_detail.position|default:'' }}{% endif %}">
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -99,12 +105,18 @@
                                 <label for="id_department" class="form-label">القسم</label>
                                 <select class="form-select" id="id_department" name="department">
                                     <option value="">اختر القسم</option>
-                                    <option value="hr" {% if user_detail.department == 'hr' %}selected{% endif %}>الموارد البشرية</option>
-                                    <option value="it" {% if user_detail.department == 'it' %}selected{% endif %}>تقنية المعلومات</option>
-                                    <option value="finance" {% if user_detail.department == 'finance' %}selected{% endif %}>المالية</option>
-                                    <option value="operations" {% if user_detail.department == 'operations' %}selected{% endif %}>العمليات</option>
-                                    <option value="sales" {% if user_detail.department == 'sales' %}selected{% endif %}>المبيعات</option>
-                                    <option value="marketing" {% if user_detail.department == 'marketing' %}selected{% endif %}>التسويق</option>
+                                    <option value="hr" {% if user_detail.department=='hr' %}selected{% endif %}>الموارد
+                                        البشرية</option>
+                                    <option value="it" {% if user_detail.department=='it' %}selected{% endif %}>تقنية
+                                        المعلومات</option>
+                                    <option value="finance" {% if user_detail.department=='finance' %}selected{% endif
+                                        %}>المالية</option>
+                                    <option value="operations" {% if user_detail.department=='operations' %}selected{%
+                                        endif %}>العمليات</option>
+                                    <option value="sales" {% if user_detail.department=='sales' %}selected{% endif %}>
+                                        المبيعات</option>
+                                    <option value="marketing" {% if user_detail.department=='marketing' %}selected{%
+                                        endif %}>التسويق</option>
                                 </select>
                             </div>
                         </div>
@@ -113,24 +125,33 @@
                                 <label for="id_role" class="form-label">الدور <span class="text-danger">*</span></label>
                                 <select class="form-select" id="id_role" name="role" required>
                                     <option value="">اختر الدور</option>
-                                    <option value="employee" {% if user_detail.role == 'employee' %}selected{% endif %}>موظف</option>
-                                    <option value="branch_manager" {% if user_detail.role == 'branch_manager' %}selected{% endif %}>مدير معرض</option>
-                                    <option value="coordinator" {% if user_detail.role == 'coordinator' %}selected{% endif %}>منسق</option>
-                                    <option value="region_manager" {% if user_detail.role == 'region_manager' %}selected{% endif %}>مدير منطقة</option>
-                                    <option value="operations_manager" {% if user_detail.role == 'operations_manager' %}selected{% endif %}>مدير عمليات</option>
-                                    <option value="admin_manager" {% if user_detail.role == 'admin_manager' %}selected{% endif %}>مدير إدارة</option>
-                                    <option value="super_admin" {% if user_detail.role == 'super_admin' %}selected{% endif %}>مدير عام</option>
+                                    <option value="employee" {% if user_detail.role=='employee' %}selected{% endif %}>
+                                        موظف</option>
+                                    <option value="branch_manager" {% if user_detail.role=='branch_manager' %}selected{%
+                                        endif %}>مدير معرض</option>
+                                    <option value="coordinator" {% if user_detail.role=='coordinator' %}selected{% endif
+                                        %}>منسق</option>
+                                    <option value="region_manager" {% if user_detail.role=='region_manager' %}selected{%
+                                        endif %}>مدير منطقة</option>
+                                    <option value="operations_manager" {% if user_detail.role=='operations_manager'
+                                        %}selected{% endif %}>مدير عمليات</option>
+                                    <option value="admin_manager" {% if user_detail.role=='admin_manager' %}selected{%
+                                        endif %}>مدير إدارة</option>
+                                    <option value="super_admin" {% if user_detail.role=='super_admin' %}selected{% endif
+                                        %}>مدير عام</option>
                                 </select>
                             </div>
                         </div>
                         <div class="col-md-6" id="region-wrapper" style="display:none;">
                             <div class="mb-3">
-                                <label for="id_region" class="form-label">المنطقة <span class="text-danger">*</span></label>
+                                <label for="id_region" class="form-label">المنطقة <span
+                                        class="text-danger">*</span></label>
                                 <div class="d-flex align-items-center gap-2">
-                                  <select class="form-select" id="id_region">
-                                      <option value="">اختر المنطقة</option>
-                                  </select>
-                                  <div id="region-loading" class="spinner-border spinner-border-sm text-primary" role="status" style="display:none;"></div>
+                                    <select class="form-select" id="id_region">
+                                        <option value="">اختر المنطقة</option>
+                                    </select>
+                                    <div id="region-loading" class="spinner-border spinner-border-sm text-primary"
+                                        role="status" style="display:none;"></div>
                                 </div>
                                 <div id="region-error" class="alert alert-danger mt-2 p-2" style="display:none;"></div>
                             </div>
@@ -141,7 +162,8 @@
                                 <select class="form-select" id="id_branch" name="branch">
                                     <option value="">اختر الفرع</option>
                                     {% for branch in branches %}
-                                    <option value="{{ branch.id }}" {% if user_detail.branch.id == branch.id %}selected{% endif %}>
+                                    <option value="{{ branch.id }}" {% if user_detail.branch.id==branch.id %}selected{%
+                                        endif %}>
                                         {{ branch.name }} - {{ branch.get_type_display }}
                                     </option>
                                     {% endfor %}
@@ -151,15 +173,15 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="id_join_date" class="form-label">تاريخ الانضمام</label>
-                                <input type="date" class="form-control" id="id_join_date" name="join_date" 
-                                       value="{{ user_detail.join_date|default:'' }}">
+                                <input type="date" class="form-control" id="id_join_date" name="join_date"
+                                    value="{{ user_detail.join_date|default:'' }}">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="id_salary" class="form-label">الراتب</label>
-                                <input type="number" class="form-control" id="id_salary" name="salary" 
-                                       value="{{ user_detail.salary|default:'' }}" step="0.01">
+                                <input type="number" class="form-control" id="id_salary" name="salary"
+                                    value="{{ user_detail.salary|default:'' }}" step="0.01">
                             </div>
                         </div>
 
@@ -172,7 +194,8 @@
                                 <label for="id_is_active" class="form-label">حالة الحساب</label>
                                 <select class="form-select" id="id_is_active" name="is_active">
                                     <option value="true" {% if user_detail.is_active %}selected{% endif %}>نشط</option>
-                                    <option value="false" {% if not user_detail.is_active %}selected{% endif %}>غير نشط</option>
+                                    <option value="false" {% if not user_detail.is_active %}selected{% endif %}>غير نشط
+                                    </option>
                                 </select>
                             </div>
                         </div>
@@ -180,7 +203,8 @@
                             <div class="mb-3">
                                 <label for="id_is_staff" class="form-label">نوع المستخدم</label>
                                 <select class="form-select" id="id_is_staff" name="is_staff">
-                                    <option value="false" {% if not user_detail.is_staff %}selected{% endif %}>مستخدم عادي</option>
+                                    <option value="false" {% if not user_detail.is_staff %}selected{% endif %}>مستخدم
+                                        عادي</option>
                                     <option value="true" {% if user_detail.is_staff %}selected{% endif %}>موظف</option>
                                 </select>
                             </div>
@@ -193,13 +217,15 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_password1" class="form-label">كلمة المرور <span class="text-danger">*</span></label>
+                                <label for="id_password1" class="form-label">كلمة المرور <span
+                                        class="text-danger">*</span></label>
                                 <input type="password" class="form-control" id="id_password1" name="password1" required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="id_password2" class="form-label">تأكيد كلمة المرور <span class="text-danger">*</span></label>
+                                <label for="id_password2" class="form-label">تأكيد كلمة المرور <span
+                                        class="text-danger">*</span></label>
                                 <input type="password" class="form-control" id="id_password2" name="password2" required>
                             </div>
                         </div>
@@ -212,20 +238,19 @@
                         <div class="col-12">
                             <div class="mb-3">
                                 <label for="id_bio" class="form-label">نبذة شخصية</label>
-                                <textarea class="form-control" id="id_bio" name="bio" rows="4" 
-                                          placeholder="اكتب نبذة عن المستخدم...">{{ user_detail.bio|default:'' }}</textarea>
+                                <textarea class="form-control" id="id_bio" name="bio" rows="4"
+                                    placeholder="اكتب نبذة عن المستخدم...">{{ user_detail.bio|default:'' }}</textarea>
                             </div>
                         </div>
                         <div class="col-12">
                             <div class="mb-3">
                                 <label for="id_avatar" class="form-label">صورة المستخدم</label>
-                                <input type="file" class="form-control" id="id_avatar" name="avatar" 
-                                       accept="image/*">
+                                <input type="file" class="form-control" id="id_avatar" name="avatar" accept="image/*">
                                 <div class="form-text">الصور المسموحة: JPG, PNG, GIF (حد أقصى 2MB)</div>
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="d-flex justify-content-end gap-2 mt-4">
                         <a href="{% url 'users:list' %}" class="btn btn-secondary">إلغاء</a>
                         <button type="submit" class="btn btn-primary">
@@ -246,11 +271,8 @@
                 <h6 class="mb-0"><i class="fas fa-image me-2"></i>الصورة الحالية</h6>
             </div>
             <div class="card-body text-center">
-                <img src="{% static 'images/avatar-placeholder.png' %}" 
-                     alt="صورة المستخدم" 
-                     class="rounded-circle mb-3" 
-                     width="150" 
-                     height="150">
+                <img src="{% static 'images/avatar-placeholder.png' %}" alt="صورة المستخدم" class="rounded-circle mb-3"
+                    width="150" height="150">
                 <p class="text-muted">صورة المستخدم الحالية</p>
             </div>
         </div>
@@ -263,7 +285,8 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('id_avatar').click()">
+                    <button type="button" class="btn btn-outline-primary"
+                        onclick="document.getElementById('id_avatar').click()">
                         <i class="fas fa-camera me-1"></i>تغيير الصورة
                     </button>
                     {% if user_detail %}
@@ -273,7 +296,8 @@
                     <button type="button" class="btn btn-outline-warning">
                         <i class="fas fa-key me-1"></i>إعادة تعيين كلمة المرور
                     </button>
-                    <button type="button" class="btn btn-outline-{% if user_detail.is_active %}danger{% else %}success{% endif %}">
+                    <button type="button"
+                        class="btn btn-outline-{% if user_detail.is_active %}danger{% else %}success{% endif %}">
                         <i class="fas fa-{% if user_detail.is_active %}ban{% else %}check{% endif %} me-1"></i>
                         {% if user_detail.is_active %}تعطيل الحساب{% else %}تفعيل الحساب{% endif %}
                     </button>
@@ -311,103 +335,103 @@
     </div>
 </div>
 <script>
-var REGIONS_FALLBACK = [
-  {% for k, v in regions_choices %}{ value: '{{ k }}', label: '{{ v }}' }{% if not forloop.last %},{% endif %}{% endfor %}
+    var REGIONS_FALLBACK = [
+        {% for k, v in regions_choices %}{ value: '{{ k }}', label: '{{ v }}' } {% if not forloop.last %}, {% endif %} {% endfor %}
 ];
-document.addEventListener('DOMContentLoaded', function() {
-  var roleEl = document.getElementById('id_role');
-  var regionWrapper = document.getElementById('region-wrapper');
-  var regionEl = document.getElementById('id_region');
-  var regionLoading = document.getElementById('region-loading');
-  var regionError = document.getElementById('region-error');
-  function setRegionNameAttr(enabled){
-    if(enabled){
-      regionEl.setAttribute('name','region');
-      regionEl.removeAttribute('disabled');
-    } else {
-      regionEl.removeAttribute('name');
-      regionEl.value = '';
-      regionEl.setAttribute('disabled','disabled');
-    }
-  }
-  function loadRegions(selected){
-    regionLoading.style.display = '';
-    regionError.style.display = 'none';
-    regionError.textContent = '';
-    var controller = new AbortController();
-    var timeout = setTimeout(function(){ controller.abort(); }, 7000);
-    fetch('/users/api/regions/', { signal: controller.signal }).then(function(r){
-      return r.json();
-    }).then(function(data){
-      clearTimeout(timeout);
-      var regions = Array.isArray(data && data.regions) ? data.regions : [];
-      if(!regions.length){
-        regions = REGIONS_FALLBACK;
-      }
-      regionEl.innerHTML = '';
-      var opt = document.createElement('option');
-      opt.value = '';
-      opt.textContent = 'اختر المنطقة';
-      regionEl.appendChild(opt);
-      regions.forEach(function(item){
-        var o = document.createElement('option');
-        o.value = item.value;
-        o.textContent = item.label;
-        regionEl.appendChild(o);
-      });
-      if(selected){
-        regionEl.value = selected;
-      }
-      if(data && data.db_ok === false){
-        regionError.textContent = 'تعذر الاتصال بقاعدة البيانات. تم استخدام قائمة افتراضية للمناطق.';
-        regionError.style.display = '';
-      }
-    }).catch(function(){
-      clearTimeout(timeout);
-      regionEl.innerHTML = '';
-      var opt = document.createElement('option');
-      opt.value = '';
-      opt.textContent = 'اختر المنطقة';
-      regionEl.appendChild(opt);
-      REGIONS_FALLBACK.forEach(function(item){
-        var o = document.createElement('option');
-        o.value = item.value;
-        o.textContent = item.label;
-        regionEl.appendChild(o);
-      });
-      regionError.textContent = 'حدث خطأ أثناء تحميل المناطق. تم عرض قائمة افتراضية.';
-      regionError.style.display = '';
-    }).finally(function(){
-      regionLoading.style.display = 'none';
+    document.addEventListener('DOMContentLoaded', function () {
+        var roleEl = document.getElementById('id_role');
+        var regionWrapper = document.getElementById('region-wrapper');
+        var regionEl = document.getElementById('id_region');
+        var regionLoading = document.getElementById('region-loading');
+        var regionError = document.getElementById('region-error');
+        function setRegionNameAttr(enabled) {
+            if (enabled) {
+                regionEl.setAttribute('name', 'region');
+                regionEl.removeAttribute('disabled');
+            } else {
+                regionEl.removeAttribute('name');
+                regionEl.value = '';
+                regionEl.setAttribute('disabled', 'disabled');
+            }
+        }
+        function loadRegions(selected) {
+            regionLoading.style.display = '';
+            regionError.style.display = 'none';
+            regionError.textContent = '';
+            var controller = new AbortController();
+            var timeout = setTimeout(function () { controller.abort(); }, 7000);
+            fetch('/users/api/regions/', { signal: controller.signal }).then(function (r) {
+                return r.json();
+            }).then(function (data) {
+                clearTimeout(timeout);
+                var regions = Array.isArray(data && data.regions) ? data.regions : [];
+                if (!regions.length) {
+                    regions = REGIONS_FALLBACK;
+                }
+                regionEl.innerHTML = '';
+                var opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = 'اختر المنطقة';
+                regionEl.appendChild(opt);
+                regions.forEach(function (item) {
+                    var o = document.createElement('option');
+                    o.value = item.value;
+                    o.textContent = item.label;
+                    regionEl.appendChild(o);
+                });
+                if (selected) {
+                    regionEl.value = selected;
+                }
+                if (data && data.db_ok === false) {
+                    regionError.textContent = 'تعذر الاتصال بقاعدة البيانات. تم استخدام قائمة افتراضية للمناطق.';
+                    regionError.style.display = '';
+                }
+            }).catch(function () {
+                clearTimeout(timeout);
+                regionEl.innerHTML = '';
+                var opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = 'اختر المنطقة';
+                regionEl.appendChild(opt);
+                REGIONS_FALLBACK.forEach(function (item) {
+                    var o = document.createElement('option');
+                    o.value = item.value;
+                    o.textContent = item.label;
+                    regionEl.appendChild(o);
+                });
+                regionError.textContent = 'حدث خطأ أثناء تحميل المناطق. تم عرض قائمة افتراضية.';
+                regionError.style.display = '';
+            }).finally(function () {
+                regionLoading.style.display = 'none';
+            });
+        }
+        function toggleRegion() {
+            var role = roleEl.value;
+            if (role === 'region_manager') {
+                regionWrapper.style.display = '';
+                setRegionNameAttr(true);
+                var initial = '';
+                try { initial = '{{ user_detail.region|default:"" }}'; } catch (e) { }
+                loadRegions(initial);
+            } else {
+                regionWrapper.style.display = 'none';
+                setRegionNameAttr(false);
+            }
+        }
+        roleEl.addEventListener('change', toggleRegion);
+        toggleRegion();
+        var form = document.querySelector('form');
+        form.addEventListener('submit', function (e) {
+            var role = roleEl.value;
+            if (role === 'region_manager') {
+                if (!regionEl.value) {
+                    e.preventDefault();
+                    alert('يرجى اختيار المنطقة لمدير المنطقة');
+                }
+            } else {
+                setRegionNameAttr(false);
+            }
+        });
     });
-  }
-  function toggleRegion(){
-    var role = roleEl.value;
-    if(role === 'region_manager'){
-      regionWrapper.style.display = '';
-      setRegionNameAttr(true);
-      var initial = '';
-      try{initial = '{{ user_detail.region|default:"" }}';}catch(e){}
-      loadRegions(initial);
-    } else {
-      regionWrapper.style.display = 'none';
-      setRegionNameAttr(false);
-    }
-  }
-  roleEl.addEventListener('change', toggleRegion);
-  toggleRegion();
-  var form = document.querySelector('form');
-  form.addEventListener('submit', function(e){
-    var role = roleEl.value;
-    if(role === 'region_manager'){
-      if(!regionEl.value){
-        e.preventDefault();
-        alert('يرجى اختيار المنطقة لمدير المنطقة');
-      }
-    } else {
-      setRegionNameAttr(false);
-    }
-  });
-});
 </script>
 {% endblock %}

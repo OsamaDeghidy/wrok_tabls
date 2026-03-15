@@ -31,22 +31,12 @@
             <!-- User Menu -->
             <ul class="navbar-nav">
                 {% if user.is_authenticated %}
-                <!-- Notifications -->
+                <!-- Notifications (Moved to Sidebar) -->
+                <!--
                 <li class="nav-item dropdown">
-                    <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-bell"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                            3
-                        </span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><h6 class="dropdown-header">الإشعارات</h6></li>
-                        <li><a class="dropdown-item" href="#">طلب موافقة جديد</a></li>
-                        <li><a class="dropdown-item" href="#">تذكير بإنشاء جدول</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#">عرض جميع الإشعارات</a></li>
-                    </ul>
+                    ...
                 </li>
+                -->
                 
                 <!-- User Dropdown -->
                 <li class="nav-item dropdown">

@@ -500,6 +500,11 @@ def branch_import_view(request):
                             errors.append(f'الصف {index + 2}: اسم الفرع أو كود الفرع مفقود')
                             continue
                         
+                        # التحقق من أن الكود 4 خانات
+                        if not (code.isdigit() and len(code) == 4):
+                            errors.append(f'الصف {index + 2}: كود الفرع "{code}" يجب أن يكون 4 أرقام')
+                            continue
+                        
                         # التحقق من وجود الفرع
                         branch = Branch.objects.filter(code=code).first()
                         
@@ -512,9 +517,11 @@ def branch_import_view(request):
                             branch.address = str(row.get('address', row.get('العنوان', ''))).strip()
                             branch.city = str(row.get('city', row.get('المدينة', ''))).strip()
                             branch.region = str(row.get('region', row.get('المنطقة', ''))).strip()
-                            branch.postal_code = str(row.get('postal_code', row.get('الرمز البريدي', ''))).strip()
-                            branch.phone = str(row.get('phone', row.get('رقم الهاتف', ''))).strip()
-                            branch.email = str(row.get('email', row.get('البريد الإلكتروني', ''))).strip()
+                            
+                            # إزالة الحقول القديمة كما طلب العميل
+                            # branch.postal_code = str(row.get('postal_code', row.get('الرمز البريدي', ''))).strip()
+                            # branch.phone = str(row.get('phone', row.get('رقم الهاتف', ''))).strip()
+                            # branch.email = str(row.get('email', row.get('البريد الإلكتروني', ''))).strip()
                             
                             capacity = row.get('capacity', row.get('السعة الاستيعابية', 0))
                             if pd.notna(capacity):
@@ -523,15 +530,7 @@ def branch_import_view(request):
                                 except:
                                     branch.capacity = 0
                             
-                            opening_date_value = row.get('opening_date', row.get('تاريخ الافتتاح', None))
-                            if pd.notna(opening_date_value) and opening_date_value != '':
-                                try:
-                                    if isinstance(opening_date_value, str):
-                                        branch.opening_date = parse_date(opening_date_value)
-                                    else:
-                                        branch.opening_date = opening_date_value
-                                except:
-                                    branch.opening_date = None
+                            # branch.opening_date = ...
                             
                             # أيام العمل
                             working_days_str = str(row.get('working_days', row.get('أيام العمل', ''))).strip()
@@ -557,31 +556,31 @@ def branch_import_view(request):
                             branch.notes = str(row.get('notes', row.get('ملاحظات', ''))).strip()
                             branch.save()
                             
-                            # تحديث الشفتات
+                            # تحديث الشفتات (دعم 4 شفتات)
                             branch.shifts.all().delete()
                             
-                            # شفت الأسبوع
-                            week_start = str(row.get('week_start', row.get('وقت بداية دوام الأسبوع', ''))).strip()
-                            week_end = str(row.get('week_end', row.get('وقت نهاية دوام الأسبوع', ''))).strip()
+                            # الأيام ما عدا الجمعة
+                            week_days = [d for d in branch.working_days if d != 'friday']
                             
-                            if week_start and week_end and week_start != 'nan':
-                                try:
-                                    start_time = parse_time(week_start)
-                                    end_time = parse_time(week_end)
-                                    # الأيام ما عدا الجمعة
-                                    week_days = [d for d in branch.working_days if d != 'friday']
-                                    if week_days:
-                                        BranchShift.objects.create(
-                                            branch=branch,
-                                            name='شفت الأسبوع',
-                                            start_time=start_time,
-                                            end_time=end_time,
-                                            days=week_days,
-                                            is_active=True
-                                        )
-                                except Exception as e:
-                                    print(f"Error creating week shift: {e}")
-                                    pass
+                            for i in range(1, 5):
+                                s_start = str(row.get(f'shift{i}_start', row.get(f'وقت بداية الشفت {i}', ''))).strip()
+                                s_end = str(row.get(f'shift{i}_end', row.get(f'وقت نهاية الشفت {i}', ''))).strip()
+                                
+                                if s_start and s_end and s_start != 'nan' and s_start != 'None':
+                                    try:
+                                        start_time = parse_time(s_start)
+                                        end_time = parse_time(s_end)
+                                        if week_days:
+                                            BranchShift.objects.create(
+                                                branch=branch,
+                                                name=f'شفت {i}',
+                                                start_time=start_time,
+                                                end_time=end_time,
+                                                days=week_days,
+                                                is_active=True
+                                            )
+                                    except Exception as e:
+                                        print(f"Error creating shift {i}: {e}")
 
                             # شفت الجمعة
                             friday_start = str(row.get('friday_start', row.get('وقت بداية دوام الجمعة', ''))).strip()
@@ -684,34 +683,35 @@ def branch_import_view(request):
                             # إنشاء الشفتات
                             branch.shifts.all().delete()
                             
-                            # شفت الأسبوع
-                            week_start = str(row.get('week_start', row.get('وقت بداية دوام الأسبوع', ''))).strip()
-                            week_end = str(row.get('week_end', row.get('وقت نهاية دوام الأسبوع', ''))).strip()
+                            # إنشاء 4 شفتات للأسبوع كحد أقصى (حسب طلب العميل)
+                            week_days = [d for d in branch.working_days if d != 'friday']
                             
-                            if week_start and week_end and week_start != 'nan':
-                                try:
-                                    start_time = parse_time(week_start)
-                                    end_time = parse_time(week_end)
-                                    # الأيام ما عدا الجمعة
-                                    week_days = [d for d in branch.working_days if d != 'friday']
-                                    if week_days:
-                                        BranchShift.objects.create(
-                                            branch=branch,
-                                            name='شفت الأسبوع',
-                                            start_time=start_time,
-                                            end_time=end_time,
-                                            days=week_days,
-                                            is_active=True
-                                        )
-                                except Exception as e:
-                                    print(f"Error creating week shift: {e}")
-                                    pass
+                            for i in range(1, 5):
+                                shift_start = str(row.get(f'shift{i}_start', row.get(f'وقت بداية الشفت {i}', ''))).strip()
+                                shift_end = str(row.get(f'shift{i}_end', row.get(f'وقت نهاية الشفت {i}', ''))).strip()
+                                
+                                if shift_start and shift_end and shift_start != 'nan' and shift_end != 'nan':
+                                    try:
+                                        start_time = parse_time(shift_start)
+                                        end_time = parse_time(shift_end)
+                                        if week_days:
+                                            BranchShift.objects.create(
+                                                branch=branch,
+                                                name=f'الشفت {i}',
+                                                start_time=start_time,
+                                                end_time=end_time,
+                                                days=week_days,
+                                                is_active=True
+                                            )
+                                    except Exception as e:
+                                        print(f"Error creating shift {i}: {e}")
+                                        pass
 
                             # شفت الجمعة
                             friday_start = str(row.get('friday_start', row.get('وقت بداية دوام الجمعة', ''))).strip()
                             friday_end = str(row.get('friday_end', row.get('وقت نهاية دوام الجمعة', ''))).strip()
                             
-                            if friday_start and friday_end and friday_start != 'nan':
+                            if friday_start and friday_end and friday_start != 'nan' and friday_end != 'nan':
                                 try:
                                     start_time = parse_time(friday_start)
                                     end_time = parse_time(friday_end)
@@ -727,25 +727,6 @@ def branch_import_view(request):
                                         )
                                 except Exception as e:
                                     print(f"Error creating friday shift: {e}")
-                                    pass
-                            
-                            # دعم التنسيق القديم (اختياري، لكن يفضل الاعتماد على الجديد)
-                            shift_name = str(row.get('shift_name', row.get('اسم الشفت', ''))).strip()
-                            shift_start = str(row.get('shift_start', row.get('وقت بداية الشفت', ''))).strip()
-                            shift_end = str(row.get('shift_end', row.get('وقت نهاية الشفت', ''))).strip()
-                            
-                            if shift_name and shift_start and shift_end and shift_name != 'nan':
-                                try:
-                                    start_time = parse_time(shift_start)
-                                    end_time = parse_time(shift_end)
-                                    BranchShift.objects.create(
-                                        branch=branch,
-                                        name=shift_name,
-                                        start_time=start_time,
-                                        end_time=end_time,
-                                        is_active=True
-                                    )
-                                except:
                                     pass
                             
                             created_count += 1
@@ -794,22 +775,24 @@ def download_branch_sample_file(request):
     # إنشاء بيانات نموذجية
     sample_data = {
         'اسم الفرع': ['فرع الرياض', 'فرع جدة', 'فرع الدمام'],
-        'كود الفرع': ['RYD001', 'JED001', 'DMM001'],
+        'كود الفرع': ['1001', '2001', '3001'],
         'نوع الفرع': ['branch', 'branch', 'branch'],
         'فئة الفرع': ['A', 'B', 'C'],
         'الحالة': ['active', 'active', 'active'],
         'العنوان': ['شارع الملك فهد، الرياض', 'شارع التحلية، جدة', 'شارع الكورنيش، الدمام'],
         'المدينة': ['الرياض', 'جدة', 'الدمام'],
         'المنطقة': ['center', 'west', 'east'],
-        'الرمز البريدي': ['12345', '23456', '34567'],
-        'رقم الهاتف': ['+966112345678', '+966122345678', '+966133345678'],
-        'البريد الإلكتروني': ['riyadh@company.com', 'jeddah@company.com', 'dammam@company.com'],
         'السعة الاستيعابية': [50, 40, 30],
-        'تاريخ الافتتاح': ['2024-01-01', '2024-01-15', '2024-02-01'],
         'أيام العمل': ['السبت, الأحد, الاثنين, الثلاثاء, الأربعاء, الخميس, الجمعة', 'السبت, الأحد, الاثنين, الثلاثاء, الأربعاء, الخميس, الجمعة', 'السبت, الأحد, الاثنين, الثلاثاء, الأربعاء, الخميس'],
-        'وقت بداية دوام الأسبوع': ['08:00', '09:00', '08:00'],
-        'وقت نهاية دوام الأسبوع': ['16:00', '17:00', '16:00'],
-        'وقت بداية دوام الجمعة': ['13:00', '13:00', ''],
+        'وقت بداية الشفت 1': ['08:00', '09:00', '08:00'],
+        'وقت نهاية الشفت 1': ['12:00', '13:00', '16:00'],
+        'وقت بداية الشفت 2': ['16:00', '17:00', ''],
+        'وقت نهاية الشفت 2': ['21:00', '21:00', ''],
+        'وقت بداية الشفت 3': ['', '', ''],
+        'وقت نهاية الشفت 3': ['', '', ''],
+        'وقت بداية الشفت 4': ['', '', ''],
+        'وقت نهاية الشفت 4': ['', '', ''],
+        'وقت بداية دوام الجمعة': ['16:00', '16:00', ''],
         'وقت نهاية دوام الجمعة': ['21:00', '21:00', ''],
     }
     

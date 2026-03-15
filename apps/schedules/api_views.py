@@ -9,6 +9,7 @@ from apps.leaves.models import LeaveRequest
 from apps.users.models import UserProfile
 from .models import Schedule, ScheduleEntry
 import json
+from datetime import datetime
 
 
 @csrf_exempt
@@ -67,7 +68,8 @@ def employees_api(request):
                     'role': profile.role,
                     'role_display': profile.get_role_display(),
                     'position': getattr(profile, 'position', 'موظف'),
-                    'hours_per_day': getattr(profile, 'hours_per_day', 8),
+                    'hours_per_day': getattr(profile, 'work_hours', 8),
+                    'work_days': getattr(profile, 'work_days', 6 if getattr(profile, 'work_hours', 8) == 8 else 5),
                     'phone': getattr(profile, 'phone', ''),
                     'email': employee.email,
                 })
@@ -292,11 +294,15 @@ def create_schedule_api(request):
         
         branch = get_object_or_404(Branch, id=data['branch'])
         
+        # تحويل التواريخ من نصوص إلى كائنات date
+        start_date = datetime.strptime(data['start_date'], '%Y-%m-%d').date()
+        end_date = datetime.strptime(data['end_date'], '%Y-%m-%d').date()
+        
         schedule = Schedule.objects.create(
             branch=branch,
             schedule_type=data['schedule_type'],
-            start_date=data['start_date'],
-            end_date=data['end_date'],
+            start_date=start_date,
+            end_date=end_date,
             notes=data.get('notes', ''),
             created_by=request.user,
             status='draft'
@@ -306,33 +312,52 @@ def create_schedule_api(request):
         
         # إضافة الإدخالات إذا كانت متوفرة
         entries_created = 0
+        entry_errors = []
         if 'entries' in data and data['entries']:
             print(f"=== API: Processing {len(data['entries'])} entries ===")
             for i, entry_data in enumerate(data['entries']):
                 try:
                     print(f"Creating entry {i+1}: {entry_data}")
-                    entry = ScheduleEntry.objects.create(
+                    entry = ScheduleEntry(
                         schedule=schedule,
                         employee_id=entry_data['employee_id'],
-                        date=entry_data['date'],
+                        date=datetime.strptime(entry_data['date'], '%Y-%m-%d').date(),
                         shift_id=entry_data['shift_id'],
-                        start_time=entry_data['start_time'],
-                        end_time=entry_data['end_time'],
+                        start_time=datetime.strptime(entry_data['start_time'], '%H:%M').time(),
+                        end_time=datetime.strptime(entry_data['end_time'], '%H:%M').time(),
                         hours=entry_data.get('hours', 8),
                         is_cover=entry_data.get('is_cover', False),
                         notes=entry_data.get('notes', '')
                     )
+                    entry.full_clean()
+                    entry.save()
                     entries_created += 1
                     print(f"Successfully created entry {entries_created}: {entry}")
                 except Exception as e:
-                    print(f"Error creating entry {i+1}: {e}")
-                    print(f"Entry data: {entry_data}")
+                    error_msg = str(e)
+                    print(f"Error creating entry {i+1}: {error_msg}")
+                    entry_errors.append({
+                        'index': i,
+                        'data': entry_data,
+                        'error': error_msg
+                    })
                     continue
         else:
             print("=== API: No entries to process ===")
         
-        print(f"=== API: Total entries created: {entries_created} ===")
+        print(f"=== API: Total entries created: {entries_created}, Errors: {len(entry_errors)} ===")
         
+        if entry_errors:
+            # إذا فشل أي إدخال، يفضل حذف الجدول أو تنبيه المستخدم
+            # في هذه الحالة سنعيد نجاح مع قائمة بالأخطاء ليعرضها الـ Frontend
+            return JsonResponse({
+                'success': entries_created > 0,
+                'schedule_id': schedule.id,
+                'entries_created': entries_created,
+                'errors': entry_errors,
+                'message': f'تم إنشاء الجدول مع {entries_created} إدخال ووجد {len(entry_errors)} أخطاء'
+            })
+
         return JsonResponse({
             'success': True,
             'schedule_id': schedule.id,
@@ -377,9 +402,9 @@ def save_schedule_entries_api(request, schedule_id):
         if 'version' in data:
             schedule.version = data['version']
         if 'start_date' in data:
-            schedule.start_date = data['start_date']
+            schedule.start_date = datetime.strptime(data['start_date'], '%Y-%m-%d').date()
         if 'end_date' in data:
-            schedule.end_date = data['end_date']
+            schedule.end_date = datetime.strptime(data['end_date'], '%Y-%m-%d').date()
         if 'notes' in data:
             schedule.notes = data['notes']
         
@@ -396,33 +421,49 @@ def save_schedule_entries_api(request, schedule_id):
         
         # إنشاء الإدخالات الجديدة
         entries_created = 0
+        entry_errors = []
         if 'entries' in data and data['entries']:
             print(f"Creating {len(data['entries'])} new entries")
             for i, entry_data in enumerate(data['entries']):
                 try:
                     print(f"Creating entry {i+1}: {entry_data}")
-                    entry = ScheduleEntry.objects.create(
+                    entry = ScheduleEntry(
                         schedule=schedule,
                         employee_id=entry_data['employee_id'],
-                        date=entry_data['date'],
+                        date=datetime.strptime(entry_data['date'], '%Y-%m-%d').date(),
                         shift_id=entry_data['shift_id'],
-                        start_time=entry_data['start_time'],
-                        end_time=entry_data['end_time'],
+                        start_time=datetime.strptime(entry_data['start_time'], '%H:%M').time(),
+                        end_time=datetime.strptime(entry_data['end_time'], '%H:%M').time(),
                         hours=entry_data.get('hours', 8),
                         is_cover=entry_data.get('is_cover', False),
                         notes=entry_data.get('notes', '')
                     )
+                    entry.full_clean()
+                    entry.save()
                     entries_created += 1
                     print(f"Successfully created entry {entries_created}: {entry}")
                 except Exception as e:
-                    print(f"Error creating entry {i+1}: {e}")
-                    print(f"Entry data: {entry_data}")
+                    error_msg = str(e)
+                    print(f"Error creating entry {i+1}: {error_msg}")
+                    entry_errors.append({
+                        'index': i,
+                        'data': entry_data,
+                        'error': error_msg
+                    })
                     continue
         else:
             print("No entries to process")
         
-        print(f"Total entries created: {entries_created}")
+        print(f"Total entries created: {entries_created}, Errors: {len(entry_errors)}")
         
+        if entry_errors:
+            return JsonResponse({
+                'success': entries_created > 0,
+                'entries_created': entries_created,
+                'errors': entry_errors,
+                'message': f'تم حفظ {entries_created} إدخال ووجد {len(entry_errors)} أخطاء'
+            })
+
         return JsonResponse({
             'success': True,
             'entries_created': entries_created,

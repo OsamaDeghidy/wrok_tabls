@@ -3,118 +3,248 @@
 
 {% block title %}تسجيل الدخول - نظام إدارة الجداول التشغيلية{% endblock %}
 
-{% block content %}
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-4">
-            <div class="card shadow-lg border-0">
-                <div class="card-body p-5">
-                    <!-- Logo -->
-                    <div class="text-center mb-4">
-                        <img src="{% static 'images/logo.png' %}" alt="Logo" class="mb-3" width="80" height="80">
-                        <h4 class="text-primary">نظام إدارة الجداول التشغيلية</h4>
-                        <p class="text-muted">تسجيل الدخول إلى حسابك</p>
-                    </div>
+{% block head_extra %}
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+        --glass-bg: rgba(255, 255, 255, 0.9);
+        --glass-border: rgba(255, 255, 255, 0.2);
+    }
 
-                    <!-- Login Form -->
+    body {
+        background: #f8f9fc;
+        background-image: radial-gradient(at 0% 0%, rgba(78, 115, 223, 0.05) 0, transparent 50%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+    }
+
+    .login-container {
+        padding: 2rem 1rem;
+    }
+
+    .login-card {
+        border: none;
+        border-radius: 25px;
+        overflow: hidden;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+        background: var(--glass-bg);
+        backdrop-filter: blur(15px);
+        border: 1px solid var(--glass-border);
+    }
+
+    .login-header {
+        padding: 3rem 2rem 2rem;
+        text-align: center;
+    }
+
+    .login-header i {
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 3.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .login-header h2 {
+        font-weight: 800;
+        color: #4e73df;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-section {
+        padding: 0 3rem 3rem;
+    }
+
+    .form-control {
+        border-radius: 12px;
+        padding: 0.8rem 1.2rem;
+        border: 2px solid #eaecf4;
+        transition: all 0.2s;
+        background: #fff;
+    }
+
+    .form-control:focus {
+        border-color: #bac8f3;
+        box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.1);
+        background: #fff;
+    }
+
+    .input-group-text {
+        background: transparent;
+        border: 2px solid #eaecf4;
+        border-right: none;
+        color: #d1d3e2;
+        border-radius: 12px 0 0 12px;
+    }
+
+    .form-control:focus~.input-group-text {
+        border-color: #bac8f3;
+    }
+
+    .btn-login {
+        background: var(--primary-gradient);
+        border: none;
+        border-radius: 12px;
+        padding: 0.9rem;
+        font-weight: 700;
+        color: white;
+        box-shadow: 0 4px 15px rgba(78, 115, 223, 0.3);
+        transition: all 0.3s;
+        width: 100%;
+    }
+
+    .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(78, 115, 223, 0.4);
+        color: white;
+    }
+
+    .btn-register {
+        color: #4e73df;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .btn-register:hover {
+        color: #224abe;
+        text-decoration: underline;
+    }
+
+    .demo-accounts {
+        background: #f8f9fc;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin-top: 2rem;
+    }
+
+    .demo-btn {
+        border-radius: 10px;
+        padding: 0.5rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .demo-btn:hover {
+        transform: scale(1.02);
+    }
+
+    .animate-up {
+        animation: fadeInUp 0.8s ease-out;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .form-check-input:checked {
+        background-color: #4e73df;
+        border-color: #4e73df;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container login-container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-5">
+            <div class="login-card animate-up">
+                <div class="login-header">
+                    <i class="fas fa-user-shield"></i>
+                    <h2>مرحباً بك مجدداً</h2>
+                    <p class="text-muted">نظام إدارة الجداول التشغيلية</p>
+                </div>
+
+                <div class="form-section">
                     <form method="post" id="loginForm">
                         {% csrf_token %}
-                        
-                        <!-- Username -->
-                        <div class="mb-3">
-                            <label for="username" class="form-label">اسم المستخدم أو البريد الإلكتروني</label>
+
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-muted mb-2">اسم المستخدم أو البريد
+                                الإلكتروني</label>
                             <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="fas fa-user"></i>
-                                </span>
-                                <input type="text" class="form-control" id="username" name="username" 
-                                       placeholder="أدخل اسم المستخدم" required autofocus>
+                                <span class="input-group-text"><i class="fas fa-user-circle"></i></span>
+                                <input type="text" class="form-control" id="username" name="username"
+                                    placeholder="أدخل بريدك الإلكتروني" required autofocus>
                             </div>
                         </div>
 
-                        <!-- Password -->
-                        <div class="mb-3">
-                            <label for="password" class="form-label">كلمة المرور</label>
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-muted mb-2">كلمة المرور</label>
                             <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="fas fa-lock"></i>
-                                </span>
-                                <input type="password" class="form-control" id="password" name="password" 
-                                       placeholder="أدخل كلمة المرور" required>
-                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="password" name="password"
+                                    placeholder="أدخل كلمة المرور" required>
+                                <button class="btn btn-outline-light border-2 text-muted px-3" type="button"
+                                    onclick="togglePassword()">
                                     <i class="fas fa-eye" id="passwordToggleIcon"></i>
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Remember Me & Forgot Password -->
-                        <div class="row mb-3">
-                            <div class="col-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="rememberMe" name="remember_me">
-                                    <label class="form-check-label" for="rememberMe">
-                                        تذكرني
-                                    </label>
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div class="form-check custom-checkbox">
+                                <input class="form-check-input" type="checkbox" id="rememberMe" name="remember_me">
+                                <label class="form-check-label small text-muted" for="rememberMe">تذكرني</label>
+                            </div>
+                            <a href="#" class="small text-decoration-none">نسيت كلمة المرور؟</a>
+                        </div>
+
+                        <button type="submit" class="btn btn-login mb-4">
+                            <i class="fas fa-sign-in-alt me-2"></i>دخول للنظام
+                        </button>
+
+                        <div class="demo-accounts">
+                            <h6 class="text-center small fw-bold text-muted mb-3">حسابات تجريبية للمعاينة</h6>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-outline-primary demo-btn w-100"
+                                        onclick="fillDemoAccount('admin')">
+                                        <i class="fas fa-shield-alt me-1"></i>مدير
+                                    </button>
                                 </div>
-                            </div>
-                            <div class="col-6 text-end">
-                                <a href="#" class="text-decoration-none">
-                                    نسيت كلمة المرور؟
-                                </a>
-                            </div>
-                        </div>
-
-                        <!-- Login Button -->
-                        <div class="d-grid mb-3">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-sign-in-alt me-2"></i>تسجيل الدخول
-                            </button>
-                        </div>
-
-                        <!-- Demo Accounts -->
-                        <div class="card bg-light">
-                            <div class="card-body">
-                                <h6 class="card-title text-center">حسابات تجريبية</h6>
-                                <div class="row">
-                                    <div class="col-6">
-                                        <button class="btn btn-outline-primary btn-sm w-100 mb-2" onclick="fillDemoAccount('admin')">
-                                            <i class="fas fa-user-shield me-1"></i>مدير
-                                        </button>
-                                    </div>
-                                    <div class="col-6">
-                                        <button class="btn btn-outline-success btn-sm w-100 mb-2" onclick="fillDemoAccount('manager')">
-                                            <i class="fas fa-user-tie me-1"></i>مدير فرع
-                                        </button>
-                                    </div>
-                                    <div class="col-6">
-                                        <button class="btn btn-outline-info btn-sm w-100" onclick="fillDemoAccount('coordinator')">
-                                            <i class="fas fa-user-cog me-1"></i>منسق
-                                        </button>
-                                    </div>
-                                    <div class="col-6">
-                                        <button class="btn btn-outline-warning btn-sm w-100" onclick="fillDemoAccount('employee')">
-                                            <i class="fas fa-user me-1"></i>موظف
-                                        </button>
-                                    </div>
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-outline-success demo-btn w-100"
+                                        onclick="fillDemoAccount('manager')">
+                                        <i class="fas fa-building me-1"></i>مدير فرع
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-outline-info demo-btn w-100"
+                                        onclick="fillDemoAccount('coordinator')">
+                                        <i class="fas fa-users me-1"></i>منسق
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-outline-warning demo-btn w-100"
+                                        onclick="fillDemoAccount('employee')">
+                                        <i class="fas fa-user me-1"></i>موظف
+                                    </button>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Register Link -->
-                        <div class="text-center mt-3">
-                            <p class="text-muted">ليس لديك حساب؟ 
-                                <a href="{% url 'users:register' %}" class="text-decoration-none">إنشاء حساب جديد</a>
+                        <div class="text-center mt-4 pt-2">
+                            <p class="text-muted small mb-0">ليس لديك حساب؟
+                                <a href="{% url 'users:register' %}" class="btn-register">أنشئ حسابك الآن</a>
                             </p>
                         </div>
                     </form>
                 </div>
             </div>
 
-            <!-- Footer -->
-            <div class="text-center mt-4">
-                <p class="text-muted">
-                    &copy; {% now "Y" %} نظام إدارة الجداول التشغيلية. جميع الحقوق محفوظة.
-                </p>
+            <div class="text-center mt-4 text-muted small animate-up" style="animation-delay: 0.2s">
+                <p>&copy; 2026 نظام إدارة الجداول التشغيلية. جميع الحقوق محفوظة.</p>
             </div>
         </div>
     </div>
@@ -123,68 +253,43 @@
 
 {% block scripts %}
 <script>
-// Password toggle
-function togglePassword() {
-    const passwordInput = document.getElementById('password');
-    const toggleIcon = document.getElementById('passwordToggleIcon');
-    
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        toggleIcon.classList.remove('fa-eye');
-        toggleIcon.classList.add('fa-eye-slash');
-    } else {
-        passwordInput.type = 'password';
-        toggleIcon.classList.remove('fa-eye-slash');
-        toggleIcon.classList.add('fa-eye');
-    }
-}
+    function togglePassword() {
+        const passwordInput = document.getElementById('password');
+        const toggleIcon = document.getElementById('passwordToggleIcon');
 
-// Demo accounts
-function fillDemoAccount(type) {
-    const accounts = {
-        'admin': { username: 'admin', password: 'admin123' },
-        'manager': { username: 'manager1', password: 'password123' },
-        'coordinator': { username: 'coordinator1', password: 'password123' },
-        'employee': { username: 'employee1', password: 'password123' }
-    };
-    
-    const account = accounts[type];
-    if (account) {
-        document.getElementById('username').value = account.username;
-        document.getElementById('password').value = account.password;
-        showInfoMessage(`تم ملء بيانات ${type} بنجاح!`);
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleIcon.classList.replace('fa-eye', 'fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            toggleIcon.classList.replace('fa-eye-slash', 'fa-eye');
+        }
     }
-}
 
-// Form submission
-document.getElementById('loginForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
-    
-    if (!username || !password) {
-        showErrorMessage('يرجى ملء جميع الحقول المطلوبة');
-        return;
-    }
-    
-    // Show loading
-    const submitBtn = this.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
-    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>جاري تسجيل الدخول...';
-    submitBtn.disabled = true;
-    
-    // Submit form normally
-    this.submit();
-});
+    function fillDemoAccount(type) {
+        const accounts = {
+            'admin': { username: 'admin', password: 'admin123' },
+            'manager': { username: 'manager1', password: 'password123' },
+            'coordinator': { username: 'coordinator1', password: 'password123' },
+            'employee': { username: 'employee1', password: 'password123' }
+        };
 
-// Enter key submission
-document.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+        const account = accounts[type];
+        if (account) {
+            document.getElementById('username').value = account.username;
+            document.getElementById('password').value = account.password;
+
+            // Add subtle animation to show it was filled
+            const loginCard = document.querySelector('.login-card');
+            loginCard.style.transform = 'scale(1.02)';
+            setTimeout(() => loginCard.style.transform = 'scale(1)', 200);
+        }
     }
-});
+
+    document.getElementById('loginForm').addEventListener('submit', function () {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>جاري الدخول...';
+        submitBtn.disabled = true;
+    });
 </script>
 {% endblock %}
-
-

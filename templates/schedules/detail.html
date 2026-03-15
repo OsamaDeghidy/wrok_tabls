@@ -70,11 +70,14 @@
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card border-warning h-100">
+        <div class="card border-{% if stats.deficit > 0 %}danger{% else %}warning{% endif %} h-100 shadow-sm">
             <div class="card-body text-center">
-                <i class="fas fa-chart-pie text-warning fs-2 mb-2"></i>
-                <h6 class="card-title">التغطية</h6>
-                <p class="card-text text-muted">{{ stats.coverage_percentage|floatformat:0 }}%</p>
+                <i class="fas fa-{% if stats.deficit > 0 %}exclamation-triangle text-danger{% else %}chart-pie text-warning{% endif %} fs-2 mb-2"></i>
+                <h6 class="card-title">{% if stats.deficit > 0 %}عجز التغطية{% else %}التغطية{% endif %}</h6>
+                <p class="card-text {% if stats.deficit > 0 %}text-danger fw-bold{% else %}text-muted{% endif %}">
+                    {{ stats.coverage_percentage|floatformat:0 }}% 
+                    {% if stats.deficit > 0 %}({{ stats.deficit|floatformat:0 }}س ناقصة){% endif %}
+                </p>
             </div>
         </div>
     </div>
@@ -454,6 +457,20 @@
                     <i class="fas fa-chart-line me-2"></i>
                     <span>الساعات الفعلية: {{ stats.total_hours|floatformat:0 }} ساعة</span>
                 </div>
+                
+                {% if stats.deficit > 0 %}
+                <div class="d-flex align-items-center text-danger mb-2 fw-bold">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <span>العجز: {{ stats.deficit|floatformat:1 }} ساعة ناقصة</span>
+                </div>
+                {% endif %}
+                
+                {% if stats.surplus > 0 %}
+                <div class="d-flex align-items-center text-primary mb-2">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    <span>الفائض: {{ stats.surplus|floatformat:1 }} ساعة إضافية</span>
+                </div>
+                {% endif %}
                 
                 <div class="d-flex align-items-center text-warning mb-2">
                     <i class="fas fa-calendar-alt me-2"></i>

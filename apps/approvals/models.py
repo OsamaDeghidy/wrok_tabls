@@ -184,6 +184,42 @@ class ApprovalFlow(models.Model):
         })
         data['notifications'] = notifications
         self._save_notes(data)
+        
+        # إنشاء تنبيهات حقيقية في قاعدة البيانات
+        from apps.notifications.models import Notification
+        for user_id in recipients:
+            Notification.objects.create(
+                recipient_id=user_id,
+                title="تنبيه نظام الموافقات",
+                message=message,
+                link=f"/approvals/{self.id}/"
+            )
+            
+    def sync_related_object_status(self):
+        """مزامنة حالة الكائن المرتبط مع الخطوة الحالية"""
+        obj = self.related_object
+        if not obj or not hasattr(obj, 'status'):
+            return
+            
+        if self.status == 'approved':
+            obj.status = 'approved'
+        elif self.status == 'rejected':
+            obj.status = 'rejected'
+        elif self.status == 'cancelled':
+            obj.status = 'draft' # العودة للمسودة عند الإلغاء
+        elif self.status == 'in_progress':
+            # تعيين الحالة بناءً على الدور المطلوب في الخطوة الحالية
+            role = self.get_current_step_info()
+            status_map = {
+                'coordinator': 'pending_coordinator',
+                'region_manager': 'pending_region_manager',
+                'operations_manager': 'pending_operations_manager',
+                'admin_manager': 'pending_admin_manager',
+                'super_admin': 'pending_admin_manager',
+            }
+            obj.status = status_map.get(role, obj.status)
+            
+        obj.save()
     
     def approve_current_step(self, user, comment=''):
         """الموافقة على الخطوة الحالية"""
@@ -223,6 +259,7 @@ class ApprovalFlow(models.Model):
             self.add_notification('تم اعتماد الطلب نهائياً', [self.created_by.id])
         
         self.save()
+        self.sync_related_object_status()
     
     def reject(self, user, reason=''):
         """رفض الموافقة"""
@@ -239,6 +276,7 @@ class ApprovalFlow(models.Model):
         self.status = 'rejected'
         self.rejection_reason = reason
         self.save()
+        self.sync_related_object_status()
     
     def cancel(self, user, reason=''):
         """إلغاء الموافقة"""
@@ -255,6 +293,7 @@ class ApprovalFlow(models.Model):
         self.status = 'cancelled'
         self.notes = reason
         self.save()
+        self.sync_related_object_status()
     
     def get_current_step_info(self):
         """الحصول على معلومات الخطوة الحالية"""
@@ -322,6 +361,7 @@ class ApprovalFlow(models.Model):
             self.approved_at = timezone.now()
             self.add_notification('تم اعتماد الطلب نهائياً', [self.created_by.id])
         self.save()
+        self.sync_related_object_status()
 
 
 class ApprovalStep(models.Model):

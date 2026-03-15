@@ -354,3 +354,11 @@ server {
         proxy_pass http://unix:/run/gunicorn.sock;
     }
 }
+
+
+
+
+
+pip install pandas openpyxl
+
+ python generate_demo_data.py

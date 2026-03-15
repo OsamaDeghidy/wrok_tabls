@@ -29,7 +29,8 @@
                 </div>
                 <h4 class="card-title">{{ branch.name }}</h4>
                 <p class="text-muted">{{ branch.code }}</p>
-                <span class="badge bg-{% if branch.category == 'A' %}success{% elif branch.category == 'B' %}warning{% elif branch.category == 'C' %}info{% else %}secondary{% endif %} fs-6">
+                <span
+                    class="badge bg-{% if branch.category == 'A' %}success{% elif branch.category == 'B' %}warning{% elif branch.category == 'C' %}info{% else %}secondary{% endif %} fs-6">
                     فئة {{ branch.category }}
                 </span>
             </div>
@@ -44,14 +45,6 @@
                 <div class="mb-3">
                     <i class="fas fa-map-marker-alt me-2 text-muted"></i>
                     <span>{{ branch.address|default:"غير محدد" }}</span>
-                </div>
-                <div class="mb-3">
-                    <i class="fas fa-phone me-2 text-muted"></i>
-                    <span>{{ branch.phone|default:"غير محدد" }}</span>
-                </div>
-                <div class="mb-3">
-                    <i class="fas fa-envelope me-2 text-muted"></i>
-                    <span>{{ branch.email|default:"غير محدد" }}</span>
                 </div>
                 <div class="mb-3">
                     <i class="fas fa-clock me-2 text-muted"></i>
@@ -150,17 +143,20 @@
             <div class="card-header py-3">
                 <ul class="nav nav-tabs card-header-tabs" id="branchTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="employees-tab" data-bs-toggle="tab" data-bs-target="#employees" type="button" role="tab">
+                        <button class="nav-link active" id="employees-tab" data-bs-toggle="tab"
+                            data-bs-target="#employees" type="button" role="tab">
                             الموظفين
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="schedules-tab" data-bs-toggle="tab" data-bs-target="#schedules" type="button" role="tab">
+                        <button class="nav-link" id="schedules-tab" data-bs-toggle="tab" data-bs-target="#schedules"
+                            type="button" role="tab">
                             الجداول
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab">
+                        <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings"
+                            type="button" role="tab">
                             الإعدادات
                         </button>
                     </li>
@@ -186,7 +182,8 @@
                                     <tr>
                                         <td>
                                             <div class="d-flex align-items-center">
-                                                <img src="{% static 'images/avatar-placeholder.png' %}" class="rounded-circle me-2" width="32" height="32">
+                                                <img src="{% static 'images/avatar-placeholder.png' %}"
+                                                    class="rounded-circle me-2" width="32" height="32">
                                                 <div>
                                                     <div class="fw-bold">{{ employee.get_full_name }}</div>
                                                     <small class="text-muted">{{ employee.profile.job_id|default:"غير محدد" }}</small>
@@ -196,12 +193,14 @@
                                         <td>{{ employee.profile.position|default:"غير محدد" }}</td>
                                         <td>{{ employee.profile.get_role_display }}</td>
                                         <td>
-                                            <span class="badge bg-{% if employee.profile.status == 'active' %}success{% elif employee.profile.status == 'inactive' %}secondary{% else %}warning{% endif %}">
+                                            <span
+                                                class="badge bg-{% if employee.profile.status == 'active' %}success{% elif employee.profile.status == 'inactive' %}secondary{% else %}warning{% endif %}">
                                                 {{ employee.profile.get_status_display }}
                                             </span>
                                         </td>
                                         <td>
-                                            <a href="{% url 'users:detail' employee.id %}" class="btn btn-outline-primary btn-sm">عرض</a>
+                                            <a href="{% url 'users:detail' employee.id %}"
+                                                class="btn btn-outline-primary btn-sm">عرض</a>
                                         </td>
                                     </tr>
                                     {% empty %}
@@ -237,12 +236,14 @@
                                         <td>{{ shift.start_time }}</td>
                                         <td>{{ shift.end_time }}</td>
                                         <td>
-                                            <span class="badge bg-{% if shift.is_active %}success{% else %}secondary{% endif %}">
+                                            <span
+                                                class="badge bg-{% if shift.is_active %}success{% else %}secondary{% endif %}">
                                                 {% if shift.is_active %}نشط{% else %}غير نشط{% endif %}
                                             </span>
                                         </td>
                                         <td>
-                                            <button class="btn btn-outline-primary btn-sm" onclick="editShift({{ shift.id }})">تعديل</button>
+                                            <button class="btn btn-outline-primary btn-sm"
+                                                onclick="editShift({{ shift.id }})">تعديل</button>
                                         </td>
                                     </tr>
                                     {% empty %}
@@ -270,12 +271,6 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label fw-bold">تاريخ الافتتاح</label>
-                                        <p class="form-control-plaintext">{{ branch.opening_date|default:"غير محدد" }}</p>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
                                         <label class="form-label fw-bold">نوع الفرع</label>
                                         <p class="form-control-plaintext">{{ branch.get_type_display }}</p>
                                     </div>
@@ -289,13 +284,15 @@
                                 <div class="col-md-12">
                                     <div class="mb-3">
                                         <label class="form-label fw-bold">الوصف</label>
-                                        <p class="form-control-plaintext">{{ branch.description|default:"لا يوجد وصف" }}</p>
+                                        <p class="form-control-plaintext">{{ branch.description|default:"لا يوجد وصف" }}
+                                        </p>
                                     </div>
                                 </div>
                                 <div class="col-md-12">
                                     <div class="mb-3">
                                         <label class="form-label fw-bold">ملاحظات</label>
-                                        <p class="form-control-plaintext">{{ branch.notes|default:"لا توجد ملاحظات" }}</p>
+                                        <p class="form-control-plaintext">{{ branch.notes|default:"لا توجد ملاحظات" }}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -310,22 +307,22 @@
 
 {% block scripts %}
 <style>
-.day {
-    padding: 10px;
-    border-radius: 8px;
-    margin: 5px 0;
-    background-color: #f8f9fa;
-    border: 2px solid transparent;
-}
+    .day {
+        padding: 10px;
+        border-radius: 8px;
+        margin: 5px 0;
+        background-color: #f8f9fa;
+        border: 2px solid transparent;
+    }
 
-.day.active {
-    background-color: var(--primary-50);
-    border-color: var(--primary-500);
-}
+    .day.active {
+        background-color: var(--primary-50);
+        border-color: var(--primary-500);
+    }
 
-.day-name {
-    font-weight: 600;
-    font-size: 0.9rem;
-}
+    .day-name {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
 </style>
 {% endblock %}

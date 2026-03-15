@@ -25,16 +25,10 @@ class EmployeeForm(forms.ModelForm):
         widget=forms.TextInput(attrs={'class': 'form-control'}),
         help_text='مطلوب. 150 رمزاً أو أقل، مكونة من حروف وأرقام و @/./+/-/_ فقط'
     )
-    first_name = forms.CharField(
-        max_length=30,
+    full_name = forms.CharField(
+        max_length=60,
         required=True,
-        label='الاسم الأول',
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-    last_name = forms.CharField(
-        max_length=30,
-        required=True,
-        label='الاسم الأخير',
+        label='الاسم الكامل',
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
     email = forms.EmailField(
@@ -44,12 +38,6 @@ class EmployeeForm(forms.ModelForm):
     )
     
     # حقول UserProfile
-    phone = forms.CharField(
-        max_length=20,
-        required=False,
-        label='رقم الهاتف',
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+966501234567'})
-    )
     role = forms.ChoiceField(
         choices=UserProfile.ROLE_CHOICES,
         label='الدور',
@@ -166,13 +154,11 @@ class EmployeeForm(forms.ModelForm):
             
             user = self.instance.user
             self.fields['username'].initial = user.username
-            self.fields['first_name'].initial = user.first_name
-            self.fields['last_name'].initial = user.last_name
+            self.fields['full_name'].initial = f"{user.first_name} {user.last_name}".strip()
             self.fields['email'].initial = user.email
             
             if hasattr(user, 'profile'):
                 profile = user.profile
-                self.fields['phone'].initial = profile.phone
                 self.fields['role'].initial = profile.role
                 self.fields['branch'].initial = profile.branch
                 self.fields['region'].initial = profile.region
@@ -242,10 +228,15 @@ class EmployeeForm(forms.ModelForm):
         if not self.instance.pk:  # إنشاء جديد
             # إنشاء User جديد
             password = self.cleaned_data.get('password1', 'password123')
+            # تقسيم الاسم الكامل إلى اسم أول وأخير (تقريبي)
+            full_name_parts = self.cleaned_data['full_name'].split(' ', 1)
+            first_name = full_name_parts[0]
+            last_name = full_name_parts[1] if len(full_name_parts) > 1 else ''
+            
             user = User.objects.create_user(
                 username=self.cleaned_data['username'],
-                first_name=self.cleaned_data['first_name'],
-                last_name=self.cleaned_data['last_name'],
+                first_name=first_name,
+                last_name=last_name,
                 email=self.cleaned_data['email'],
                 password=password,
                 is_staff=True,
@@ -255,7 +246,6 @@ class EmployeeForm(forms.ModelForm):
             # الـ signal سينشئ UserProfile تلقائياً، فقط نحدثه
             # استخدام get_or_create للتأكد من وجود Profile
             profile, created = UserProfile.objects.get_or_create(user=user)
-            profile.phone = self.cleaned_data.get('phone', '')
             profile.role = self.cleaned_data['role']
             profile.branch = self.cleaned_data.get('branch')
             profile.work_hours = int(self.cleaned_data.get('work_hours', 8))
@@ -285,8 +275,11 @@ class EmployeeForm(forms.ModelForm):
             # تحديث بيانات User
             user = employee.user
             user.username = self.cleaned_data['username']
-            user.first_name = self.cleaned_data['first_name']
-            user.last_name = self.cleaned_data['last_name']
+            
+            full_name_parts = self.cleaned_data['full_name'].split(' ', 1)
+            user.first_name = full_name_parts[0]
+            user.last_name = full_name_parts[1] if len(full_name_parts) > 1 else ''
+            
             user.email = self.cleaned_data['email']
             
             # تحديث كلمة المرور إذا تم إدخالها
@@ -298,7 +291,6 @@ class EmployeeForm(forms.ModelForm):
             
             # تحديث UserProfile
             profile = user.profile
-            profile.phone = self.cleaned_data.get('phone', '')
             profile.role = self.cleaned_data['role']
             profile.branch = self.cleaned_data.get('branch')
             profile.region = self.cleaned_data.get('region', '')

@@ -26,28 +26,27 @@
             <div class="card-body">
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
-                    
+
                     <div class="mb-4">
                         <label for="{{ form.file.id_for_label }}" class="form-label">
                             ملف Excel <span class="text-danger">*</span>
                         </label>
                         {{ form.file }}
                         {% if form.file.errors %}
-                            <div class="text-danger mt-1">
-                                {% for error in form.file.errors %}
-                                    <small>{{ error }}</small>
-                                {% endfor %}
-                            </div>
+                        <div class="text-danger mt-1">
+                            {% for error in form.file.errors %}
+                            <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
                         {% endif %}
                         <div class="form-text">
                             يرجى رفع ملف Excel يحتوي على بيانات الموظفين. يجب أن يحتوي الملف على الأعمدة التالية:
                             <ul class="mt-2">
-                                <li><strong>first_name</strong> - الاسم الأول</li>
-                                <li><strong>last_name</strong> - الاسم الأخير</li>
-                                <li><strong>username</strong> - اسم المستخدم (مطلوب)</li>
-                                <li><strong>email</strong> - البريد الإلكتروني (مطلوب)</li>
+                                <li><strong>employee_number</strong> - الرقم الوظيفي (مطلوب)</li>
+                                <li><strong>full_name</strong> - الاسم الكامل (مطلوب)</li>
+                                <li><strong>username</strong> - اسم المستخدم (اختياري)</li>
+                                <li><strong>email</strong> - البريد الإلكتروني (اختياري)</li>
                                 <li><strong>password</strong> - كلمة المرور (اختياري، افتراضي: password123)</li>
-                                <li><strong>phone</strong> - رقم الهاتف</li>
                                 <li><strong>job_title</strong> - المسمى الوظيفي</li>
                                 <li><strong>role</strong> - الدور (employee, branch_manager, coordinator, etc.)</li>
                                 <li><strong>branch</strong> - الفرع</li>
@@ -55,12 +54,12 @@
                             </ul>
                             <div class="alert alert-info mt-2">
                                 <small><i class="fas fa-info-circle me-1"></i>
-                                    استخدم الأسماء الإنجليزية للأعمدة كما هي موضحة أعلاه (first_name, last_name, username, email, etc.)
+                                    يفضل استخدام الأسماء العربية للأعمدة الموجودة في الملف النموذجي
                                 </small>
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="mb-4">
                         <div class="form-check">
                             {{ form.update_existing }}
@@ -69,17 +68,17 @@
                             </label>
                         </div>
                         {% if form.update_existing.errors %}
-                            <div class="text-danger mt-1">
-                                {% for error in form.update_existing.errors %}
-                                    <small>{{ error }}</small>
-                                {% endfor %}
-                            </div>
+                        <div class="text-danger mt-1">
+                            {% for error in form.update_existing.errors %}
+                            <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
                         {% endif %}
                         <div class="form-text">
-                            إذا تم تحديد هذا الخيار، سيتم تحديث بيانات الموظفين الموجودين بناءً على اسم المستخدم أو البريد الإلكتروني.
+                            إذا تم تحديد هذا الخيار، سيتم تحديث بيانات الموظفين الموجودين بناءً على الرقم الوظيفي.
                         </div>
                     </div>
-                    
+
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                         <a href="{% url 'employees:list' %}" class="btn btn-outline-secondary me-md-2">إلغاء</a>
                         <button type="submit" class="btn btn-primary">
@@ -89,7 +88,7 @@
                 </form>
             </div>
         </div>
-        
+
         <!-- Sample File Download -->
         <div class="card shadow mt-4">
             <div class="card-header">

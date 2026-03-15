@@ -247,6 +247,8 @@ def schedule_detail_view(request, schedule_id):
         'coverage_percentage': coverage_percentage,
         'required_hours': required_hours,
         'duration_days': schedule.get_duration_days(),
+        'deficit': max(0, required_hours - total_hours),
+        'surplus': max(0, total_hours - required_hours),
     }
     
     context = {
@@ -343,6 +345,8 @@ def schedule_edit_view(request, schedule_id):
         'coverage_percentage': coverage_percentage,
         'required_hours': required_hours,
         'duration_days': schedule.get_duration_days(),
+        'deficit': max(0, required_hours - total_hours),
+        'surplus': max(0, total_hours - required_hours),
     }
     
     # إنشاء نماذج التوزيعات

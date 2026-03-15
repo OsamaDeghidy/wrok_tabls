@@ -27,13 +27,15 @@
 {% block content %}
 <!-- Messages -->
 {% if messages %}
-    {% for message in messages %}
-        <div class="alert alert-{% if message.tags == 'warning' %}warning{% elif message.tags == 'error' %}danger{% elif message.tags == 'success' %}success{% else %}info{% endif %} alert-dismissible fade show" role="alert">
-            <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' or message.tags == 'danger' %}exclamation-triangle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    {% endfor %}
+{% for message in messages %}
+<div class="alert alert-{% if message.tags == 'warning' %}warning{% elif message.tags == 'error' %}danger{% elif message.tags == 'success' %}success{% else %}info{% endif %} alert-dismissible fade show"
+    role="alert">
+    <i
+        class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' or message.tags == 'danger' %}exclamation-triangle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endfor %}
 {% endif %}
 
 <!-- Step Navigation -->
@@ -67,7 +69,7 @@
 <!-- Main Form -->
 <form method="post" id="scheduleForm">
     {% csrf_token %}
-    
+
     <!-- Step 1: Basic Information -->
     <div class="step-content" id="step1">
         <div class="card shadow mb-4">
@@ -86,7 +88,7 @@
                             <select class="form-select" id="branch" name="branch" required>
                                 <option value="">اختر الفرع</option>
                                 {% for branch in branches %}
-                                    <option value="{{ branch.id }}">{{ branch.name }}</option>
+                                <option value="{{ branch.id }}">{{ branch.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -98,7 +100,7 @@
                             </label>
                             <select class="form-select" id="schedule_type" name="schedule_type" required>
                                 {% for value, label in schedule_types %}
-                                    <option value="{{ value }}">{{ label }}</option>
+                                <option value="{{ value }}">{{ label }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -122,13 +124,14 @@
                     <div class="col-12">
                         <div class="mb-3">
                             <label for="notes" class="form-label">ملاحظات</label>
-                            <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="أي ملاحظات إضافية حول الجدول التشغيلي"></textarea>
+                            <textarea class="form-control" id="notes" name="notes" rows="3"
+                                placeholder="أي ملاحظات إضافية حول الجدول التشغيلي"></textarea>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        
+
         <!-- Branch Info -->
         <div class="card shadow mb-4" id="branch-info" style="display: none;">
             <div class="card-header py-3">
@@ -161,7 +164,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Leave Conflicts -->
         <div class="card shadow mb-4" id="leave-conflicts" style="display: none;">
             <div class="card-header py-3">
@@ -195,12 +198,13 @@
                         </select>
                     </div>
                     <div class="col-md-6 d-flex align-items-end">
-                        <button type="button" class="btn btn-outline-primary" onclick="generateSchedule()" id="generateBtn">
+                        <button type="button" class="btn btn-outline-primary" onclick="generateSchedule()"
+                            id="generateBtn">
                             <i class="fas fa-magic me-1"></i>توليد الجدول تلقائياً
                         </button>
                     </div>
                 </div>
-                
+
                 <div class="table-responsive">
                     <table class="table table-bordered" id="schedule-table">
                         <thead>
@@ -219,7 +223,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Schedule Summary -->
         <div class="card shadow mb-4">
             <div class="card-header py-3">
@@ -233,6 +237,23 @@
                 </div>
             </div>
         </div>
+
+        <!-- Employee Coverage Status -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-info">
+                    <i class="fas fa-user-check me-2"></i>تحليل توزيع الموظفين
+                </h6>
+            </div>
+            <div class="card-body bg-light">
+                <div class="row" id="employee-coverage-cards">
+                    <div class="col-12 text-center text-muted">
+                        <small>قم بالتوزيع لتحديث مؤشرات الموظفين. يوضح لك كل كارد كفاءة الموظف ونسبة استيعابه.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Step 4: Review and Save -->
@@ -254,7 +275,8 @@
     <!-- Navigation Buttons -->
     <div class="navigation-buttons">
         <div class="d-flex justify-content-between">
-            <button type="button" class="btn btn-outline-secondary" id="prevBtn" onclick="changeStep(-1)" style="display: none;">
+            <button type="button" class="btn btn-outline-secondary" id="prevBtn" onclick="changeStep(-1)"
+                style="display: none;">
                 <i class="fas fa-arrow-right me-1"></i>السابق
             </button>
             <button type="button" class="btn btn-primary" id="nextBtn" onclick="changeStep(1)">
@@ -270,167 +292,188 @@
 
 {% block scripts %}
 <script>
-let currentStep = 1;
-let selectedEmployees = [];
-let selectedBranch = null;
-let scheduleData = {};
-let branchShifts = [];
-let employeeLeaves = {};
-let employeesData = []; // لحفظ بيانات الموظفين المحملة
+    let currentStep = 1;
+    let selectedEmployees = [];
+    let selectedBranch = null;
+    let scheduleData = {};
+    let branchShifts = [];
+    let employeeLeaves = {};
+    let employeesData = []; // لحفظ بيانات الموظفين المحملة
 
-// حفظ واسترجاع البيانات
-function saveScheduleDataToStorage() {
-    try {
-        localStorage.setItem('scheduleData', JSON.stringify(scheduleData));
-        localStorage.setItem('selectedEmployees', JSON.stringify(selectedEmployees));
-        localStorage.setItem('branchShifts', JSON.stringify(branchShifts));
-        console.log('Schedule data saved to localStorage');
-    } catch (e) {
-        console.error('Error saving to localStorage:', e);
-    }
-}
-
-function loadScheduleDataFromStorage() {
-    try {
-        const savedScheduleData = localStorage.getItem('scheduleData');
-        const savedSelectedEmployees = localStorage.getItem('selectedEmployees');
-        const savedBranchShifts = localStorage.getItem('branchShifts');
-        
-        if (savedScheduleData) {
-            scheduleData = JSON.parse(savedScheduleData);
-            console.log('Schedule data loaded from localStorage:', scheduleData);
+    // حفظ واسترجاع البيانات
+    function saveScheduleDataToStorage() {
+        try {
+            // تنظيف البيانات قبل الحفظ للتأكد من عدم وجود تواريخ خارج النطاق
+            cleanupScheduleData();
+            localStorage.setItem('scheduleData', JSON.stringify(scheduleData));
+            localStorage.setItem('selectedEmployees', JSON.stringify(selectedEmployees));
+            localStorage.setItem('branchShifts', JSON.stringify(branchShifts));
+            console.log('Schedule data saved to localStorage');
+        } catch (e) {
+            console.error('Error saving to localStorage:', e);
         }
-        
-        if (savedSelectedEmployees) {
-            selectedEmployees = JSON.parse(savedSelectedEmployees);
-            console.log('Selected employees loaded from localStorage:', selectedEmployees);
-        }
-        
-        if (savedBranchShifts) {
-            branchShifts = JSON.parse(savedBranchShifts);
-            console.log('Branch shifts loaded from localStorage:', branchShifts);
-        }
-    } catch (e) {
-        console.error('Error loading from localStorage:', e);
     }
-}
 
-function clearScheduleDataFromStorage() {
-    try {
-        localStorage.removeItem('scheduleData');
-        localStorage.removeItem('selectedEmployees');
-        localStorage.removeItem('branchShifts');
-        console.log('Schedule data cleared from localStorage');
-    } catch (e) {
-        console.error('Error clearing localStorage:', e);
+    // وظيفة لتنظيف البيانات خارج النطاق الزمني المختار
+    function cleanupScheduleData() {
+        // التأكد من أننا نستخدم التواريخ الحالية من المدخلات
+        const startInput = document.getElementById('start_date');
+        const endInput = document.getElementById('end_date');
+        
+        if (!startInput || !endInput || !startInput.value || !endInput.value) return;
+        
+        const startDateStr = startInput.value;
+        const endDateStr = endInput.value;
+        
+        Object.keys(scheduleData).forEach(dateKey => {
+            if (dateKey < startDateStr || dateKey > endDateStr) {
+                console.log('Removing out of range date:', dateKey);
+                delete scheduleData[dateKey];
+            }
+        });
     }
-}
 
-// Step Navigation
-function changeStep(direction) {
-    if (direction === 1 && !validateCurrentStep()) {
-        return;
+    function loadScheduleDataFromStorage() {
+        try {
+            const savedScheduleData = localStorage.getItem('scheduleData');
+            const savedSelectedEmployees = localStorage.getItem('selectedEmployees');
+            const savedBranchShifts = localStorage.getItem('branchShifts');
+
+            if (savedScheduleData) {
+                scheduleData = JSON.parse(savedScheduleData);
+                console.log('Schedule data loaded from localStorage:', scheduleData);
+            }
+
+            if (savedSelectedEmployees) {
+                selectedEmployees = JSON.parse(savedSelectedEmployees);
+                console.log('Selected employees loaded from localStorage:', selectedEmployees);
+            }
+
+            if (savedBranchShifts) {
+                branchShifts = JSON.parse(savedBranchShifts);
+                console.log('Branch shifts loaded from localStorage:', branchShifts);
+            }
+        } catch (e) {
+            console.error('Error loading from localStorage:', e);
+        }
     }
-    
-    // حفظ البيانات قبل الانتقال للخطوة التالية
-    saveScheduleDataToStorage();
-    
-    document.getElementById(`step${currentStep}`).style.display = 'none';
-    document.getElementById(`step${currentStep}-circle`).classList.remove('active');
-    
-    currentStep += direction;
-    
-    if (currentStep < 1) currentStep = 1;
-    if (currentStep > 4) currentStep = 4;
-    
-    document.getElementById(`step${currentStep}`).style.display = 'block';
-    document.getElementById(`step${currentStep}-circle`).classList.add('active');
-    
-    // Update navigation buttons
-    document.getElementById('prevBtn').style.display = currentStep > 1 ? 'inline-block' : 'none';
-    document.getElementById('nextBtn').style.display = currentStep < 4 ? 'inline-block' : 'none';
-    document.getElementById('submitBtn').style.display = currentStep === 4 ? 'inline-block' : 'none';
-    
+
+    function clearScheduleDataFromStorage() {
+        try {
+            localStorage.removeItem('scheduleData');
+            localStorage.removeItem('selectedEmployees');
+            localStorage.removeItem('branchShifts');
+            console.log('Schedule data cleared from localStorage');
+        } catch (e) {
+            console.error('Error clearing localStorage:', e);
+        }
+    }
+
+    // Step Navigation
+    function changeStep(direction) {
+        if (direction === 1 && !validateCurrentStep()) {
+            return;
+        }
+
+        // حفظ البيانات قبل الانتقال للخطوة التالية
+        saveScheduleDataToStorage();
+
+        document.getElementById(`step${currentStep}`).style.display = 'none';
+        document.getElementById(`step${currentStep}-circle`).classList.remove('active');
+
+        currentStep += direction;
+
+        if (currentStep < 1) currentStep = 1;
+        if (currentStep > 4) currentStep = 4;
+
+        document.getElementById(`step${currentStep}`).style.display = 'block';
+        document.getElementById(`step${currentStep}-circle`).classList.add('active');
+
+        // Update navigation buttons
+        document.getElementById('prevBtn').style.display = currentStep > 1 ? 'inline-block' : 'none';
+        document.getElementById('nextBtn').style.display = currentStep < 4 ? 'inline-block' : 'none';
+        document.getElementById('submitBtn').style.display = currentStep === 4 ? 'inline-block' : 'none';
+
+        // Load step data
+        loadStepData();
+
+        // إصلاح مشاكل الـ scroll بعد تحميل البيانات
+        setTimeout(() => {
+            fixScrollIssues();
+        }, 100);
+    }
+
+    // Validate current step
+    function validateCurrentStep() {
+        switch (currentStep) {
+            case 1:
+                const branch = document.getElementById('branch').value;
+                const startDate = document.getElementById('start_date').value;
+                const endDate = document.getElementById('end_date').value;
+
+                if (!branch || !startDate || !endDate) {
+                    alert('يرجى ملء جميع الحقول المطلوبة');
+                    return false;
+                }
+
+                if (new Date(endDate) <= new Date(startDate)) {
+                    alert('تاريخ النهاية يجب أن يكون بعد تاريخ البداية');
+                    return false;
+                }
+
+                selectedBranch = branch;
+                break;
+
+            case 2:
+                if (selectedEmployees.length === 0) {
+                    alert('يرجى اختيار موظف واحد على الأقل');
+                    return false;
+                }
+                break;
+
+            case 3:
+                // Validate schedule data
+                break;
+        }
+
+        return true;
+    }
+
     // Load step data
-    loadStepData();
-    
-    // إصلاح مشاكل الـ scroll بعد تحميل البيانات
-    setTimeout(() => {
-        fixScrollIssues();
-    }, 100);
-}
-
-// Validate current step
-function validateCurrentStep() {
-    switch(currentStep) {
-        case 1:
-            const branch = document.getElementById('branch').value;
-            const startDate = document.getElementById('start_date').value;
-            const endDate = document.getElementById('end_date').value;
-            
-            if (!branch || !startDate || !endDate) {
-                alert('يرجى ملء جميع الحقول المطلوبة');
-                return false;
-            }
-            
-            if (new Date(endDate) <= new Date(startDate)) {
-                alert('تاريخ النهاية يجب أن يكون بعد تاريخ البداية');
-                return false;
-            }
-            
-            selectedBranch = branch;
-            break;
-            
-        case 2:
-            if (selectedEmployees.length === 0) {
-                alert('يرجى اختيار موظف واحد على الأقل');
-                return false;
-            }
-            break;
-            
-        case 3:
-            // Validate schedule data
-            break;
-    }
-    
-    return true;
-}
-
-// Load step data
-function loadStepData() {
-    console.log('Loading step data for step:', currentStep);
-    switch(currentStep) {
-        case 1:
-            loadBranchInfo();
-            break;
-        case 2:
-            loadEmployees();
-            break;
-        case 3:
-            loadScheduleTable();
-            break;
-        case 4:
-            loadFinalReview();
-            break;
-    }
-}
-
-// Load branch information
-function loadBranchInfo() {
-    const branchId = document.getElementById('branch').value;
-    if (!branchId) return;
-    
-    // Fetch branch data via AJAX
-    fetch(`/schedules/api/branches/${branchId}/`, {
-        headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-            'Content-Type': 'application/json',
+    function loadStepData() {
+        console.log('Loading step data for step:', currentStep);
+        switch (currentStep) {
+            case 1:
+                loadBranchInfo();
+                break;
+            case 2:
+                loadEmployees();
+                break;
+            case 3:
+                loadScheduleTable();
+                break;
+            case 4:
+                loadFinalReview();
+                break;
         }
-    })
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('branch-info').style.display = 'block';
-            document.getElementById('branch-details').innerHTML = `
+    }
+
+    // Load branch information
+    function loadBranchInfo() {
+        const branchId = document.getElementById('branch').value;
+        if (!branchId) return;
+
+        // Fetch branch data via AJAX
+        fetch(`/schedules/api/branches/${branchId}/`, {
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('branch-info').style.display = 'block';
+                document.getElementById('branch-details').innerHTML = `
                 <div class="col-md-6">
                     <strong>اسم الفرع:</strong> ${data.name}<br>
                     <strong>العنوان:</strong> ${data.address}<br>
@@ -442,33 +485,33 @@ function loadBranchInfo() {
                     <strong>ساعات العمل:</strong> ${data.total_hours} ساعة/يوم
                 </div>
             `;
-        })
-        .catch(error => console.error('Error loading branch info:', error));
-}
+            })
+            .catch(error => console.error('Error loading branch info:', error));
+    }
 
-// Load employees for selection
-function loadEmployees() {
-    const branchId = document.getElementById('branch').value;
-    console.log('Loading employees for branch:', branchId);
-    if (!branchId) return;
-    
-    fetch(`/schedules/api/employees/?branch=${branchId}`, {
-        headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-            'Content-Type': 'application/json',
-        }
-    })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Employees data:', data);
-            employeesData = data; // حفظ بيانات الموظفين
-            const container = document.getElementById('employees-container');
-            container.innerHTML = '';
-            
-            data.forEach(employee => {
-                const employeeCard = document.createElement('div');
-                employeeCard.className = 'col-md-4 mb-3';
-                employeeCard.innerHTML = `
+    // Load employees for selection
+    function loadEmployees() {
+        const branchId = document.getElementById('branch').value;
+        console.log('Loading employees for branch:', branchId);
+        if (!branchId) return;
+
+        fetch(`/schedules/api/employees/?branch=${branchId}`, {
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Employees data:', data);
+                employeesData = data; // حفظ بيانات الموظفين
+                const container = document.getElementById('employees-container');
+                container.innerHTML = '';
+
+                data.forEach(employee => {
+                    const employeeCard = document.createElement('div');
+                    employeeCard.className = 'col-md-4 mb-3';
+                    employeeCard.innerHTML = `
                     <div class="card employee-card" onclick="toggleEmployee(${employee.id})">
                         <div class="card-body text-center">
                             <div class="avatar-circle mb-2">
@@ -482,89 +525,97 @@ function loadEmployees() {
                         </div>
                     </div>
                 `;
-                container.appendChild(employeeCard);
-            });
-            
-            // Check for leave conflicts
-            checkLeaveConflicts();
-        })
-        .catch(error => console.error('Error loading employees:', error));
-}
+                    container.appendChild(employeeCard);
+                });
 
-// Toggle employee selection
-function toggleEmployee(employeeId) {
-    const card = event.currentTarget;
-    const index = selectedEmployees.indexOf(employeeId);
-    
-    if (index > -1) {
-        selectedEmployees.splice(index, 1);
-        card.classList.remove('selected');
-    } else {
-        selectedEmployees.push(employeeId);
-        card.classList.add('selected');
+                // Check for leave conflicts
+                checkLeaveConflicts();
+            })
+            .catch(error => console.error('Error loading employees:', error));
     }
-    
-    // حفظ البيانات فوراً
-    saveScheduleDataToStorage();
-    
-    updateSelectedCount();
-}
 
-// Update selected count
-function updateSelectedCount() {
-    document.getElementById('selected-count').textContent = `${selectedEmployees.length} موظف محدد`;
-}
+    // Toggle employee selection
+    function toggleEmployee(employeeId) {
+        const card = event.currentTarget;
+        const index = selectedEmployees.indexOf(employeeId);
 
-// Check for leave conflicts
-function checkLeaveConflicts() {
-    const startDate = document.getElementById('start_date').value;
-    const endDate = document.getElementById('end_date').value;
-    
-    if (!startDate || !endDate) return;
-    
-    fetch(`/schedules/api/leaves/conflicts/?start_date=${startDate}&end_date=${endDate}&employees=${selectedEmployees.join(',')}`, {
-        headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-            'Content-Type': 'application/json',
+        if (index > -1) {
+            selectedEmployees.splice(index, 1);
+            card.classList.remove('selected');
+        } else {
+            selectedEmployees.push(employeeId);
+            card.classList.add('selected');
         }
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.conflicts.length > 0) {
-                document.getElementById('leave-conflicts').style.display = 'block';
-                const conflictsList = document.getElementById('conflicts-list');
-                conflictsList.innerHTML = data.conflicts.map(conflict => `
+
+        // حفظ البيانات فوراً
+        saveScheduleDataToStorage();
+
+        updateSelectedCount();
+    }
+
+    // Update selected count
+    function updateSelectedCount() {
+        document.getElementById('selected-count').textContent = `${selectedEmployees.length} موظف محدد`;
+    }
+
+    // Check for leave conflicts
+    function checkLeaveConflicts() {
+        const startDate = document.getElementById('start_date').value;
+        const endDate = document.getElementById('end_date').value;
+
+        if (!startDate || !endDate) return;
+
+        fetch(`/schedules/api/leaves/conflicts/?start_date=${startDate}&end_date=${endDate}&employees=${selectedEmployees.join(',')}`, {
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.conflicts.length > 0) {
+                    document.getElementById('leave-conflicts').style.display = 'block';
+                    const conflictsList = document.getElementById('conflicts-list');
+                    conflictsList.innerHTML = data.conflicts.map(conflict => `
                     <div class="alert alert-warning">
                         <strong>${conflict.employee_name}</strong> في إجازة من ${conflict.start_date} إلى ${conflict.end_date}
                         <span class="badge bg-warning ms-2">${conflict.type}</span>
                     </div>
                 `).join('');
-            } else {
-                document.getElementById('leave-conflicts').style.display = 'none';
-            }
-        })
-        .catch(error => console.error('Error checking leave conflicts:', error));
-}
+                } else {
+                    document.getElementById('leave-conflicts').style.display = 'none';
+                }
+            })
+            .catch(error => console.error('Error checking leave conflicts:', error));
+    }
 
-// Load schedule table
-function loadScheduleTable() {
-    const startDate = new Date(document.getElementById('start_date').value);
-    const endDate = new Date(document.getElementById('end_date').value);
-    const tbody = document.getElementById('schedule-tbody');
-    tbody.innerHTML = '';
-    
-    console.log('Loading schedule table for dates:', startDate, 'to', endDate);
-    console.log('Selected employees:', selectedEmployees);
-    console.log('Existing schedule data:', scheduleData);
-    
-    const currentDate = new Date(startDate);
-    while (currentDate <= endDate) {
-        const dateStr = currentDate.toISOString().split('T')[0];
-        const dayName = currentDate.toLocaleDateString('ar-SA', { weekday: 'long' });
+    // Load schedule table
+    function loadScheduleTable() {
+        const startDateStr = document.getElementById('start_date').value;
+        const endDateStr = document.getElementById('end_date').value;
+        const startDate = new Date(startDateStr);
+        const endDate = new Date(endDateStr);
+        const tbody = document.getElementById('schedule-tbody');
+        tbody.innerHTML = '';
+
+        console.log('Loading schedule table for dates:', startDateStr, 'to', endDateStr);
         
-        // إنشاء الجدول مع عرض الموظفين المحددين
-        const row = document.createElement('tr');
-        row.innerHTML = `
+        // 1. تنظيف أي مواعيد قديمة مخزنة خارج النطاق الحالي المختار
+        Object.keys(scheduleData).forEach(dateKey => {
+            if (dateKey < startDateStr || dateKey > endDateStr) {
+                console.log('Removing out of range date:', dateKey);
+                delete scheduleData[dateKey];
+            }
+        });
+
+        const currentDate = new Date(startDate);
+        while (currentDate <= endDate) {
+            const dateStr = currentDate.toISOString().split('T')[0];
+            const dayName = currentDate.toLocaleDateString('ar-SA', { weekday: 'long' });
+
+            // إنشاء الصف في الجدول
+            const row = document.createElement('tr');
+            row.innerHTML = `
             <td>
                 <div class="fw-bold">${dateStr}</div>
                 <small class="text-muted">${dayName}</small>
@@ -578,11 +629,11 @@ function loadScheduleTable() {
             <td>
                 <div class="employee-assignments" id="assignments-${dateStr}">
                     <div class="selected-employees mb-2">
-                        ${selectedEmployees.length > 0 ? 
+                        ${selectedEmployees.length > 0 ?
                             selectedEmployees.map(empId => {
                                 const emp = getEmployeeById(empId);
                                 return `<span class="badge bg-info me-1 mb-1">${emp ? emp.full_name : 'موظف ' + empId}</span>`;
-                            }).join('') : 
+                            }).join('') :
                             '<span class="text-muted">لم يتم اختيار موظفين</span>'
                         }
                     </div>
@@ -615,88 +666,98 @@ function loadScheduleTable() {
                     </button>
                 </div>
             </td>
-        `;
-        tbody.appendChild(row);
-        
-        // تهيئة بيانات الجدول لهذا اليوم
-        scheduleData[dateStr] = {
-            employees: [...selectedEmployees],
-            shifts: {},
-            coverage: 0
-        };
-        
-        currentDate.setDate(currentDate.getDate() + 1);
-    }
-    
-    loadBranchShifts();
-    updateScheduleSummary();
-    
-    // حفظ البيانات بعد التحديث
-    saveScheduleDataToStorage();
-    
-    // إصلاح الـ scroll بعد تحميل الجدول
-    setTimeout(() => {
-        fixScrollIssues();
-    }, 200);
-}
+            `;
+            tbody.appendChild(row);
 
-// Load branch shifts
-function loadBranchShifts() {
-    const branchId = document.getElementById('branch').value;
-    
-    fetch(`/schedules/api/branches/${branchId}/shifts/`, {
-        headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-            'Content-Type': 'application/json',
+            // تهيئة بيانات الجدول لهذا اليوم فقط إذا لم تكن موجودة مسبقاً
+            if (!scheduleData[dateStr]) {
+                scheduleData[dateStr] = {
+                    employees: [...selectedEmployees],
+                    shifts: {},
+                    coverage: 0
+                };
+            } else {
+                // تحديث قائمة الموظفين المتاحين في حال تغيرت
+                scheduleData[dateStr].employees = [...selectedEmployees];
+                // نقوم بتحديث العرض لهذه البيانات الموجودة مسبقاً
+                setTimeout(() => {
+                    updateDaySchedule(dateStr);
+                    updateCoverage(dateStr);
+                }, 10);
+            }
+
+            currentDate.setDate(currentDate.getDate() + 1);
         }
-    })
-        .then(response => response.json())
-        .then(data => {
-            branchShifts = data;
+
+        loadBranchShifts();
+        updateScheduleSummary();
+
+        // حفظ البيانات بعد التحديث
+        saveScheduleDataToStorage();
+
+        // إصلاح الـ scroll بعد تحميل الجدول
+        setTimeout(() => {
+            fixScrollIssues();
+        }, 200);
+    }
+
+    // Load branch shifts
+    function loadBranchShifts() {
+        const branchId = document.getElementById('branch').value;
+
+        fetch(`/schedules/api/branches/${branchId}/shifts/`, {
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            }
         })
-        .catch(error => console.error('Error loading shifts:', error));
-}
-
-// Assign employees to specific date
-function assignEmployees(dateStr) {
-    console.log('Assigning employees for date:', dateStr);
-    
-    if (selectedEmployees.length === 0) {
-        alert('يرجى اختيار موظفين أولاً في الخطوة السابقة');
-        return;
+            .then(response => response.json())
+            .then(data => {
+                branchShifts = data;
+            })
+            .catch(error => console.error('Error loading shifts:', error));
     }
-    
-    // إعداد البيانات
-    document.getElementById('assignment-date').textContent = dateStr;
-    document.getElementById('assignment-date-input').value = dateStr;
-    
-    // تحضير المحتوى
-    prepareModalContent(dateStr);
-    
-    // إزالة أي modal مفتوح مسبقاً
-    const existingModal = bootstrap.Modal.getInstance(document.getElementById('assignmentModal'));
-    if (existingModal) {
-        existingModal.dispose();
-    }
-    
-    // فتح الـ modal
-    const modal = new bootstrap.Modal(document.getElementById('assignmentModal'), {
-        backdrop: true,
-        keyboard: true
-    });
-    
-    modal.show();
-}
 
-// تحضير محتوى الـ modal
-function prepareModalContent(dateStr) {
-    console.log('Preparing modal content for date:', dateStr);
-    
-    const shiftsContainer = document.getElementById('shifts-container');
-    shiftsContainer.innerHTML = '';
-    
-    if (branchShifts.length === 0) {
-        shiftsContainer.innerHTML = `
+    // Assign employees to specific date
+    function assignEmployees(dateStr) {
+        console.log('Assigning employees for date:', dateStr);
+
+        if (selectedEmployees.length === 0) {
+            alert('يرجى اختيار موظفين أولاً في الخطوة السابقة');
+            return;
+        }
+
+        // إعداد البيانات
+        document.getElementById('assignment-date').textContent = dateStr;
+        document.getElementById('assignment-date-input').value = dateStr;
+
+        // تحضير المحتوى
+        prepareModalContent(dateStr);
+
+        // إزالة أي modal مفتوح مسبقاً
+        const existingModal = bootstrap.Modal.getInstance(document.getElementById('assignmentModal'));
+        if (existingModal) {
+            existingModal.dispose();
+        }
+
+        // فتح الـ modal
+        const modal = new bootstrap.Modal(document.getElementById('assignmentModal'), {
+            backdrop: true,
+            keyboard: true
+        });
+
+        modal.show();
+    }
+
+    // تحضير محتوى الـ modal
+    function prepareModalContent(dateStr) {
+        console.log('Preparing modal content for date:', dateStr);
+
+        const shiftsContainer = document.getElementById('shifts-container');
+        shiftsContainer.innerHTML = '';
+
+        if (branchShifts.length === 0) {
+            shiftsContainer.innerHTML = `
             <div class="col-12">
                 <div class="alert alert-warning">
                     <i class="fas fa-exclamation-triangle me-2"></i>
@@ -704,17 +765,17 @@ function prepareModalContent(dateStr) {
                 </div>
             </div>
         `;
-        return;
-    }
-    
-    branchShifts.forEach(shift => {
-        const shiftCard = document.createElement('div');
-        shiftCard.className = 'col-md-6 mb-3';
-        
-        // الحصول على الموظفين المعينين مسبقاً لهذه الشفتة
-        const assignedEmployees = scheduleData[dateStr].shifts[shift.id] || [];
-        
-        shiftCard.innerHTML = `
+            return;
+        }
+
+        branchShifts.forEach(shift => {
+            const shiftCard = document.createElement('div');
+            shiftCard.className = 'col-md-6 mb-3';
+
+            // الحصول على الموظفين المعينين مسبقاً لهذه الشفتة
+            const assignedEmployees = scheduleData[dateStr].shifts[shift.id] || [];
+
+            shiftCard.innerHTML = `
             <div class="card h-100">
                 <div class="card-header bg-primary text-white">
                     <h6 class="mb-0">
@@ -727,9 +788,9 @@ function prepareModalContent(dateStr) {
                         <label class="form-label">الموظفين المعينين:</label>
                         <div id="assigned-${shift.id}" class="assigned-employees">
                             ${assignedEmployees.map(empId => {
-                                const emp = getEmployeeById(empId);
-                                return `<span class="badge bg-success me-1 mb-1">${emp ? emp.full_name : 'موظف ' + empId} <i class="fas fa-times ms-1" onclick="removeEmployeeFromShift('${dateStr}', ${shift.id}, ${empId})"></i></span>`;
-                            }).join('')}
+                const emp = getEmployeeById(empId);
+                return `<span class="badge bg-success me-1 mb-1">${emp ? emp.full_name : 'موظف ' + empId} <i class="fas fa-times ms-1" onclick="removeEmployeeFromShift('${dateStr}', ${shift.id}, ${empId})"></i></span>`;
+            }).join('')}
                         </div>
                     </div>
                     <div class="mb-3">
@@ -744,147 +805,249 @@ function prepareModalContent(dateStr) {
                 </div>
             </div>
         `;
-        shiftsContainer.appendChild(shiftCard);
-    });
-}
-
-// Add employee to shift
-function addEmployeeToShift(dateStr, shiftId, employeeId) {
-    if (!employeeId) return;
-    
-    if (!scheduleData[dateStr].shifts[shiftId]) {
-        scheduleData[dateStr].shifts[shiftId] = [];
-    }
-    
-    scheduleData[dateStr].shifts[shiftId].push(parseInt(employeeId));
-    
-    // حفظ البيانات فوراً
-    saveScheduleDataToStorage();
-    
-    // إعادة تحديث العرض
-    prepareModalContent(dateStr);
-    
-    // تحديث التغطية
-    updateCoverage(dateStr);
-    updateDaySchedule(dateStr);
-    updateScheduleSummary();
-}
-
-// Remove employee from shift
-function removeEmployeeFromShift(dateStr, shiftId, employeeId) {
-    if (scheduleData[dateStr].shifts[shiftId]) {
-        const index = scheduleData[dateStr].shifts[shiftId].indexOf(employeeId);
-        if (index > -1) {
-            scheduleData[dateStr].shifts[shiftId].splice(index, 1);
-            
-            // إذا لم يعد هناك موظفين، احذف الشفتة
-            if (scheduleData[dateStr].shifts[shiftId].length === 0) {
-                delete scheduleData[dateStr].shifts[shiftId];
-            }
-        }
-    }
-    
-    // حفظ البيانات فوراً
-    saveScheduleDataToStorage();
-    
-    // إعادة تحديث العرض
-    prepareModalContent(dateStr);
-    
-    // تحديث التغطية
-    updateCoverage(dateStr);
-    updateDaySchedule(dateStr);
-    updateScheduleSummary();
-}
-
-// Generate schedule automatically for all days
-function generateSchedule() {
-    console.log('Generating schedule for all days');
-    
-    // تغيير نص الزر لإظهار التحميل
-    const generateBtn = document.getElementById('generateBtn');
-    const originalText = generateBtn.innerHTML;
-    generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>جاري التوليد...';
-    generateBtn.disabled = true;
-    
-    if (selectedEmployees.length === 0) {
-        alert('يرجى اختيار موظفين أولاً');
-        resetGenerateButton(generateBtn, originalText);
-        return;
-    }
-    
-    if (branchShifts.length === 0) {
-        alert('لا توجد شفتات متاحة');
-        resetGenerateButton(generateBtn, originalText);
-        return;
-    }
-    
-    const dates = Object.keys(scheduleData);
-    console.log('Dates to process:', dates);
-    
-    if (dates.length === 0) {
-        alert('لا توجد أيام في الفترة المحددة');
-        resetGenerateButton(generateBtn, originalText);
-        return;
-    }
-    
-    let successCount = 0;
-    dates.forEach((dateStr, index) => {
-        console.log(`Processing date ${index + 1}/${dates.length}: ${dateStr}`);
-        if (autoAssign(dateStr)) {
-            successCount++;
-        }
-    });
-    
-    // تحديث الملخص
-    updateScheduleSummary();
-    
-    // إعادة تعيين الزر
-    resetGenerateButton(generateBtn, originalText);
-    
-    alert(`تم توليد الجدول تلقائياً لـ ${successCount} من ${dates.length} يوم بنجاح!`);
-}
-
-// إعادة تعيين زر التوليد
-function resetGenerateButton(button, originalText) {
-    button.innerHTML = originalText;
-    button.disabled = false;
-}
-
-// View schedule details for a specific date
-function viewSchedule(dateStr) {
-    const shifts = scheduleData[dateStr].shifts;
-    let details = `جدول العمل لليوم ${dateStr}:\n\n`;
-    
-    if (Object.keys(shifts).length === 0) {
-        details += 'لم يتم تعيين أي شفتات لهذا اليوم.';
-    } else {
-        Object.keys(shifts).forEach(shiftId => {
-            const shift = branchShifts.find(s => s.id == shiftId);
-            const employees = shifts[shiftId];
-            
-            if (shift) {
-                details += `\n${shift.name} (${shift.start_time} - ${shift.end_time}):\n`;
-                employees.forEach(empId => {
-                    const emp = getEmployeeById(empId);
-                    details += `  - ${emp ? emp.full_name : 'موظف ' + empId}\n`;
-                });
-            }
+            shiftsContainer.appendChild(shiftCard);
         });
     }
-    
-    alert(details);
-}
 
-// Load final review
-function loadFinalReview() {
-    const reviewContainer = document.getElementById('final-review');
-    
-    // حساب الإحصائيات
-    const totalEntries = calculateTotalEntries();
-    const coverageStats = calculateCoverageStats();
-    const detailedAssignments = generateDetailedAssignments();
-    
-    reviewContainer.innerHTML = `
+    // Add employee to shift
+    function addEmployeeToShift(dateStr, shiftId, employeeId) {
+        if (!employeeId) return;
+
+        const shift = branchShifts.find(s => s.id == shiftId);
+        const shiftDuration = shift ? parseFloat(shift.duration) : 0;
+
+        let currentDayHours = 0;
+        Object.keys(scheduleData[dateStr].shifts).forEach(sid => {
+            if (scheduleData[dateStr].shifts[sid].includes(parseInt(employeeId))) {
+                const s = branchShifts.find(sh => sh.id == sid);
+                if (s) currentDayHours += parseFloat(s.duration);
+            }
+        });
+
+        if (currentDayHours + shiftDuration > 9.0) {
+            const emp = getEmployeeById(employeeId);
+            if (!confirm(`تنبيه: الموظف ${emp ? emp.full_name : employeeId} سيتجاوز 9 ساعات عمل في يوم ${dateStr} (${currentDayHours + shiftDuration} ساعة). هل تريد المتابعة؟`)) {
+                return;
+            }
+        }
+
+        if (!scheduleData[dateStr].shifts[shiftId]) {
+            scheduleData[dateStr].shifts[shiftId] = [];
+        }
+
+        scheduleData[dateStr].shifts[shiftId].push(parseInt(employeeId));
+
+        // حفظ البيانات فوراً
+        saveScheduleDataToStorage();
+
+        // إعادة تحديث العرض
+        prepareModalContent(dateStr);
+
+        // تحديث التغطية والجدول
+        updateCoverage(dateStr);
+        updateDaySchedule(dateStr);
+        updateScheduleSummary();
+    }
+
+    // Remove employee from shift
+    function removeEmployeeFromShift(dateStr, shiftId, employeeId) {
+        if (scheduleData[dateStr].shifts[shiftId]) {
+            const index = scheduleData[dateStr].shifts[shiftId].indexOf(employeeId);
+            if (index > -1) {
+                scheduleData[dateStr].shifts[shiftId].splice(index, 1);
+
+                // إذا لم يعد هناك موظفين، احذف الشفتة
+                if (scheduleData[dateStr].shifts[shiftId].length === 0) {
+                    delete scheduleData[dateStr].shifts[shiftId];
+                }
+            }
+        }
+
+        // حفظ البيانات فوراً
+        saveScheduleDataToStorage();
+
+        // إعادة تحديث العرض
+        prepareModalContent(dateStr);
+
+        // تحديث التغطية
+        updateCoverage(dateStr);
+        updateDaySchedule(dateStr);
+        updateScheduleSummary();
+    }
+
+    // Generate schedule automatically for all days (SMART ALLOCATION)
+    function generateSchedule() {
+        console.log('Generating schedule for all days smartly');
+        const generateBtn = document.getElementById('generateBtn');
+        const originalText = generateBtn.innerHTML;
+        generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>جاري التوليد...';
+        generateBtn.disabled = true;
+
+        if (selectedEmployees.length === 0) {
+            alert('يرجى اختيار موظفين أولاً');
+            resetGenerateButton(generateBtn, originalText);
+            return;
+        }
+
+        if (branchShifts.length === 0) {
+            alert('لا توجد شفتات متاحة');
+            resetGenerateButton(generateBtn, originalText);
+            return;
+        }
+
+        const dates = Object.keys(scheduleData);
+        if (dates.length === 0) {
+            alert('لا توجد أيام في الفترة المحددة');
+            resetGenerateButton(generateBtn, originalText);
+            return;
+        }
+        
+        // مسح التوزيعات القديمة
+        dates.forEach(dateStr => {
+            scheduleData[dateStr].shifts = {};
+            scheduleData[dateStr].coverage = 0;
+        });
+
+        // تقسيم الأيام إلى أسابيع لتطبيق القيود بشكل صحيح (6/5 أيام بالأسبوع للموظف)
+        const weeks = [];
+        let currentWeek = [];
+        dates.forEach((dateStr) => {
+            currentWeek.push(dateStr);
+            if (currentWeek.length === 7) {
+                weeks.push(currentWeek);
+                currentWeek = [];
+            }
+        });
+        if (currentWeek.length > 0) {
+            weeks.push(currentWeek);
+        }
+
+        let totalCoverageShifts = 0;
+        let successfullyCovered = 0;
+
+        // التوزيع أسبوعاً بأسبوع لتفادي تجاوز الساعات وأيام العمل
+        weeks.forEach(weekDates => {
+            const weeklyUsage = {};
+            selectedEmployees.forEach(empId => {
+                const emp = getEmployeeById(empId);
+                weeklyUsage[empId] = {
+                    daysWorked: 0,
+                    maxDays: emp ? emp.work_days : 6,
+                    hoursWorked: 0,
+                    maxDailyHours: emp ? emp.hours_per_day : 8
+                };
+            });
+
+            weekDates.forEach(dateStr => {
+                // ترتيب الشفتات حسب الأولوية وتفادي الشفتات المتضاربة إذا لزم
+                branchShifts.forEach(shift => {
+                    totalCoverageShifts++;
+                    
+                    const currentDayHours = {}; 
+                    const assignedToThisShift = [];
+                    
+                    // إعطاء أولوية للموظفين الذين عملوا ساعات أقل في الأسبوع لضمان عدالة التوزيع التقريبية
+                    const sortedEmps = [...selectedEmployees].sort((a, b) => {
+                        return (weeklyUsage[a].hoursWorked) - (weeklyUsage[b].hoursWorked);
+                    });
+                    
+                    for (const empId of sortedEmps) {
+                        const usage = weeklyUsage[empId];
+                        const currentDailyHrs = currentDayHours[empId] || 0;
+                        const isWorkingToday = currentDailyHrs > 0;
+                        
+                        // التحقق من أن الموظف لم يستنفذ عدد أيام عمله في الأسبوع!
+                        if (!isWorkingToday && usage.daysWorked >= usage.maxDays) continue;
+                        
+                        // التحقق من أنه لن يتجاوز سقف الساعات اليومية
+                        const shiftDuration = parseFloat(shift.duration);
+                        if (currentDailyHrs + shiftDuration > usage.maxDailyHours) continue;
+                        
+                        // تخصيص الموظف لهذا الشفت!
+                        assignedToThisShift.push(parseInt(empId));
+                        if (!scheduleData[dateStr].shifts[shift.id]) {
+                            scheduleData[dateStr].shifts[shift.id] = [];
+                        }
+                        scheduleData[dateStr].shifts[shift.id].push(parseInt(empId));
+                        
+                        if (!isWorkingToday) {
+                            usage.daysWorked += 1;
+                        }
+                        currentDayHours[empId] = currentDailyHrs + shiftDuration;
+                        usage.hoursWorked += shiftDuration;
+                        
+                        // كم عدد الموظفين المطلوبين في كل شفت؟
+                        const neededPerShift = Math.max(1, Math.floor(selectedEmployees.length / branchShifts.length));
+                        if (assignedToThisShift.length >= neededPerShift) {
+                            break; // اكتفينا لهذا الشفت
+                        }
+                    }
+                    
+                    if (assignedToThisShift.length > 0) {
+                        successfullyCovered++;
+                    }
+                });
+                
+                updateDaySchedule(dateStr);
+                updateCoverage(dateStr);
+            });
+        });
+
+        // تحديث الواجهة والملخص
+        updateScheduleSummary();
+        renderEmployeeCoverageCards();
+
+        // إعادة تعيين الزر
+        resetGenerateButton(generateBtn, originalText);
+        saveScheduleDataToStorage();
+
+        alert(`نجح التوزيع الذكي!\nتم مراعاة ضوابط ساعات وأيام العمل للموظفين وتوزيعهم بشكل آلي.`);
+    }
+
+    // إعادة تعيين زر التوليد
+    function resetGenerateButton(button, originalText) {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    }
+
+    // View schedule details for a specific date
+    function viewSchedule(dateStr) {
+        const shifts = scheduleData[dateStr].shifts;
+        let details = `جدول العمل لليوم ${dateStr}:\n\n`;
+
+        if (Object.keys(shifts).length === 0) {
+            details += 'لم يتم تعيين أي شفتات لهذا اليوم.';
+        } else {
+            Object.keys(shifts).forEach(shiftId => {
+                const shift = branchShifts.find(s => s.id == shiftId);
+                const employees = shifts[shiftId];
+
+                if (shift) {
+                    details += `\n${shift.name} (${shift.start_time} - ${shift.end_time}):\n`;
+                    employees.forEach(empId => {
+                        const emp = getEmployeeById(empId);
+                        details += `  - ${emp ? emp.full_name : 'موظف ' + empId}\n`;
+                    });
+                }
+            });
+        }
+
+        alert(details);
+    }
+
+    // Load final review
+    function loadFinalReview() {
+        // التأكد من تنظيف البيانات قبل العرض النهائي
+        cleanupScheduleData();
+        
+        const reviewContainer = document.getElementById('final-review');
+
+        // حساب الإحصائيات
+        const totalEntries = calculateTotalEntries();
+        const coverageStats = calculateCoverageStats();
+        const detailedAssignments = generateDetailedAssignments();
+
+        reviewContainer.innerHTML = `
         <div class="row">
             <div class="col-md-6">
                 <h6>معلومات الجدول</h6>
@@ -940,48 +1103,48 @@ function loadFinalReview() {
             </div>
         </div>
     `;
-}
+    }
 
-// توليد التوزيعات التفصيلية
-function generateDetailedAssignments() {
-    let html = '';
-    let totalAssignments = 0;
-    
-    console.log('=== Generating detailed assignments ===');
-    console.log('Schedule data:', scheduleData);
-    console.log('Branch shifts:', branchShifts);
-    console.log('Selected employees:', selectedEmployees);
-    
-    Object.keys(scheduleData).forEach(dateStr => {
-        const dayData = scheduleData[dateStr];
-        const shifts = dayData.shifts;
-        
-        console.log(`Processing date ${dateStr}:`, dayData);
-        
-        if (Object.keys(shifts).length === 0) {
-            html += `
+    // توليد التوزيعات التفصيلية
+    function generateDetailedAssignments() {
+        let html = '';
+        let totalAssignments = 0;
+
+        console.log('=== Generating detailed assignments ===');
+        console.log('Schedule data:', scheduleData);
+        console.log('Branch shifts:', branchShifts);
+        console.log('Selected employees:', selectedEmployees);
+
+        Object.keys(scheduleData).forEach(dateStr => {
+            const dayData = scheduleData[dateStr];
+            const shifts = dayData.shifts;
+
+            console.log(`Processing date ${dateStr}:`, dayData);
+
+            if (Object.keys(shifts).length === 0) {
+                html += `
                 <tr>
                     <td>${dateStr}</td>
                     <td colspan="3" class="text-muted text-center">لا توجد توزيعات</td>
                 </tr>
             `;
-            return;
-        }
-        
-        let isFirstRow = true;
-        Object.keys(shifts).forEach(shiftId => {
-            const employees = shifts[shiftId];
-            const shift = branchShifts.find(s => s.id == shiftId);
-            
-            console.log(`Processing shift ${shiftId}:`, { employees, shift });
-            
-            if (shift && employees.length > 0) {
-                const employeeNames = employees.map(empId => {
-                    const emp = getEmployeeById(empId);
-                    return emp ? emp.full_name : `موظف ${empId}`;
-                }).join(', ');
-                
-                html += `
+                return;
+            }
+
+            let isFirstRow = true;
+            Object.keys(shifts).forEach(shiftId => {
+                const employees = shifts[shiftId];
+                const shift = branchShifts.find(s => s.id == shiftId);
+
+                console.log(`Processing shift ${shiftId}:`, { employees, shift });
+
+                if (shift && employees.length > 0) {
+                    const employeeNames = employees.map(empId => {
+                        const emp = getEmployeeById(empId);
+                        return emp ? emp.full_name : `موظف ${empId}`;
+                    }).join(', ');
+
+                    html += `
                     <tr>
                         <td>${isFirstRow ? dateStr : ''}</td>
                         <td>
@@ -990,9 +1153,9 @@ function generateDetailedAssignments() {
                         </td>
                         <td>
                             ${employees.map(empId => {
-                                const emp = getEmployeeById(empId);
-                                return `<span class="badge bg-info me-1">${emp ? emp.full_name : `موظف ${empId}`}</span>`;
-                            }).join('')}
+                        const emp = getEmployeeById(empId);
+                        return `<span class="badge bg-info me-1">${emp ? emp.full_name : `موظف ${empId}`}</span>`;
+                    }).join('')}
                         </td>
                         <td>
                             <span class="badge bg-success">${shift.duration} ساعة</span>
@@ -1000,16 +1163,16 @@ function generateDetailedAssignments() {
                         </td>
                     </tr>
                 `;
-                isFirstRow = false;
-                totalAssignments += employees.length;
-            }
+                    isFirstRow = false;
+                    totalAssignments += employees.length;
+                }
+            });
         });
-    });
-    
-    console.log(`Total assignments found: ${totalAssignments}`);
-    
-    if (html === '') {
-        html = `
+
+        console.log(`Total assignments found: ${totalAssignments}`);
+
+        if (html === '') {
+            html = `
             <tr>
                 <td colspan="4" class="text-center text-muted">
                     <i class="fas fa-calendar-times fa-2x mb-2"></i>
@@ -1017,237 +1180,294 @@ function generateDetailedAssignments() {
                 </td>
             </tr>
         `;
-    }
-    
-    return html;
-}
-
-// حساب إجمالي التوزيعات
-function calculateTotalEntries() {
-    let total = 0;
-    Object.keys(scheduleData).forEach(dateStr => {
-        const shifts = scheduleData[dateStr].shifts;
-        Object.keys(shifts).forEach(shiftId => {
-            total += shifts[shiftId].length;
-        });
-    });
-    return total;
-}
-
-// حساب إحصائيات التغطية
-function calculateCoverageStats() {
-    const dates = Object.keys(scheduleData);
-    let coveredDays = 0;
-    let totalCoverage = 0;
-    
-    dates.forEach(dateStr => {
-        const coverage = scheduleData[dateStr].coverage;
-        totalCoverage += coverage;
-        if (coverage > 0) coveredDays++;
-    });
-    
-    return {
-        totalDays: dates.length,
-        coveredDays: coveredDays,
-        average: dates.length > 0 ? Math.round(totalCoverage / dates.length) : 0
-    };
-}
-
-// Helper functions
-function calculateDays() {
-    const startDate = new Date(document.getElementById('start_date').value);
-    const endDate = new Date(document.getElementById('end_date').value);
-    return Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
-}
-
-function calculateTotalHours() {
-    return selectedEmployees.length * calculateDays() * 8; // Assuming 8 hours per day
-}
-
-// حفظ الجدول في قاعدة البيانات
-async function saveScheduleToDatabase() {
-    try {
-        console.log('=== Starting to save schedule ===');
-        
-        // جمع جميع البيانات
-        const scheduleDataToSave = collectAllScheduleData();
-        
-        console.log('=== Data to be saved ===');
-        console.log('Schedule basic info:', {
-            branch: scheduleDataToSave.branch,
-            schedule_type: scheduleDataToSave.schedule_type,
-            start_date: scheduleDataToSave.start_date,
-            end_date: scheduleDataToSave.end_date,
-            notes: scheduleDataToSave.notes
-        });
-        console.log('Entries count:', scheduleDataToSave.entries.length);
-        console.log('Entries details:', scheduleDataToSave.entries);
-        
-        // إرسال البيانات إلى الخادم
-        console.log('=== Sending to server ===');
-        const response = await fetch('{% url "schedules:create_schedule_api" %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            },
-            body: JSON.stringify(scheduleDataToSave)
-        });
-        
-        console.log('Response status:', response.status);
-        const result = await response.json();
-        console.log('Server response:', result);
-        
-        if (result.success) {
-            alert(`تم حفظ الجدول بنجاح!\n\nرقم الجدول: ${result.schedule_id}\nعدد التوزيعات المحفوظة: ${result.entries_created}`);
-            
-            // مسح البيانات المحفوظة محلياً
-            clearScheduleDataFromStorage();
-            
-            // الانتقال إلى صفحة تفاصيل الجدول
-            window.location.href = `/schedules/${result.schedule_id}/`;
-        } else {
-            alert(`خطأ في حفظ الجدول: ${result.error}`);
         }
-    } catch (error) {
-        console.error('Error saving schedule:', error);
-        alert('حدث خطأ في حفظ الجدول. يرجى المحاولة مرة أخرى.');
-    }
-}
 
-// جمع جميع بيانات الجدول
-function collectAllScheduleData() {
-    const data = {
-        branch: document.getElementById('branch').value,
-        schedule_type: document.getElementById('schedule_type').value,
-        start_date: document.getElementById('start_date').value,
-        end_date: document.getElementById('end_date').value,
-        notes: document.getElementById('notes').value || '',
-        entries: []
-    };
-    
-    console.log('Collecting schedule data...');
-    console.log('Schedule data object:', scheduleData);
-    
-    // جمع جميع التوزيعات
-    let totalEntries = 0;
-    Object.keys(scheduleData).forEach(dateStr => {
-        const dayData = scheduleData[dateStr];
-        console.log(`Processing date ${dateStr}:`, dayData);
-        
-        if (dayData.shifts) {
-            Object.keys(dayData.shifts).forEach(shiftId => {
-                const employees = dayData.shifts[shiftId];
-                console.log(`Processing shift ${shiftId} with employees:`, employees);
-                
-                employees.forEach(employeeId => {
-                    const employee = selectedEmployees.find(emp => emp.id == employeeId);
-                    const shift = branchShifts.find(s => s.id == shiftId);
-                    
-                    if (employee && shift) {
-                        const entry = {
-                            employee_id: parseInt(employeeId),
-                            date: dateStr,
-                            shift_id: parseInt(shiftId),
-                            start_time: shift.start_time,
-                            end_time: shift.end_time,
-                            hours: shift.duration,
-                            is_cover: false,
-                            notes: ''
-                        };
-                        
-                        data.entries.push(entry);
-                        totalEntries++;
-                        console.log(`Added entry:`, entry);
-                    } else {
-                        console.warn(`Missing employee or shift: employee=${employee}, shift=${shift}`);
-                    }
-                });
+        return html;
+    }
+
+    // حساب إجمالي التوزيعات
+    function calculateTotalEntries() {
+        let total = 0;
+        Object.keys(scheduleData).forEach(dateStr => {
+            const shifts = scheduleData[dateStr].shifts;
+            Object.keys(shifts).forEach(shiftId => {
+                total += shifts[shiftId].length;
             });
-        }
-    });
-    
-    console.log(`Total entries collected: ${totalEntries}`);
-    console.log('Final data to send:', data);
-    
-    return data;
-}
-
-function getEmployeeById(employeeId) {
-    return employeesData.find(emp => emp.id == employeeId);
-}
-
-function getEmployeeName(employeeId) {
-    const employee = getEmployeeById(employeeId);
-    return employee ? employee.full_name : `موظف ${employeeId}`;
-}
-
-// Auto-assign employees to shifts
-function autoAssign(dateStr) {
-    console.log('Auto-assigning employees for date:', dateStr);
-    
-    if (selectedEmployees.length === 0) {
-        alert('يرجى اختيار موظفين أولاً');
-        return false;
+        });
+        return total;
     }
-    
-    if (branchShifts.length === 0) {
-        alert('لا توجد شفتات متاحة');
-        return false;
-    }
-    
-    console.log('Selected employees:', selectedEmployees);
-    console.log('Available shifts:', branchShifts);
-    
-    // توزيع الموظفين على الشفتات بشكل تلقائي
-    const shiftsForDate = {};
-    
-    // التأكد من وجود بيانات للتاريخ
-    if (!scheduleData[dateStr]) {
-        scheduleData[dateStr] = {
-            employees: [...selectedEmployees],
-            shifts: {},
-            coverage: 0
+
+    // حساب إحصائيات التغطية
+    function calculateCoverageStats() {
+        // التأكد من أننا نحسب فقط التواريخ داخل النطاق الحالي
+        cleanupScheduleData();
+        
+        const dates = Object.keys(scheduleData);
+        let coveredDays = 0;
+        let totalCoverage = 0;
+
+        dates.forEach(dateStr => {
+            const coverage = scheduleData[dateStr].coverage;
+            totalCoverage += coverage;
+            if (coverage > 0) coveredDays++;
+        });
+
+        return {
+            totalDays: dates.length,
+            coveredDays: coveredDays,
+            average: dates.length > 0 ? Math.round(totalCoverage / dates.length) : 0
         };
     }
-    
-    // توزيع كل موظف على شفتة
-    selectedEmployees.forEach((empId, index) => {
-        const shiftIndex = index % branchShifts.length;
-        const shift = branchShifts[shiftIndex];
-        
-        if (!shiftsForDate[shift.id]) {
-            shiftsForDate[shift.id] = [];
-        }
-        shiftsForDate[shift.id].push(parseInt(empId));
-    });
-    
-    console.log('Generated shifts for date:', shiftsForDate);
-    
-    // تحديث البيانات
-    scheduleData[dateStr].shifts = shiftsForDate;
-    
-    // تحديث العرض
-    updateDaySchedule(dateStr);
-    updateCoverage(dateStr);
-    
-    return true;
-}
 
-// Update day schedule display
-function updateDaySchedule(dateStr) {
-    const container = document.getElementById(`shift-assignments-${dateStr}`);
-    if (!container) return;
-    
-    const shifts = scheduleData[dateStr].shifts;
-    let html = '';
-    
-    Object.keys(shifts).forEach(shiftId => {
-        const shift = branchShifts.find(s => s.id == shiftId);
-        const employees = shifts[shiftId];
-        
-        if (shift && employees.length > 0) {
-            html += `
+    // Helper functions
+    function calculateDays() {
+        const startDate = new Date(document.getElementById('start_date').value);
+        const endDate = new Date(document.getElementById('end_date').value);
+        return Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+    }
+
+    function calculateTotalHours() {
+        return selectedEmployees.length * calculateDays() * 8; // Assuming 8 hours per day
+    }
+
+    // حفظ الجدول في قاعدة البيانات
+    // التحقق من صحة الجدول قبل الحفظ
+    function validateSchedule() {
+        console.log('Validating schedule data...');
+        const errors = [];
+        const maxHours = 9.0;
+
+        Object.keys(scheduleData).forEach(dateStr => {
+            const dayData = scheduleData[dateStr];
+            const employeeHours = {};
+
+            if (dayData.shifts) {
+                Object.keys(dayData.shifts).forEach(shiftId => {
+                    const shift = branchShifts.find(s => s.id == shiftId);
+                    const employees = dayData.shifts[shiftId];
+
+                    if (shift) {
+                        employees.forEach(empId => {
+                            const id = parseInt(empId);
+                            if (!employeeHours[id]) employeeHours[id] = 0;
+                            employeeHours[id] += parseFloat(shift.duration);
+                        });
+                    }
+                });
+            }
+
+            Object.keys(employeeHours).forEach(empId => {
+                if (employeeHours[empId] > maxHours) {
+                    const emp = getEmployeeById(empId);
+                    errors.push(`الموظف ${emp ? emp.full_name : 'رقم ' + empId} لديه ${employeeHours[empId]} ساعة عمل في يوم ${dateStr}. الحد الأقصى هو ${maxHours} ساعات.`);
+                }
+            });
+        });
+
+        return errors;
+    }
+
+    // حفظ الجدول في قاعدة البيانات
+    async function saveScheduleToDatabase() {
+        try {
+            console.log('=== Starting to save schedule ===');
+
+            // 1. التحقق من البيانات محلياً أولاً
+            const validationErrors = validateSchedule();
+            if (validationErrors.length > 0) {
+                const errorMsg = 'يوجد مشكلات في توزيع الموظفين:\n\n' + validationErrors.join('\n');
+                if (!confirm(errorMsg + '\n\nهل تريد المتابعة ومحاولة الحفظ على أي حال؟ (قد يفشل الحفظ في قاعدة البيانات)')) {
+                    return;
+                }
+            }
+
+            // جمع جميع البيانات
+            const scheduleDataToSave = collectAllScheduleData();
+
+            if (scheduleDataToSave.entries.length === 0) {
+                alert('لا توجد توزيعات موظفين لحفظها. يرجى توزيع الموظفين على الأيام أولاً.');
+                return;
+            }
+
+            console.log('=== Sending to server ===');
+            const submitBtn = document.getElementById('submitBtn');
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>جاري الحفظ...';
+
+            const response = await fetch('{% url "schedules:create_schedule_api" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(scheduleDataToSave)
+            });
+
+            const result = await response.json();
+            console.log('Server response:', result);
+
+            if (result.success && (!result.errors || result.errors.length === 0)) {
+                alert(`تم حفظ الجدول بنجاح!\n\nرقم الجدول: ${result.schedule_id}\nعدد التوزيعات المحفوظة: ${result.entries_created}`);
+                clearScheduleDataFromStorage();
+                window.location.href = `/schedules/${result.schedule_id}/`;
+            } else {
+                let errorMsg = result.error || result.message || 'حدث خطأ غير معروف';
+                if (result.errors && result.errors.length > 0) {
+                    errorMsg += '\n\nالتفاصيل:\n' + result.errors.map(e => `- إدخال ${e.index + 1}: ${e.error}`).join('\n');
+                }
+                alert(`خطأ في حفظ الجدول: ${errorMsg}`);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
+        } catch (error) {
+            console.error('Error saving schedule:', error);
+            alert('حدث خطأ في الاتصال بالخادم. يرجى المحاولة مرة أخرى.');
+            const submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'حفظ الجدول';
+            }
+        }
+    }
+
+    // جمع جميع بيانات الجدول
+    function collectAllScheduleData() {
+        const data = {
+            branch: document.getElementById('branch').value,
+            schedule_type: document.getElementById('schedule_type').value,
+            start_date: document.getElementById('start_date').value,
+            end_date: document.getElementById('end_date').value,
+            notes: document.getElementById('notes').value || '',
+            entries: []
+        };
+
+        console.log('Collecting schedule data...');
+        console.log('Schedule data object:', scheduleData);
+
+        // جمع جميع التوزيعات
+        let totalEntries = 0;
+        const startDateStr = data.start_date;
+        const endDateStr = data.end_date;
+
+        Object.keys(scheduleData).forEach(dateStr => {
+            // التحقق الإضافي أن التاريخ ضمن النطاق المطلوب
+            if (dateStr < startDateStr || dateStr > endDateStr) {
+                console.log(`Bypassing out-of-range date from collection: ${dateStr}`);
+                return;
+            }
+
+            const dayData = scheduleData[dateStr];
+            if (dayData.shifts) {
+                Object.keys(dayData.shifts).forEach(shiftId => {
+                    const employees = dayData.shifts[shiftId];
+                    employees.forEach(employeeId => {
+                        const employee = selectedEmployees.find(emp => emp.id == employeeId);
+                        const shift = branchShifts.find(s => s.id == shiftId);
+
+                        if (employee && shift) {
+                            const entry = {
+                                employee_id: parseInt(employeeId),
+                                date: dateStr,
+                                shift_id: parseInt(shiftId),
+                                start_time: shift.start_time,
+                                end_time: shift.end_time,
+                                hours: shift.duration,
+                                is_cover: false,
+                                notes: ''
+                            };
+
+                            data.entries.push(entry);
+                            totalEntries++;
+                        }
+                    });
+                });
+            }
+        });
+
+        console.log(`Total entries collected: ${totalEntries}`);
+        console.log('Final data to send:', data);
+
+        return data;
+    }
+
+    function getEmployeeById(employeeId) {
+        return employeesData.find(emp => emp.id == employeeId);
+    }
+
+    function getEmployeeName(employeeId) {
+        const employee = getEmployeeById(employeeId);
+        return employee ? employee.full_name : `موظف ${employeeId}`;
+    }
+
+    // Auto-assign employees to shifts
+    function autoAssign(dateStr) {
+        console.log('Auto-assigning employees for date:', dateStr);
+
+        if (selectedEmployees.length === 0) {
+            alert('يرجى اختيار موظفين أولاً');
+            return false;
+        }
+
+        if (branchShifts.length === 0) {
+            alert('لا توجد شفتات متاحة');
+            return false;
+        }
+
+        console.log('Selected employees:', selectedEmployees);
+        console.log('Available shifts:', branchShifts);
+
+        // توزيع الموظفين على الشفتات بشكل تلقائي
+        const shiftsForDate = {};
+
+        // التأكد من وجود بيانات للتاريخ
+        if (!scheduleData[dateStr]) {
+            scheduleData[dateStr] = {
+                employees: [...selectedEmployees],
+                shifts: {},
+                coverage: 0
+            };
+        }
+
+        // توزيع كل موظف على شفتة
+        selectedEmployees.forEach((empId, index) => {
+            const shiftIndex = index % branchShifts.length;
+            const shift = branchShifts[shiftIndex];
+            const shiftDuration = shift ? parseFloat(shift.duration) : 0;
+
+            // التحقق من الساعات (اختياري في التوزيع التلقائي لتجنب كثرة الرسائل، ولكن سنطبق تحذير واحد في النهاية)
+            if (!shiftsForDate[shift.id]) {
+                shiftsForDate[shift.id] = [];
+            }
+            shiftsForDate[shift.id].push(parseInt(empId));
+        });
+
+        console.log('Generated shifts for date:', shiftsForDate);
+
+        // تحديث البيانات
+        scheduleData[dateStr].shifts = shiftsForDate;
+
+        // تحديث العرض
+        updateDaySchedule(dateStr);
+        updateCoverage(dateStr);
+
+        return true;
+    }
+
+    // Update day schedule display
+    function updateDaySchedule(dateStr) {
+        const container = document.getElementById(`shift-assignments-${dateStr}`);
+        if (!container) return;
+
+        const shifts = scheduleData[dateStr].shifts;
+        let html = '';
+
+        Object.keys(shifts).forEach(shiftId => {
+            const shift = branchShifts.find(s => s.id == shiftId);
+            const employees = shifts[shiftId];
+
+            if (shift && employees.length > 0) {
+                html += `
                 <div class="shift-group mb-2">
                     <div class="d-flex align-items-center mb-1">
                         <i class="fas fa-clock text-primary me-2"></i>
@@ -1256,60 +1476,60 @@ function updateDaySchedule(dateStr) {
                     </div>
                     <div class="employee-list">
                         ${employees.map(empId => {
-                            const emp = getEmployeeById(empId);
-                            return `<span class="badge bg-success me-1 mb-1">${emp ? emp.full_name : 'موظف ' + empId}</span>`;
-                        }).join('')}
+                    const emp = getEmployeeById(empId);
+                    return `<span class="badge bg-success me-1 mb-1">${emp ? emp.full_name : 'موظف ' + empId}</span>`;
+                }).join('')}
                     </div>
                 </div>
             `;
-        }
-    });
-    
-    container.innerHTML = html || '<span class="text-muted">لم يتم تعيين شفتات</span>';
-}
+            }
+        });
 
-// Update coverage for a specific date
-function updateCoverage(dateStr) {
-    const totalShifts = branchShifts.length;
-    const assignedShifts = Object.keys(scheduleData[dateStr].shifts).length;
-    const coverage = totalShifts > 0 ? Math.round((assignedShifts / totalShifts) * 100) : 0;
-    
-    // تحديث شريط التقدم
-    const progressBar = document.getElementById(`coverage-bar-${dateStr}`);
-    const badge = document.getElementById(`coverage-badge-${dateStr}`);
-    const text = document.getElementById(`coverage-text-${dateStr}`);
-    
-    if (progressBar && badge && text) {
-        progressBar.style.width = `${coverage}%`;
-        progressBar.className = `progress-bar ${coverage >= 90 ? 'bg-success' : coverage >= 70 ? 'bg-warning' : 'bg-danger'}`;
-        
-        badge.textContent = `${coverage}%`;
-        badge.className = `badge ${coverage >= 90 ? 'bg-success' : coverage >= 70 ? 'bg-warning' : 'bg-danger'}`;
-        
-        if (coverage === 0) {
-            text.textContent = 'لم يتم تعيين شفتات';
-        } else if (coverage === 100) {
-            text.textContent = 'تغطية كاملة';
-        } else {
-            text.textContent = `${assignedShifts} من ${totalShifts} شفتات`;
-        }
+        container.innerHTML = html || '<span class="text-muted">لم يتم تعيين شفتات</span>';
     }
-    
-    // تحديث البيانات
-    scheduleData[dateStr].coverage = coverage;
-}
 
-// Update schedule summary
-function updateScheduleSummary() {
-    const summaryContainer = document.getElementById('schedule-summary');
-    if (!summaryContainer) return;
-    
-    const dates = Object.keys(scheduleData);
-    const totalDays = dates.length;
-    const totalCoverage = dates.reduce((sum, date) => sum + scheduleData[date].coverage, 0);
-    const averageCoverage = totalDays > 0 ? Math.round(totalCoverage / totalDays) : 0;
-    
-    summaryContainer.innerHTML = `
+    // Update coverage for a specific date
+    function updateCoverage(dateStr) {
+        const totalShifts = branchShifts.length;
+        const assignedShifts = Object.keys(scheduleData[dateStr].shifts).length;
+        const coverage = totalShifts > 0 ? Math.round((assignedShifts / totalShifts) * 100) : 0;
+
+        // تحديث شريط التقدم
+        const progressBar = document.getElementById(`coverage-bar-${dateStr}`);
+        const badge = document.getElementById(`coverage-badge-${dateStr}`);
+        const text = document.getElementById(`coverage-text-${dateStr}`);
+
+        if (progressBar && badge && text) {
+            progressBar.style.width = `${coverage}%`;
+            progressBar.className = `progress-bar ${coverage >= 90 ? 'bg-success' : coverage >= 70 ? 'bg-warning' : 'bg-danger'}`;
+
+            badge.textContent = `${coverage}%`;
+            badge.className = `badge ${coverage >= 90 ? 'bg-success' : coverage >= 70 ? 'bg-warning' : 'bg-danger'}`;
+
+            if (coverage === 0) {
+                text.textContent = 'لم يتم تعيين شفتات';
+            } else if (coverage === 100) {
+                text.textContent = 'تغطية كاملة';
+            } else {
+                text.textContent = `${assignedShifts} من ${totalShifts} شفتات`;
+            }
+        }
+
+        // تحديث البيانات
+        scheduleData[dateStr].coverage = coverage;
+    }
+
+    // Update schedule summary
+    function updateScheduleSummary() {
+        const summaryContainer = document.getElementById('schedule-summary');
+        if (!summaryContainer) return;
+
+        const dates = Object.keys(scheduleData);
+        const totalDays = dates.length;
+        const totalCoverage = dates.reduce((sum, date) => sum + scheduleData[date].coverage, 0);
+        const averageCoverage = totalDays > 0 ? Math.round(totalCoverage / totalDays) : 0;
+
+        summaryContainer.innerHTML = `
         <div class="row">
             <div class="col-md-3">
                 <div class="card bg-primary text-white">
@@ -1349,298 +1569,400 @@ function updateScheduleSummary() {
             </div>
         </div>
     `;
-}
-
-// Auto-calculate end date
-document.getElementById('schedule_type').addEventListener('change', function() {
-    const startDate = document.getElementById('start_date').value;
-    if (!startDate) return;
-    
-    const start = new Date(startDate);
-    const scheduleType = this.value;
-    let endDate = new Date(start);
-    
-    switch (scheduleType) {
-        case 'weekly':
-            endDate.setDate(start.getDate() + 6);
-            break;
-        case 'monthly':
-            endDate.setMonth(start.getMonth() + 1);
-            endDate.setDate(start.getDate() - 1);
-            break;
-        case 'quarterly':
-            endDate.setMonth(start.getMonth() + 3);
-            endDate.setDate(start.getDate() - 1);
-            break;
-        case 'yearly':
-            endDate.setFullYear(start.getFullYear() + 1);
-            endDate.setDate(start.getDate() - 1);
-            break;
+        // عرض كروت توزيع الموظفين
+        renderEmployeeCoverageCards();
     }
-    
-    document.getElementById('end_date').value = endDate.toISOString().split('T')[0];
-});
 
-// إصلاح مشاكل الـ scroll
-function fixScrollIssues() {
-    console.log('Fixing scroll issues...');
-    
-    // إزالة أي قيود على الـ scroll
-    document.body.style.overflow = 'auto';
-    document.documentElement.style.overflow = 'auto';
-    
-    // التأكد من أن الـ main content قابل للـ scroll
-    const mainContent = document.querySelector('.main-content') || document.querySelector('main') || document.body;
-    if (mainContent) {
-        mainContent.style.overflow = 'auto';
-        mainContent.style.overflowX = 'auto';
-        mainContent.style.overflowY = 'auto';
-    }
-    
-    // إصلاح الـ scroll للجداول
-    const tables = document.querySelectorAll('.table-responsive');
-    tables.forEach(table => {
-        table.style.maxHeight = '60vh';
-        table.style.overflowY = 'auto';
-        table.style.overflowX = 'auto';
-    });
-    
-    // إصلاح الـ scroll للـ modals
-    const modals = document.querySelectorAll('.modal-body');
-    modals.forEach(modal => {
-        modal.style.maxHeight = '70vh';
-        modal.style.overflowY = 'auto';
-    });
-    
-    console.log('Scroll issues fixed');
-}
-
-// Help function
-function showHelp() {
-    alert('مساعد إنشاء الجدول التشغيلي:\n\n' +
-          'الخطوة 1: اختر الفرع ونوع الجدول والفترة\n' +
-          'الخطوة 2: اختر الموظفين الذين سيتم جدولتهم\n' +
-          'الخطوة 3: وزع الموظفين على الشفتات لكل يوم\n' +
-          'الخطوة 4: راجع الجدول واحفظه');
-}
-
-// Initialize
-document.addEventListener('DOMContentLoaded', function() {
-    // تحميل البيانات المحفوظة
-    loadScheduleDataFromStorage();
-    
-    loadStepData();
-    
-    // إصلاح مشكلة الـ scroll
-    fixScrollIssues();
-    
-    // Add event listeners
-    document.getElementById('branch').addEventListener('change', function() {
-        console.log('Branch changed to:', this.value);
-        if (currentStep === 1) {
-            loadBranchInfo();
-        }
-        if (currentStep === 2) {
-            loadEmployees();
-        }
-    });
-    
-    // Modal event listeners
-    const assignmentModal = document.getElementById('assignmentModal');
-    if (assignmentModal) {
-        assignmentModal.addEventListener('show.bs.modal', function (event) {
-            console.log('Modal is opening');
-            // التأكد من أن المحتوى محضر
-            const dateStr = document.getElementById('assignment-date-input').value;
-            if (dateStr) {
-                prepareModalContent(dateStr);
+    // عرض كروت ملخص وتوزيع كل موظف
+    function renderEmployeeCoverageCards() {
+        const container = document.getElementById('employee-coverage-cards');
+        if (!container) return;
+        
+        const dates = Object.keys(scheduleData);
+        if (dates.length === 0) return;
+        
+        const weeksInSchedule = dates.length / 7;
+        
+        // حساب الاستهلاك الحالي لكل موظف
+        const empUsage = {};
+        selectedEmployees.forEach(empId => {
+            const emp = getEmployeeById(empId);
+            const workDaysLimitPerWeek = emp ? emp.work_days : 6;
+            const hoursPerDayLimit = emp ? emp.hours_per_day : 8;
+            empUsage[empId] = {
+                hoursWorked: 0,
+                workedDaysSet: new Set(),
+                maxDaysPeriod: Math.ceil(workDaysLimitPerWeek * weeksInSchedule),
+                maxHoursPeriod: Math.ceil(hoursPerDayLimit * workDaysLimitPerWeek * weeksInSchedule),
+                dailyConstraint: hoursPerDayLimit
+            };
+        });
+        
+        dates.forEach(dateStr => {
+            const shifts = scheduleData[dateStr].shifts;
+            if (shifts) {
+                Object.keys(shifts).forEach(shiftId => {
+                    const shift = branchShifts.find(s => s.id == shiftId);
+                    const employeesInShift = shifts[shiftId];
+                    if (shift && employeesInShift) {
+                        employeesInShift.forEach(empId => {
+                            if (empUsage[empId]) {
+                                empUsage[empId].hoursWorked += parseFloat(shift.duration);
+                                empUsage[empId].workedDaysSet.add(dateStr);
+                            }
+                        });
+                    }
+                });
             }
         });
         
-        assignmentModal.addEventListener('shown.bs.modal', function (event) {
-            console.log('Modal is fully shown');
+        let html = '';
+        selectedEmployees.forEach(empId => {
+            const emp = getEmployeeById(empId);
+            const usage = empUsage[empId];
+            usage.daysWorkedCount = usage.workedDaysSet.size;
+            
+            const hoursPercentage = usage.maxHoursPeriod > 0 ? Math.min(100, Math.round((usage.hoursWorked / usage.maxHoursPeriod) * 100)) : 0;
+            const daysPercentage = usage.maxDaysPeriod > 0 ? Math.min(100, Math.round((usage.daysWorkedCount / usage.maxDaysPeriod) * 100)) : 0;
+            
+            const isHoursOver = usage.hoursWorked > usage.maxHoursPeriod;
+            const isDaysOver = usage.daysWorkedCount > usage.maxDaysPeriod;
+            
+            let cardClass = (isHoursOver || isDaysOver) ? 'border-danger custom-shadow-danger' : 'border-light shadow-sm';
+            let progressColor = (isHoursOver || isDaysOver) ? 'bg-danger' : (hoursPercentage >= 95 ? 'bg-success' : 'bg-primary');
+            
+            html += `
+            <div class="col-md-3 mb-3">
+                <div class="card h-100 ${cardClass}">
+                    <div class="card-body p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <strong class="text-truncate" style="max-width: 65%; color: #344767;" title="${emp ? emp.full_name : ''}">
+                                <i class="fas fa-user-circle text-primary me-1"></i> ${emp ? emp.full_name : 'موظف ' + empId}
+                            </strong>
+                            <span class="badge ${progressColor}">${emp ? emp.hours_per_day : 8} ساعات/يوم</span>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between text-muted mb-1" style="font-size: 0.8rem;">
+                                <span><i class="fas fa-history me-1"></i>ساعات العمل</span>
+                                <span class="fw-bold text-dark">${usage.hoursWorked} / ${usage.maxHoursPeriod}</span>
+                            </div>
+                            <div class="progress" style="height: 5px;">
+                                <div class="progress-bar ${progressColor}" style="width: ${hoursPercentage}%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="d-flex justify-content-between text-muted mb-1" style="font-size: 0.8rem;">
+                                <span><i class="fas fa-calendar-check me-1"></i>أيام العمل</span>
+                                <span class="fw-bold text-dark">${usage.daysWorkedCount} / ${usage.maxDaysPeriod}</span>
+                            </div>
+                            <div class="progress" style="height: 5px;">
+                                <div class="progress-bar ${progressColor}" style="width: ${daysPercentage}%"></div>
+                            </div>
+                        </div>
+                        ${(isHoursOver || isDaysOver) ? `
+                        <div class="text-danger mt-3 text-center rounded p-1" style="font-size: 0.75rem; background:#fee;">
+                            <i class="fas fa-exclamation-triangle"></i> تجاوز الحد الأقصى للنظام!
+                        </div>` : ''}
+                    </div>
+                </div>
+            </div>
+            `;
         });
         
-        assignmentModal.addEventListener('hide.bs.modal', function (event) {
-            console.log('Modal is closing');
-        });
+        container.innerHTML = html;
     }
-});
+
+    // Auto-calculate end date
+    document.getElementById('schedule_type').addEventListener('change', function () {
+        const startDate = document.getElementById('start_date').value;
+        if (!startDate) return;
+
+        const start = new Date(startDate);
+        const scheduleType = this.value;
+        let endDate = new Date(start);
+
+        switch (scheduleType) {
+            case 'weekly':
+                endDate.setDate(start.getDate() + 6);
+                break;
+            case 'monthly':
+                endDate.setMonth(start.getMonth() + 1);
+                endDate.setDate(start.getDate() - 1);
+                break;
+            case 'quarterly':
+                endDate.setMonth(start.getMonth() + 3);
+                endDate.setDate(start.getDate() - 1);
+                break;
+            case 'yearly':
+                endDate.setFullYear(start.getFullYear() + 1);
+                endDate.setDate(start.getDate() - 1);
+                break;
+        }
+
+        document.getElementById('end_date').value = endDate.toISOString().split('T')[0];
+    });
+
+    // إصلاح مشاكل الـ scroll
+    function fixScrollIssues() {
+        console.log('Fixing scroll issues...');
+
+        // إزالة أي قيود على الـ scroll
+        document.body.style.overflow = 'auto';
+        document.documentElement.style.overflow = 'auto';
+
+        // التأكد من أن الـ main content قابل للـ scroll
+        const mainContent = document.querySelector('.main-content') || document.querySelector('main') || document.body;
+        if (mainContent) {
+            mainContent.style.overflow = 'auto';
+            mainContent.style.overflowX = 'auto';
+            mainContent.style.overflowY = 'auto';
+        }
+
+        // إصلاح الـ scroll للجداول
+        const tables = document.querySelectorAll('.table-responsive');
+        tables.forEach(table => {
+            table.style.maxHeight = '60vh';
+            table.style.overflowY = 'auto';
+            table.style.overflowX = 'auto';
+        });
+
+        // إصلاح الـ scroll للـ modals
+        const modals = document.querySelectorAll('.modal-body');
+        modals.forEach(modal => {
+            modal.style.maxHeight = '70vh';
+            modal.style.overflowY = 'auto';
+        });
+
+        console.log('Scroll issues fixed');
+    }
+
+    // Help function
+    function showHelp() {
+        alert('مساعد إنشاء الجدول التشغيلي:\n\n' +
+            'الخطوة 1: اختر الفرع ونوع الجدول والفترة\n' +
+            'الخطوة 2: اختر الموظفين الذين سيتم جدولتهم\n' +
+            'الخطوة 3: وزع الموظفين على الشفتات لكل يوم\n' +
+            'الخطوة 4: راجع الجدول واحفظه');
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function () {
+        // تحميل البيانات المحفوظة
+        loadScheduleDataFromStorage();
+
+        loadStepData();
+
+        // إصلاح مشكلة الـ scroll
+        fixScrollIssues();
+
+        // Add event listeners
+        document.getElementById('branch').addEventListener('change', function () {
+            console.log('Branch changed to:', this.value);
+            if (currentStep === 1) {
+                loadBranchInfo();
+            }
+            if (currentStep === 2) {
+                loadEmployees();
+            }
+        });
+
+        // Modal event listeners
+        const assignmentModal = document.getElementById('assignmentModal');
+        if (assignmentModal) {
+            assignmentModal.addEventListener('show.bs.modal', function (event) {
+                console.log('Modal is opening');
+                // التأكد من أن المحتوى محضر
+                const dateStr = document.getElementById('assignment-date-input').value;
+                if (dateStr) {
+                    prepareModalContent(dateStr);
+                }
+            });
+
+            assignmentModal.addEventListener('shown.bs.modal', function (event) {
+                console.log('Modal is fully shown');
+            });
+
+            assignmentModal.addEventListener('hide.bs.modal', function (event) {
+                console.log('Modal is closing');
+            });
+        }
+    });
 </script>
 
 <style>
-.step-circle {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: #e9ecef;
-    color: #6c757d;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 10px;
-    font-weight: bold;
-    transition: all 0.3s ease;
-}
+    .step-circle {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #e9ecef;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 10px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
 
-.step-circle.active {
-    background: linear-gradient(45deg, #007bff, #0056b3);
-    color: white;
-    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
-}
+    .step-circle.active {
+        background: linear-gradient(45deg, #007bff, #0056b3);
+        color: white;
+        box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+    }
 
-.step-circle.completed {
-    background: #28a745;
-    color: white;
-}
+    .step-circle.completed {
+        background: #28a745;
+        color: white;
+    }
 
-.employee-card {
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
+    .employee-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
 
-.employee-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-}
+    .employee-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
 
-.employee-card.selected {
-    border-color: #007bff !important;
-    background: linear-gradient(135deg, #f8f9ff, #e3f2fd);
-    transform: scale(1.02);
-    box-shadow: 0 8px 25px rgba(0, 123, 255, 0.2);
-}
+    .employee-card.selected {
+        border-color: #007bff !important;
+        background: linear-gradient(135deg, #f8f9ff, #e3f2fd);
+        transform: scale(1.02);
+        box-shadow: 0 8px 25px rgba(0, 123, 255, 0.2);
+    }
 
-.shift-group {
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 10px;
-    margin-bottom: 10px;
-    background: #f8f9fa;
-}
+    .shift-group {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 10px;
+        background: #f8f9fa;
+    }
 
-.assigned-employees .badge {
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
+    .assigned-employees .badge {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
 
-.assigned-employees .badge:hover {
-    transform: scale(1.1);
-    background-color: #dc3545 !important;
-}
+    .assigned-employees .badge:hover {
+        transform: scale(1.1);
+        background-color: #dc3545 !important;
+    }
 
-.progress {
-    border-radius: 10px;
-    overflow: hidden;
-}
+    .progress {
+        border-radius: 10px;
+        overflow: hidden;
+    }
 
-.progress-bar {
-    transition: all 0.3s ease;
-}
+    .progress-bar {
+        transition: all 0.3s ease;
+    }
 
-/* إصلاح مشكلة الـ scroll */
-body {
-    overflow-x: auto !important;
-    overflow-y: auto !important;
-}
+    /* إصلاح مشكلة الـ scroll */
+    body {
+        overflow-x: auto !important;
+        overflow-y: auto !important;
+    }
 
-.modal-body {
-    max-height: 70vh;
-    overflow-y: auto;
-}
+    .modal-body {
+        max-height: 70vh;
+        overflow-y: auto;
+    }
 
-.table-responsive {
-    max-height: 60vh;
-    overflow-y: auto;
-}
+    .table-responsive {
+        max-height: 60vh;
+        overflow-y: auto;
+    }
 
-/* تحسين الـ scroll للجداول */
-#schedule-table {
-    min-height: 400px;
-}
+    /* تحسين الـ scroll للجداول */
+    #schedule-table {
+        min-height: 400px;
+    }
 
-/* إصلاح الـ scroll للصفحة الرئيسية */
-.main-content {
-    overflow-x: auto;
-    overflow-y: auto;
-}
+    /* إصلاح الـ scroll للصفحة الرئيسية */
+    .main-content {
+        overflow-x: auto;
+        overflow-y: auto;
+    }
 
-/* إصلاح مشاكل الـ scroll العامة */
-html, body {
-    height: auto !important;
-    overflow-x: auto !important;
-    overflow-y: auto !important;
-}
+    /* إصلاح مشاكل الـ scroll العامة */
+    html,
+    body {
+        height: auto !important;
+        overflow-x: auto !important;
+        overflow-y: auto !important;
+    }
 
-/* تحسين الـ scroll للجداول */
-.table-responsive {
-    border: 1px solid #dee2e6;
-    border-radius: 0.375rem;
-}
+    /* تحسين الـ scroll للجداول */
+    .table-responsive {
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+    }
 
-/* تحسين الـ scroll للـ modals */
-.modal-dialog {
-    max-height: 90vh;
-    overflow-y: auto;
-}
+    /* تحسين الـ scroll للـ modals */
+    .modal-dialog {
+        max-height: 90vh;
+        overflow-y: auto;
+    }
 
-.modal-content {
-    max-height: 90vh;
-    overflow-y: auto;
-}
+    .modal-content {
+        max-height: 90vh;
+        overflow-y: auto;
+    }
 
-/* إصلاح الـ scroll للخطوات */
-.step-content {
-    overflow: visible;
-}
+    /* إصلاح الـ scroll للخطوات */
+    .step-content {
+        overflow: visible;
+    }
 
-/* تحسين الـ scroll للبطاقات */
-.card {
-    overflow: visible;
-}
+    /* تحسين الـ scroll للبطاقات */
+    .card {
+        overflow: visible;
+    }
 
-.avatar-circle {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: #f8f9fa;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto;
-}
+    .avatar-circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+    }
 
-.navigation-buttons {
-    background: linear-gradient(135deg, #f8f9ff, #e3f2fd);
-    border: 2px solid #007bff;
-    border-radius: 15px;
-    padding: 20px;
-    margin: 20px 0;
-}
+    .navigation-buttons {
+        background: linear-gradient(135deg, #f8f9ff, #e3f2fd);
+        border: 2px solid #007bff;
+        border-radius: 15px;
+        padding: 20px;
+        margin: 20px 0;
+    }
 
-#nextBtn {
-    background: linear-gradient(45deg, #007bff, #0056b3);
-    border: none;
-    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
-}
+    #nextBtn {
+        background: linear-gradient(45deg, #007bff, #0056b3);
+        border: none;
+        box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+    }
 
-#nextBtn:hover {
-    background: linear-gradient(45deg, #0056b3, #004085);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
-}
+    #nextBtn:hover {
+        background: linear-gradient(45deg, #0056b3, #004085);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+    }
 
-#submitBtn {
-    background: linear-gradient(45deg, #28a745, #1e7e34);
-    border: none;
-    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
-}
+    #submitBtn {
+        background: linear-gradient(45deg, #28a745, #1e7e34);
+        border: none;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    }
 
-#submitBtn:hover {
-    background: linear-gradient(45deg, #1e7e34, #155724);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
-}
+    #submitBtn:hover {
+        background: linear-gradient(45deg, #1e7e34, #155724);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+    }
 </style>
 
 <!-- Assignment Modal -->
@@ -1651,21 +1973,22 @@ html, body {
                 <h5 class="modal-title" id="assignmentModalLabel">
                     <i class="fas fa-users me-2"></i>تعيين الموظفين للشفتات - <span id="assignment-date"></span>
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="assignment-date-input">
-                
+
                 <!-- Instructions -->
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle me-2"></i>
                     <strong>تعليمات:</strong> اختر الموظفين لكل شفتة. يمكن تعيين أكثر من موظف للشفتة الواحدة.
                 </div>
-                
+
                 <div class="row" id="shifts-container">
                     <!-- سيتم ملؤها بـ JavaScript -->
                 </div>
-                
+
                 <!-- Quick Actions -->
                 <div class="mt-4">
                     <div class="card">
@@ -1698,39 +2021,39 @@ html, body {
 </div>
 
 <script>
-// Auto-assign for current day in modal
-function autoAssignCurrentDay() {
-    const dateStr = document.getElementById('assignment-date-input').value;
-    autoAssign(dateStr);
-    
-    // إعادة تحديث محتوى الـ modal
-    prepareModalContent(dateStr);
-}
+    // Auto-assign for current day in modal
+    function autoAssignCurrentDay() {
+        const dateStr = document.getElementById('assignment-date-input').value;
+        autoAssign(dateStr);
 
-// Clear all assignments for current day
-function clearAllAssignments() {
-    const dateStr = document.getElementById('assignment-date-input').value;
-    
-    if (confirm('هل أنت متأكد من مسح جميع التعيينات لهذا اليوم؟')) {
-        scheduleData[dateStr].shifts = {};
-        updateCoverage(dateStr);
-        updateDaySchedule(dateStr);
-        updateScheduleSummary();
-        
         // إعادة تحديث محتوى الـ modal
         prepareModalContent(dateStr);
     }
-}
 
-// Save assignments
-function saveAssignments() {
-    const modal = bootstrap.Modal.getInstance(document.getElementById('assignmentModal'));
-    modal.hide();
-    
-    // تحديث الملخص
-    updateScheduleSummary();
-    
-    alert('تم حفظ التعيينات بنجاح!');
-}
+    // Clear all assignments for current day
+    function clearAllAssignments() {
+        const dateStr = document.getElementById('assignment-date-input').value;
+
+        if (confirm('هل أنت متأكد من مسح جميع التعيينات لهذا اليوم؟')) {
+            scheduleData[dateStr].shifts = {};
+            updateCoverage(dateStr);
+            updateDaySchedule(dateStr);
+            updateScheduleSummary();
+
+            // إعادة تحديث محتوى الـ modal
+            prepareModalContent(dateStr);
+        }
+    }
+
+    // Save assignments
+    function saveAssignments() {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('assignmentModal'));
+        modal.hide();
+
+        // تحديث الملخص
+        updateScheduleSummary();
+
+        alert('تم حفظ التعيينات بنجاح!');
+    }
 </script>
 {% endblock %}

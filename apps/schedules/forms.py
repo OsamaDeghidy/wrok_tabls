@@ -147,10 +147,7 @@ class ScheduleEntryForm(forms.ModelForm):
         employee = cleaned_data.get('employee')
         
         if start_time and end_time:
-            if start_time >= end_time:
-                raise forms.ValidationError({
-                    'end_time': 'ساعة النهاية يجب أن تكون بعد ساعة البداية'
-                })
+            pass # تم إزالة التحقق للسماح بالشفتات الليلية (start_time > end_time)
         
         # التحقق من الإجازات المتداخلة
         if employee and date:
@@ -316,10 +313,7 @@ class ScheduleEntryEditForm(forms.ModelForm):
         employee = cleaned_data.get('employee')
         
         if start_time and end_time:
-            if start_time >= end_time:
-                raise forms.ValidationError({
-                    'end_time': 'ساعة النهاية يجب أن تكون بعد ساعة البداية'
-                })
+            pass # تم إزالة التحقق للسماح بالشفتات الليلية (start_time > end_time)
         
         # التحقق من الإجازات المتداخلة
         if employee and date:

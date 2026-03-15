@@ -79,6 +79,7 @@ TEMPLATES = [
                     'django.template.context_processors.request',
                     'django.contrib.auth.context_processors.auth',
                     'django.contrib.messages.context_processors.messages',
+                    'apps.approvals.context_processors.pending_approvals',
                     # 'worktable_system.context_processors.user_permissions',
                 ],
         },

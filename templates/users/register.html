@@ -1,65 +1,286 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}إنشاء حساب جديد{% endblock %}
+{% block title %}إنشاء حساب جديد - نظام إدارة الجداول{% endblock %}
+
+{% block head_extra %}
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+        --success-gradient: linear-gradient(135deg, #1cc88a 0%, #13855c 100%);
+        --info-gradient: linear-gradient(135deg, #36b9cc 0%, #258391 100%);
+        --warning-gradient: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%);
+        --glass-bg: rgba(255, 255, 255, 0.9);
+        --glass-border: rgba(255, 255, 255, 0.2);
+    }
+
+    body {
+        background: #f8f9fc;
+        background-image: radial-gradient(at 0% 0%, rgba(78, 115, 223, 0.05) 0, transparent 50%),
+            radial-gradient(at 50% 0%, rgba(28, 200, 138, 0.05) 0, transparent 50%);
+        min-height: 100vh;
+    }
+
+    .register-container {
+        padding-top: 3rem;
+        padding-bottom: 5rem;
+    }
+
+    .register-card {
+        border: none;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+    }
+
+    .register-header {
+        background: var(--primary-gradient);
+        padding: 3rem 2rem;
+        color: white;
+        text-align: center;
+        position: relative;
+    }
+
+    .register-header h2 {
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        margin-bottom: 0.5rem;
+    }
+
+    .register-header p {
+        opacity: 0.8;
+        font-weight: 300;
+    }
+
+    .form-section {
+        padding: 2.5rem;
+    }
+
+    .section-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #b7b9cc;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .section-title i {
+        margin-left: 0.75rem;
+    }
+
+    .form-floating>.form-control:focus~label,
+    .form-floating>.form-control:not(:placeholder-shown)~label {
+        color: #4e73df;
+        transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+    }
+
+    .form-control,
+    .form-select {
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        border: 2px solid #eaecf4;
+        transition: all 0.2s;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #bac8f3;
+        box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.1);
+    }
+
+    .input-group-text {
+        background: transparent;
+        border: 2px solid #eaecf4;
+        border-left: none;
+        color: #d1d3e2;
+        border-radius: 0 12px 12px 0;
+    }
+
+    .form-control+.input-group-text {
+        border-right: none;
+        border-left: 2px solid #eaecf4;
+        border-radius: 12px 0 0 12px;
+    }
+
+    .role-badge {
+        padding: 1rem;
+        border-radius: 15px;
+        border: 2px solid #eaecf4;
+        margin-bottom: 1rem;
+        transition: all 0.3s;
+        cursor: pointer;
+        height: 100%;
+    }
+
+    .role-badge:hover {
+        border-color: #4e73df;
+        background: rgba(78, 115, 223, 0.05);
+        transform: translateY(-5px);
+    }
+
+    .role-badge.active {
+        border-color: #4e73df;
+        background: var(--primary-gradient);
+        color: white;
+    }
+
+    .role-badge i {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .btn-register {
+        background: var(--primary-gradient);
+        border: none;
+        border-radius: 12px;
+        padding: 0.8rem 2.5rem;
+        font-weight: 700;
+        color: white;
+        box-shadow: 0 4px 15px rgba(78, 115, 223, 0.3);
+        transition: all 0.3s;
+    }
+
+    .btn-register:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(78, 115, 223, 0.4);
+        color: white;
+    }
+
+    .btn-login {
+        color: #4e73df;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .btn-login:hover {
+        text-decoration: underline;
+    }
+
+    .role-info-card {
+        border-radius: 15px;
+        border: none;
+        background: #f8f9fc;
+    }
+
+    .animate-up {
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .custom-checkbox .form-check-input:checked {
+        background-color: #4e73df;
+        border-color: #4e73df;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<div class="container register-container">
     <div class="row justify-content-center">
-        <div class="col-lg-6">
-            <div class="card shadow-sm">
-                <div class="card-header text-center">
-                    <h4 class="mb-0"><i class="fas fa-user-plus me-2"></i>إنشاء حساب جديد</h4>
+        <div class="col-lg-10 col-xl-8">
+            <div class="register-card animate-up">
+                <div class="register-header">
+                    <h2>انضم إلينا اليوم</h2>
+                    <p>قم بإنشاء حسابك للبدء في إدارة الجداول والعمليات التشغيلية</p>
+                    <div class="position-absolute bottom-0 start-50 translate-middle-x mb-n3">
+                        <div class="bg-white rounded-circle p-2 shadow-sm">
+                            <i class="fas fa-id-card fa-2x text-primary"></i>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <form method="post">
+
+                <div class="form-section">
+                    <form method="post" id="registrationForm" class="needs-validation" novalidate>
                         {% csrf_token %}
-                        <div class="row">
+
+                        <!-- Personal Info -->
+                        <div class="section-title">
+                            <i class="fas fa-user-circle"></i>المعلومات الشخصية
+                        </div>
+                        <div class="row g-3 mb-4">
                             <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="id_first_name" class="form-label">الاسم الأول <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="id_first_name" name="first_name" required>
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="id_first_name" name="first_name"
+                                        placeholder="الاسم الأول" required>
+                                    <label for="id_first_name">الاسم الأول <span class="text-danger">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="id_last_name" class="form-label">الاسم الأخير <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="id_last_name" name="last_name" required>
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="id_last_name" name="last_name"
+                                        placeholder="الاسم الأخير" required>
+                                    <label for="id_last_name">الاسم الأخير <span class="text-danger">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="id_username" class="form-label">اسم المستخدم <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="id_username" name="username" required>
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="id_username" name="username"
+                                        placeholder="اسم المستخدم" required>
+                                    <label for="id_username">اسم المستخدم <span class="text-danger">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="id_email" class="form-label">البريد الإلكتروني <span class="text-danger">*</span></label>
-                                    <input type="email" class="form-control" id="id_email" name="email" required>
+                                <div class="form-floating">
+                                    <input type="email" class="form-control" id="id_email" name="email"
+                                        placeholder="البريد الإلكتروني" required>
+                                    <label for="id_email">البريد الإلكتروني <span class="text-danger">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="id_password1" class="form-label">كلمة المرور <span class="text-danger">*</span></label>
-                                    <input type="password" class="form-control" id="id_password1" name="password1" required>
+                                <div class="form-floating">
+                                    <input type="tel" class="form-control" id="id_phone" name="phone"
+                                        placeholder="رقم الهاتف" pattern="^(\+966|0)?[5-9][0-9]{8}$">
+                                    <label for="id_phone">رقم الهاتف (اختياري)</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Account Security -->
+                        <div class="section-title">
+                            <i class="fas fa-shield-alt"></i>أمان الحساب
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="password" class="form-control" id="id_password1" name="password1"
+                                        placeholder="كلمة المرور" required>
+                                    <label for="id_password1">كلمة المرور <span class="text-danger">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="id_password2" class="form-label">تأكيد كلمة المرور <span class="text-danger">*</span></label>
-                                    <input type="password" class="form-control" id="id_password2" name="password2" required>
+                                <div class="form-floating">
+                                    <input type="password" class="form-control" id="id_password2" name="password2"
+                                        placeholder="تأكيد كلمة المرور" required>
+                                    <label for="id_password2">تأكيد كلمة المرور <span
+                                            class="text-danger">*</span></label>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Role & Assignment -->
+                        <div class="section-title">
+                            <i class="fas fa-briefcase"></i>الدور والفرع
+                        </div>
+                        <div class="row g-3 mb-4">
                             <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="id_phone" class="form-label">رقم الهاتف</label>
-                                    <input type="tel" class="form-control" id="id_phone" name="phone" placeholder="+966501234567">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="id_role" class="form-label">الدور <span class="text-danger">*</span></label>
+                                <div class="form-floating">
                                     <select class="form-select" id="id_role" name="role" required>
                                         <option value="">اختر الدور</option>
                                         <option value="employee">موظف</option>
@@ -70,88 +291,53 @@
                                         <option value="admin_manager">مدير إدارة</option>
                                         <option value="super_admin">مدير عام</option>
                                     </select>
-                                    <div class="form-text">
-                                        <small class="text-muted">
-                                            <i class="fas fa-info-circle me-1"></i>
-                                            اختر الدور المناسب لصلاحياتك في النظام
-                                        </small>
-                                    </div>
+                                    <label for="id_role">الدور الوظيفي <span class="text-danger">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="id_branch" class="form-label">الفرع</label>
+                                <div class="form-floating" id="branch-wrapper">
                                     <select class="form-select" id="id_branch" name="branch">
                                         <option value="">اختر الفرع (اختياري)</option>
                                         {% for branch in branches %}
-                                        <option value="{{ branch.id }}">{{ branch.name }} - {{ branch.get_type_display }}</option>
+                                        <option value="{{ branch.id }}">{{ branch.name }}</option>
                                         {% endfor %}
                                     </select>
-                                    <div class="form-text">
-                                        <small class="text-muted">
-                                            <i class="fas fa-info-circle me-1"></i>
-                                            مطلوب لمديري المعارض والموظفين
-                                        </small>
-                                    </div>
+                                    <label for="id_branch" id="branch-label">الفرع</label>
                                 </div>
-                            </div>
-                            <!-- Region (for region_manager) -->
-                            <div class="col-md-6" id="region-wrapper" style="display:none;">
-                                <div class="mb-3">
-                                    <label for="id_region" class="form-label">اختر المنطقة</label>
+                                <div class="form-floating" id="region-wrapper" style="display:none;">
                                     <select class="form-select" id="id_region" name="region">
                                         <option value="">اختر المنطقة</option>
                                     </select>
-                                    <div class="form-text">
-                                        <small class="text-muted">
-                                            <i class="fas fa-info-circle me-1"></i>
-                                            يظهر فقط عند اختيار دور مدير منطقة
-                                        </small>
-                                    </div>
+                                    <label for="id_region">المنطقة</label>
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Role Information -->
-                        <div class="card bg-light mt-4">
-                            <div class="card-header">
-                                <h6 class="mb-0">
-                                    <i class="fas fa-info-circle me-2"></i>معلومات الأدوار والصلاحيات
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <h6 class="text-primary">الأدوار الأساسية:</h6>
-                                        <ul class="list-unstyled">
-                                            <li><i class="fas fa-user text-muted me-2"></i><strong>موظف:</strong> عرض الجداول والطلبات</li>
-                                            <li><i class="fas fa-building text-muted me-2"></i><strong>مدير معرض:</strong> إدارة فرع واحد</li>
-                                            <li><i class="fas fa-users text-muted me-2"></i><strong>منسق:</strong> تنسيق بين الفروع</li>
-                                        </ul>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <h6 class="text-success">الأدوار الإدارية:</h6>
-                                        <ul class="list-unstyled">
-                                            <li><i class="fas fa-map-marked-alt text-muted me-2"></i><strong>مدير منطقة:</strong> إدارة منطقة كاملة</li>
-                                            <li><i class="fas fa-cogs text-muted me-2"></i><strong>مدير عمليات:</strong> إدارة العمليات</li>
-                                            <li><i class="fas fa-shield-alt text-muted me-2"></i><strong>مدير إدارة:</strong> صلاحيات إدارية كاملة</li>
-                                            <li><i class="fas fa-crown text-muted me-2"></i><strong>مدير عام:</strong> صلاحيات النظام الكاملة</li>
-                                        </ul>
-                                    </div>
+
+                        <!-- Dynamic Role Info -->
+                        <div id="role-info-display" class="mb-4 d-none">
+                            <div class="card role-info-card border-start border-4 border-primary shadow-sm">
+                                <div class="card-body" id="role-info-content">
+                                    <!-- Dynamic content here -->
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="d-flex justify-content-between">
-                            <a href="{% url 'users:login' %}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-right me-1"></i>تسجيل الدخول
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-user-plus me-1"></i>إنشاء الحساب
+
+                        <hr class="my-4">
+
+                        <div class="d-grid gap-3 d-md-flex justify-content-md-between align-items-center">
+                            <div class="text-muted small order-2 order-md-1">
+                                لديك حساب بالفعل؟ <a href="{% url 'users:login' %}" class="btn-login">تسجيل الدخول</a>
+                            </div>
+                            <button type="submit" class="btn btn-register btn-lg order-1 order-md-2" id="submitBtn">
+                                <i class="fas fa-paper-plane me-2"></i>إنشاء الحساب الآن
                             </button>
                         </div>
                     </form>
                 </div>
+            </div>
+
+            <div class="text-center mt-4 text-muted small animate-up" style="animation-delay: 0.2s">
+                <p>&copy; 2026 نظام إدارة الجداول التشغيلية. جميع الحقوق محفوظة.</p>
             </div>
         </div>
     </div>
@@ -160,158 +346,182 @@
 
 {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const roleSelect = document.getElementById('id_role');
-    const branchSelect = document.getElementById('id_branch');
-    const phoneInput = document.getElementById('id_phone');
-    const regionWrapper = document.getElementById('region-wrapper');
-    const regionSelect = document.getElementById('id_region');
-    
-    // Update branch requirement based on role
-    roleSelect.addEventListener('change', function() {
-        const selectedRole = this.value;
-        const branchField = branchSelect.closest('.mb-3');
-        const branchLabel = branchField.querySelector('label');
-        const branchHelp = branchField.querySelector('.form-text');
-        
-        if (selectedRole === 'employee' || selectedRole === 'branch_manager') {
-            branchSelect.required = true;
-            branchLabel.innerHTML = 'الفرع <span class="text-danger">*</span>';
-            branchHelp.innerHTML = '<small class="text-muted"><i class="fas fa-info-circle me-1"></i>مطلوب لمديري المعارض والموظفين</small>';
-        } else {
-            branchSelect.required = false;
-            branchLabel.innerHTML = 'الفرع';
-            branchHelp.innerHTML = '<small class="text-muted"><i class="fas fa-info-circle me-1"></i>اختياري للأدوار الإدارية</small>';
+    document.addEventListener('DOMContentLoaded', function () {
+        const roleSelect = document.getElementById('id_role');
+        const branchSelect = document.getElementById('id_branch');
+        const branchWrapper = document.getElementById('branch-wrapper');
+        const branchLabel = document.getElementById('branch-label');
+        const regionWrapper = document.getElementById('region-wrapper');
+        const regionSelect = document.getElementById('id_region');
+        const phoneInput = document.getElementById('id_phone');
+        const password1 = document.getElementById('id_password1');
+        const password2 = document.getElementById('id_password2');
+        const roleInfoDisplay = document.getElementById('role-info-display');
+        const roleInfoContent = document.getElementById('role-info-content');
+        const form = document.getElementById('registrationForm');
+
+        // Role Metadata
+        const rolesData = {
+            'employee': {
+                icon: 'fa-user',
+                label: 'موظف',
+                color: 'info',
+                desc: 'يمكنك عرض الجداول التشغيلية المخصصة لك وتقديم طلبات الإجازات.',
+                requireBranch: true
+            },
+            'branch_manager': {
+                icon: 'fa-building',
+                label: 'مدير معرض',
+                color: 'warning',
+                desc: 'لديك صلاحية إدارة الفرع، توزيع الموظفين، واعتماد الجداول.',
+                requireBranch: true
+            },
+            'coordinator': {
+                icon: 'fa-users',
+                label: 'منسق',
+                color: 'primary',
+                desc: 'تنسيق العمل بين الفروع المختلفة ومتابعة سير العمل.',
+                requireBranch: false
+            },
+            'region_manager': {
+                icon: 'fa-map-marked-alt',
+                label: 'مدير منطقة',
+                color: 'success',
+                desc: 'إدارة منطقة كاملة، مراجعة تقارير الفروع، واتخاذ القرارات الاستراتيجية.',
+                requireBranch: false,
+                requireRegion: true
+            },
+            'operations_manager': {
+                icon: 'fa-cogs',
+                label: 'مدير عمليات',
+                color: 'info',
+                desc: 'إشراف كامل على العمليات التشغيلية وضمان كفاءة الأداء.',
+                requireBranch: false
+            },
+            'admin_manager': {
+                icon: 'fa-shield-alt',
+                label: 'مدير إدارة',
+                color: 'dark',
+                desc: 'صلاحيات إدارية متقدمة لإدارة الموظفين والإعدادات العامة.',
+                requireBranch: false
+            },
+            'super_admin': {
+                icon: 'fa-crown',
+                label: 'مدير عام',
+                color: 'danger',
+                desc: 'صلاحيات مطلقة للنظام وإدارة جميع جوانب التطبيق.',
+                requireBranch: false
+            }
+        };
+
+        function updateUIForRole() {
+            const role = roleSelect.value;
+            const data = rolesData[role];
+
+            if (role && data) {
+                // Update Role Info Content
+                roleInfoContent.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle bg-${data.color} bg-opacity-10 p-3 me-3">
+                        <i class="fas ${data.icon} text-${data.color} fa-xl"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-1 text-${data.color}">صلاحيات: ${data.label}</h6>
+                        <p class="mb-0 small text-muted">${data.desc}</p>
+                    </div>
+                </div>
+            `;
+                roleInfoDisplay.classList.remove('d-none');
+
+                // Handle Branch/Region toggles
+                if (data.requireBranch) {
+                    branchWrapper.style.display = 'block';
+                    branchSelect.required = true;
+                    branchLabel.innerHTML = 'الفرع <span class="text-danger">*</span>';
+                    regionWrapper.style.display = 'none';
+                    regionSelect.required = false;
+                } else if (data.requireRegion) {
+                    branchWrapper.style.display = 'none';
+                    branchSelect.required = false;
+                    regionWrapper.style.display = 'block';
+                    regionSelect.required = true;
+
+                    // Fetch regions if not already loaded
+                    if (regionSelect.options.length <= 1) {
+                        regionSelect.innerHTML = '<option value="">جاري تحميل المناطق...</option>';
+                        fetch('/branches/api/regions/')
+                            .then(res => res.json())
+                            .then(data => {
+                                regionSelect.innerHTML = '<option value="">اختر المنطقة</option>';
+                                (data.regions || []).forEach(r => {
+                                    const opt = document.createElement('option');
+                                    opt.value = r.value;
+                                    opt.textContent = r.label;
+                                    regionSelect.appendChild(opt);
+                                });
+                            })
+                            .catch(() => {
+                                regionSelect.innerHTML = '<option value="">تعذر تحميل المناطق</option>';
+                            });
+                    }
+                } else {
+                    branchWrapper.style.display = 'block';
+                    branchSelect.required = false;
+                    branchLabel.innerHTML = 'الفرع (اختياري)';
+                    regionWrapper.style.display = 'none';
+                    regionSelect.required = false;
+                }
+            } else {
+                roleInfoDisplay.classList.add('d-none');
+                branchWrapper.style.display = 'block';
+                branchSelect.required = false;
+                branchLabel.innerHTML = 'الفرع (اختياري)';
+                regionWrapper.style.display = 'none';
+            }
         }
 
-        // Toggle region field for region_manager
-        if (selectedRole === 'region_manager') {
-            regionWrapper.style.display = '';
-            regionSelect.required = true;
-            // Fetch regions dynamically
-            fetch('/branches/api/regions/')
-                .then(res => res.json())
-                .then(data => {
-                    const regions = data.regions || [];
-                    regionSelect.innerHTML = '<option value="">اختر المنطقة</option>';
-                    regions.forEach(r => {
-                        const opt = document.createElement('option');
-                        opt.value = r.value;
-                        opt.textContent = r.label;
-                        regionSelect.appendChild(opt);
-                    });
-                })
-                .catch(() => {
-                    regionSelect.innerHTML = '<option value="">تعذر تحميل المناطق</option>';
-                });
-        } else {
-            regionWrapper.style.display = 'none';
-            regionSelect.required = false;
-            regionSelect.value = '';
-        }
-    });
-    
-    // Phone number validation
-    phoneInput.addEventListener('input', function() {
-        const phone = this.value;
-        const phoneRegex = /^(\+966|0)?[5-9][0-9]{8}$/;
-        
-        if (phone && !phoneRegex.test(phone)) {
-            this.setCustomValidity('رقم الهاتف غير صحيح. يجب أن يبدأ بـ +966 أو 0 ويحتوي على 9 أرقام');
-        } else {
-            this.setCustomValidity('');
-        }
-    });
-    
-    // Password confirmation validation
-    const password1 = document.getElementById('id_password1');
-    const password2 = document.getElementById('id_password2');
-    
-    password2.addEventListener('input', function() {
-        if (this.value !== password1.value) {
-            this.setCustomValidity('كلمة المرور غير متطابقة');
-        } else {
-            this.setCustomValidity('');
-        }
-    });
-    
-    // Form submission validation
-    const form = document.querySelector('form');
-    form.addEventListener('submit', function(e) {
-        const role = roleSelect.value;
-        const branch = branchSelect.value;
-        const region = regionSelect.value;
-        
-        if ((role === 'employee' || role === 'branch_manager') && !branch) {
-            e.preventDefault();
-            alert('يرجى اختيار الفرع للدور المحدد');
-            branchSelect.focus();
-            return false;
-        }
+        roleSelect.addEventListener('change', updateUIForRole);
 
-        if (role === 'region_manager' && !region) {
-            e.preventDefault();
-            alert('يرجى اختيار المنطقة للدور المحدد');
-            regionSelect.focus();
-            return false;
-        }
-        
-        if (password1.value !== password2.value) {
-            e.preventDefault();
-            alert('كلمة المرور غير متطابقة');
-            password2.focus();
-            return false;
-        }
+        // Initial check (if role is pre-selected)
+        if (roleSelect.value) updateUIForRole();
+
+        // Browser Validation Overrides
+        form.addEventListener('submit', function (event) {
+            let isValid = true;
+
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+                isValid = false;
+            }
+
+            // Custom password check
+            if (password1.value !== password2.value) {
+                password2.setCustomValidity('كلمات المرور لا تتطابق');
+                event.preventDefault();
+                isValid = false;
+            } else {
+                password2.setCustomValidity('');
+            }
+
+            form.classList.add('was-validated');
+
+            if (isValid) {
+                const btn = document.getElementById('submitBtn');
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>جاري المعالجة...';
+                btn.disabled = true;
+            }
+        }, false);
+
+        // Real-time password match
+        password2.addEventListener('input', function () {
+            if (this.value !== password1.value) {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+                this.setCustomValidity('');
+            }
+        });
     });
-    
-    // Show role-specific information
-    roleSelect.addEventListener('change', function() {
-        const selectedRole = this.value;
-        const roleInfo = document.querySelector('.card.bg-light');
-        
-        if (roleInfo) {
-            let infoText = '';
-            switch(selectedRole) {
-                case 'employee':
-                    infoText = '<div class="alert alert-info"><i class="fas fa-info-circle me-2"></i><strong>موظف:</strong> يمكنك عرض الجداول التشغيلية وطلبات الإجازات</div>';
-                    break;
-                case 'branch_manager':
-                    infoText = '<div class="alert alert-warning"><i class="fas fa-building me-2"></i><strong>مدير معرض:</strong> يمكنك إدارة فرع واحد فقط وإنشاء الجداول التشغيلية</div>';
-                    break;
-                case 'coordinator':
-                    infoText = '<div class="alert alert-primary"><i class="fas fa-users me-2"></i><strong>منسق:</strong> يمكنك تنسيق العمل بين الفروع المختلفة</div>';
-                    break;
-                case 'region_manager':
-                    infoText = '<div class="alert alert-success"><i class="fas fa-map-marked-alt me-2"></i><strong>مدير منطقة:</strong> يمكنك إدارة منطقة كاملة مع جميع فروعها</div>';
-                    break;
-                case 'operations_manager':
-                    infoText = '<div class="alert alert-info"><i class="fas fa-cogs me-2"></i><strong>مدير عمليات:</strong> يمكنك إدارة جميع العمليات التشغيلية</div>';
-                    break;
-                case 'admin_manager':
-                    infoText = '<div class="alert alert-warning"><i class="fas fa-shield-alt me-2"></i><strong>مدير إدارة:</strong> صلاحيات إدارية كاملة في النظام</div>';
-                    break;
-                case 'super_admin':
-                    infoText = '<div class="alert alert-danger"><i class="fas fa-crown me-2"></i><strong>مدير عام:</strong> صلاحيات النظام الكاملة</div>';
-                    break;
-                default:
-                    infoText = '';
-            }
-            
-            // Remove existing role info
-            const existingInfo = roleInfo.querySelector('.role-specific-info');
-            if (existingInfo) {
-                existingInfo.remove();
-            }
-            
-            // Add new role info
-            if (infoText) {
-                const infoDiv = document.createElement('div');
-                infoDiv.className = 'role-specific-info mt-3';
-                infoDiv.innerHTML = infoText;
-                roleInfo.appendChild(infoDiv);
-            }
-        }
-    });
-});
 </script>
 {% endblock %}

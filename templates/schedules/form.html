@@ -2,11 +2,11 @@
 {% load static %}
 
 {% block title %}
-    {% if schedule %}تعديل الجدول - {{ schedule.name }}{% else %}إضافة جدول جديد{% endif %}
+{% if schedule %}تعديل الجدول - {{ schedule.name }}{% else %}إضافة جدول جديد{% endif %}
 {% endblock %}
 
 {% block page_title %}
-    {% if schedule %}تعديل الجدول{% else %}إضافة جدول جديد{% endif %}
+{% if schedule %}تعديل الجدول{% else %}إضافة جدول جديد{% endif %}
 {% endblock %}
 
 {% block page_actions %}
@@ -35,167 +35,168 @@
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
-                    <div class="row">
-                        <!-- Basic Information -->
+                    <!-- معلومات أساسية -->
+                    <div class="row g-4 mb-5">
+                        <div class="col-12 border-bottom pb-2 mb-3">
+                            <h5 class="text-primary d-flex align-items-center">
+                                <i class="fas fa-info-circle me-2"></i> المعلومات الأساسية
+                            </h5>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">اسم الجدول <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="name" value="{{ schedule.name|default:'' }}"
+                                required placeholder="مثلاً: جدول الأسبوع الأول - ديسمبر">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">نوع الجدول</label>
+                            <select class="form-select" name="type">
+                                <option value="daily" {% if schedule.type=='daily' %}selected{% endif %}>يومي</option>
+                                <option value="weekly" {% if schedule.type=='weekly' %}selected{% endif %}>أسبوعي
+                                </option>
+                                <option value="monthly" {% if schedule.type=='monthly' %}selected{% endif %}>شهري
+                                </option>
+                                <option value="shift" {% if schedule.type=='shift' %}selected{% endif %}>نوبات</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">الفرع <span class="text-danger">*</span></label>
+                            <select class="form-select" name="branch" required>
+                                <option value="">اختر الفرع</option>
+                                {% for b in branches %}
+                                <option value="{{ b.id }}" {% if schedule.branch_id==b.id %}selected{% endif %}>
+                                    {{ b.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">الحالة</label>
+                            <select class="form-select" name="status">
+                                <option value="draft" {% if schedule.status=='draft' %}selected{% endif %}>مسودة
+                                </option>
+                                <option value="active" {% if schedule.status=='active' %}selected{% endif %}>نشط
+                                </option>
+                                <option value="inactive" {% if schedule.status=='inactive' %}selected{% endif %}>غير نشط
+                                </option>
+                                <option value="completed" {% if schedule.status=='completed' %}selected{% endif %}>مكتمل
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- فترة الجدول -->
+                    <div class="row g-4 mb-5">
+                        <div class="col-12 border-bottom pb-2 mb-3">
+                            <h5 class="text-success d-flex align-items-center">
+                                <i class="fas fa-calendar-alt me-2"></i> فترة الجدول الزمني
+                            </h5>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">تاريخ البداية <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" name="start_date"
+                                value="{{ schedule.start_date|date:'Y-m-d' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">تاريخ النهاية <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" name="end_date"
+                                value="{{ schedule.end_date|date:'Y-m-d' }}" required>
+                        </div>
+                    </div>
+
+                    <!-- ساعات العمل والإعدادات -->
+                    <div class="row g-4 mb-5">
+                        <div class="col-12 border-bottom pb-2 mb-3">
+                            <h5 class="text-warning d-flex align-items-center">
+                                <i class="fas fa-clock me-2"></i> إعدادات الوقت والعمل
+                            </h5>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">وقت البداية</label>
+                            <input type="time" class="form-control" name="start_time"
+                                value="{{ schedule.start_time|time:'H:i'|default:'08:00' }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">وقت النهاية</label>
+                            <input type="time" class="form-control" name="end_time"
+                                value="{{ schedule.end_time|time:'H:i'|default:'17:00' }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">مدة الاستراحة (د)</label>
+                            <input type="number" class="form-control" name="break_duration"
+                                value="{{ schedule.break_duration|default:'60' }}" min="0">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">أقصى ساعات يومية</label>
+                            <input type="number" class="form-control" name="max_hours_per_day"
+                                value="{{ schedule.max_hours_per_day|default:'8' }}" min="1" max="24">
+                        </div>
+                    </div>
+
+                    <!-- تعيين الموظفين -->
+                    <div class="row g-4 mb-5">
+                        <div class="col-12 border-bottom pb-2 mb-3">
+                            <h5 class="text-info d-flex align-items-center">
+                                <i class="fas fa-users me-2"></i> تخصيص الموظفين
+                            </h5>
+                        </div>
                         <div class="col-12">
-                            <h6 class="text-primary mb-3">المعلومات الأساسية</h6>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="id_name" class="form-label">اسم الجدول <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="id_name" name="name" 
-                                       value="{{ schedule.name|default:'' }}" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="id_type" class="form-label">نوع الجدول</label>
-                                <select class="form-select" id="id_type" name="type">
-                                    <option value="">اختر نوع الجدول</option>
-                                    <option value="daily" {% if schedule.type == 'daily' %}selected{% endif %}>يومي</option>
-                                    <option value="weekly" {% if schedule.type == 'weekly' %}selected{% endif %}>أسبوعي</option>
-                                    <option value="monthly" {% if schedule.type == 'monthly' %}selected{% endif %}>شهري</option>
-                                    <option value="shift" {% if schedule.type == 'shift' %}selected{% endif %}>نوبات</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="id_branch" class="form-label">الفرع <span class="text-danger">*</span></label>
-                                <select class="form-select" id="id_branch" name="branch" required>
-                                    <option value="">اختر الفرع</option>
-                                    <option value="1" {% if schedule.branch == '1' %}selected{% endif %}>الفرع الرئيسي</option>
-                                    <option value="2" {% if schedule.branch == '2' %}selected{% endif %}>الفرع الأول</option>
-                                    <option value="3" {% if schedule.branch == '3' %}selected{% endif %}>الفرع الثاني</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="id_status" class="form-label">الحالة</label>
-                                <select class="form-select" id="id_status" name="status">
-                                    <option value="draft" {% if schedule.status == 'draft' %}selected{% endif %}>مسودة</option>
-                                    <option value="active" {% if schedule.status == 'active' %}selected{% endif %}>نشط</option>
-                                    <option value="inactive" {% if schedule.status == 'inactive' %}selected{% endif %}>غير نشط</option>
-                                    <option value="completed" {% if schedule.status == 'completed' %}selected{% endif %}>مكتمل</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Date Range -->
-                        <div class="col-12 mt-4">
-                            <h6 class="text-primary mb-3">فترة الجدول</h6>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="id_start_date" class="form-label">تاريخ البداية <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="id_start_date" name="start_date" 
-                                       value="{{ schedule.start_date|default:'' }}" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="id_end_date" class="form-label">تاريخ النهاية <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="id_end_date" name="end_date" 
-                                       value="{{ schedule.end_date|default:'' }}" required>
-                            </div>
-                        </div>
-
-                        <!-- Working Hours -->
-                        <div class="col-12 mt-4">
-                            <h6 class="text-primary mb-3">ساعات العمل</h6>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="id_start_time" class="form-label">وقت البداية</label>
-                                <input type="time" class="form-control" id="id_start_time" name="start_time" 
-                                       value="{{ schedule.start_time|default:'08:00' }}">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="id_end_time" class="form-label">وقت النهاية</label>
-                                <input type="time" class="form-control" id="id_end_time" name="end_time" 
-                                       value="{{ schedule.end_time|default:'17:00' }}">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="id_break_duration" class="form-label">مدة الاستراحة (دقائق)</label>
-                                <input type="number" class="form-control" id="id_break_duration" name="break_duration" 
-                                       value="{{ schedule.break_duration|default:'60' }}" min="0">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="id_max_hours_per_day" class="form-label">الحد الأقصى للساعات اليومية</label>
-                                <input type="number" class="form-control" id="id_max_hours_per_day" name="max_hours_per_day" 
-                                       value="{{ schedule.max_hours_per_day|default:'8' }}" min="1" max="24">
-                            </div>
-                        </div>
-
-                        <!-- Employee Assignment -->
-                        <div class="col-12 mt-4">
-                            <h6 class="text-primary mb-3">تعيين الموظفين</h6>
-                        </div>
-                        <div class="col-12">
-                            <div class="mb-3">
-                                <label class="form-label">الموظفون المخصصون</label>
-                                <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="emp1" name="employees" value="1" checked>
-                                        <label class="form-check-label" for="emp1">
-                                            أحمد محمد - مطور برمجيات
-                                        </label>
+                            <div class="p-4 bg-light rounded-3 border">
+                                <label class="form-label fw-bold mb-3">اختر الموظفين المشمولين في هذا الجدول</label>
+                                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-2"
+                                    style="max-height: 300px; overflow-y: auto;">
+                                    {% for employee in employees %}
+                                    <div class="col">
+                                        <div class="form-check card h-100 border p-2 shadow-xs">
+                                            <input class="form-check-input ms-0 me-2" type="checkbox" name="employees"
+                                                id="emp{{ employee.id }}" value="{{ employee.id }}" {% if employee in
+                                                schedule.employees.all %}checked{% endif %}>
+                                            <label class="form-check-label d-flex flex-column"
+                                                for="emp{{ employee.id }}">
+                                                <span class="fw-bold">{{ employee.user.get_full_name }}</span>
+                                                <span class="small text-muted">{{ employee.job_title }}</span>
+                                            </label>
+                                        </div>
                                     </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="emp2" name="employees" value="2">
-                                        <label class="form-check-label" for="emp2">
-                                            فاطمة علي - مديرة الموارد البشرية
-                                        </label>
+                                    {% empty %}
+                                    <div class="col-12">
+                                        <div class="alert alert-warning py-2 mb-0">لا يوجد موظفين متاحين لهذا الفرع
+                                        </div>
                                     </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="emp3" name="employees" value="3">
-                                        <label class="form-check-label" for="emp3">
-                                            محمد حسن - محاسب
-                                        </label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="emp4" name="employees" value="4">
-                                        <label class="form-check-label" for="emp4">
-                                            سارة أحمد - مديرة التسويق
-                                        </label>
-                                    </div>
+                                    {% endfor %}
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Additional Information -->
-                        <div class="col-12 mt-4">
-                            <h6 class="text-primary mb-3">معلومات إضافية</h6>
+                    <!-- إضافات -->
+                    <div class="row g-4 mb-5">
+                        <div class="col-12 border-bottom pb-2 mb-3">
+                            <h5 class="text-secondary d-flex align-items-center">
+                                <i class="fas fa-sticky-note me-2"></i> ملاحظات ووصف
+                            </h5>
                         </div>
                         <div class="col-12">
-                            <div class="mb-3">
-                                <label for="id_description" class="form-label">وصف الجدول</label>
-                                <textarea class="form-control" id="id_description" name="description" rows="3" 
-                                          placeholder="اكتب وصفاً مختصراً للجدول...">{{ schedule.description|default:'' }}</textarea>
-                            </div>
+                            <label class="form-label fw-bold">وصف الجدول</label>
+                            <textarea class="form-control" name="description" rows="3"
+                                placeholder="اكتب وصفاً مختصراً للجدول...">{{ schedule.description|default:'' }}</textarea>
                         </div>
                         <div class="col-12">
-                            <div class="mb-3">
-                                <label for="id_notes" class="form-label">ملاحظات</label>
-                                <textarea class="form-control" id="id_notes" name="notes" rows="3" 
-                                          placeholder="أي ملاحظات إضافية...">{{ schedule.notes|default:'' }}</textarea>
-                            </div>
+                            <label class="form-label fw-bold">ملاحظات إدارية</label>
+                            <textarea class="form-control" name="notes" rows="3"
+                                placeholder="أي ملاحظات إضافية...">{{ schedule.notes|default:'' }}</textarea>
                         </div>
                     </div>
-                    
-                    <div class="d-flex justify-content-end gap-2 mt-4">
-                        <a href="{% url 'schedules:list' %}" class="btn btn-secondary">إلغاء</a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save me-1"></i>
-                            {% if schedule %}حفظ التغييرات{% else %}إضافة الجدول{% endif %}
-                        </button>
+
+                    <div class="bg-light p-4 rounded-3 d-flex justify-content-between align-items-center border">
+                        <span class="text-muted small"><i class="fas fa-info-circle me-1"></i> تذكر حفظ الجدول بعد
+                            التعديل</span>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'schedules:list' %}" class="btn btn-outline-secondary px-4">إلغاء</a>
+                            <button type="submit" class="btn btn-primary px-5 shadow-sm">
+                                <i class="fas fa-save me-2"></i>
+                                {% if schedule %}حفظ التعديلات{% else %}إنشاء الجدول{% endif %}
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
