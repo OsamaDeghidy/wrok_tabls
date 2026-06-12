@@ -265,23 +265,26 @@ def employee_delete_view(request, employee_id):
     employee = get_object_or_404(Employee, pk=employee_id)
     
     if not check_employee_permission(request.user, 'delete'):
-        raise PermissionDenied("ليس لديك صلاحية لحذف الموظف")
+        return JsonResponse({'success': False, 'message': 'ليس لديك صلاحية لحذف الموظف'}, status=403)
     
     # مدير الفرع يحذف موظفي فرعه فقط
     if (hasattr(request.user, 'profile') and 
         request.user.profile.role == 'branch_manager' and 
         hasattr(request.user.profile, 'branch')):
         if employee.get_branch() != request.user.profile.branch:
-            raise PermissionDenied("ليس لديك صلاحية لحذف هذا الموظف")
+            return JsonResponse({'success': False, 'message': 'ليس لديك صلاحية لحذف هذا الموظف'}, status=403)
     
     try:
         employee_name = employee.user.get_full_name()
+        # حذف المستخدم المرتبط أيضاً
+        user_to_delete = employee.user
         employee.delete()
-        messages.success(request, f'تم حذف الموظف {employee_name} بنجاح')
+        user_to_delete.delete()
         return JsonResponse({'success': True, 'message': f'تم حذف الموظف {employee_name} بنجاح'})
     except Exception as e:
-        messages.error(request, f'حدث خطأ أثناء حذف الموظف: {str(e)}')
         return JsonResponse({'success': False, 'message': f'حدث خطأ أثناء حذف الموظف: {str(e)}'})
+
+
 
 
 @login_required
@@ -362,55 +365,74 @@ def employee_import_view(request):
                             user = User.objects.filter(username=username).first()
                         
                         if user and update_existing:
-                            # تحديث المستخدم الموجود
+                            # --- تحضير قيم التحديث ---
+                            role_val = get_val(row, 'role', 'الدور', 'الصلاحية')
+                            job_title_val = get_val(row, 'job_title', 'المسمى الوظيفي', 'الوظيفة')
+                            
+                            # ربط الفرع
+                            branch_id = None
+                            branch_name = get_val(row, 'branch', 'الفرع', 'المعرض')
+                            if branch_name:
+                                from apps.branches.models import Branch
+                                branch_obj = Branch.objects.filter(
+                                    Q(name=branch_name) | Q(name__icontains=branch_name)
+                                ).first()
+                                if branch_obj:
+                                    branch_id = branch_obj.id
+                                else:
+                                    errors.append(f'تحذير الصف {index + 2}: الفرع "{branch_name}" غير موجود في النظام')
+                            
+                            # المنطقة
+                            region_final = ''
+                            region_val = get_val(row, 'region', 'المنطقة', 'منطقة')
+                            if region_val:
+                                REGION_MAP = {
+                                    'north': 'north', 'المنطقة الشمالية': 'north', 'شمال': 'north', 'شمالية': 'north',
+                                    'south': 'south', 'المنطقة الجنوبية': 'south', 'جنوب': 'south', 'جنوبية': 'south',
+                                    'east': 'east', 'المنطقة الشرقية': 'east', 'شرق': 'east', 'شرقية': 'east',
+                                    'center': 'center', 'المنطقة الوسطى': 'center', 'وسط': 'center', 'وسطى': 'center',
+                                    'west': 'west', 'المنطقة الغربية': 'west', 'غرب': 'west', 'غربية': 'west',
+                                }
+                                for key, code in REGION_MAP.items():
+                                    if key.lower() == region_val.strip().lower():
+                                        region_final = code
+                                        break
+                            
+                            # تحديث UserProfile مباشرة في DB - يتجاوز الـ signals
+                            update_kwargs = {}
+                            if role_val:
+                                update_kwargs['role'] = role_val
+                            if job_title_val:
+                                update_kwargs['position'] = job_title_val
+                            if branch_name:  # فقط حدّث لو تم تحديد فرع في الملف
+                                update_kwargs['branch_id'] = branch_id  # None لو مش موجود
+                            if region_val:
+                                update_kwargs['region'] = region_final
+                            
+                            if update_kwargs:
+                                UserProfile.objects.filter(user=user).update(**update_kwargs)
+                            
+                            # حفظ User (بعد update profile لتجنب تأثير الـ signal على profile)
                             user.first_name = first_name
                             user.last_name = last_name
                             user.email = email
                             user.save()
                             
-                            # تحديث UserProfile
-                            if hasattr(user, 'profile'):
-                                profile = user.profile
-                                # إزالة رقم الهاتف من الاستيراد كما طلب العميل
-                                # phone = str(row.get('phone', row.get('رقم الهاتف', ''))).strip()
-                                # if phone and phone != 'nan':
-                                #     profile.phone = phone
-                                
-                                # الحصول على الحقول الإضافية
-                                role = get_val(row, 'role', 'الدور', 'الصلاحية')
-                                if role:
-                                    profile.role = role
-                                
-                                job_title = get_val(row, 'job_title', 'المسمى الوظيفي', 'الوظيفة')
-                                if job_title:
-                                    profile.position = job_title
-                                
-                                branch_name = get_val(row, 'branch', 'الفرع', 'المعرض')
-                                if branch_name:
-                                    from apps.branches.models import Branch
-                                    branch = Branch.objects.filter(name=branch_name).first()
-                                    if branch:
-                                        profile.branch = branch
-                                
-                                profile.save()
-                            
                             # تحديث Employee إذا كان موجوداً
                             try:
                                 employee_inst = Employee.objects.get(user=user)
-                                job_title = get_val(row, 'job_title', 'المسمى الوظيفي', 'الوظيفة')
-                                if job_title:
-                                    employee_inst.job_title = job_title
+                                if job_title_val:
+                                    employee_inst.job_title = job_title_val
                                 
-                                # معالجة تاريخ التعيين
                                 hire_date_raw = get_val(row, 'hire_date', 'تاريخ التعيين', 'التاريخ')
-                                if hire_date_raw:
+                                if hire_date_raw and hire_date_raw.lower() != 'nan':
                                     try:
                                         from django.utils.dateparse import parse_date
                                         hire_date = parse_date(hire_date_raw)
                                         if not hire_date:
                                             hire_date = datetime.strptime(hire_date_raw, '%Y-%m-%d').date()
                                         employee_inst.hire_date = hire_date
-                                    except:
+                                    except Exception:
                                         pass
                                 
                                 employee_inst.save()
@@ -418,6 +440,7 @@ def employee_import_view(request):
                                 pass
                             
                             updated_count += 1
+
                         elif not user:
 
                             # الحصول على كلمة المرور من الملف أو استخدام الافتراضية
@@ -434,38 +457,65 @@ def employee_import_view(request):
                                 password=password
                             )
                             
-                            # تحديث UserProfile
-                            profile = user.profile
-                            profile.role = get_val(row, 'role', 'الدور', 'employee')
+                            # --- تحضير قيم الـ profile ---
+                            role_val = get_val(row, 'role', 'الدور', 'الصلاحية')
+                            role_final = role_val if role_val else 'employee'
                             
-                            # المسمى الوظيفي
                             job_title = get_val(row, 'job_title', 'المسمى الوظيفي', 'الوظيفة') or 'موظف'
-                            profile.position = job_title
                             
-                            # محاولة ربط الفرع
+                            # ربط الفرع - نحفظ الـ ID مباشرة
+                            branch_id = None
                             branch_name = get_val(row, 'branch', 'الفرع', 'المعرض')
                             if branch_name:
                                 from apps.branches.models import Branch
-                                branch = Branch.objects.filter(name=branch_name).first()
-                                if branch:
-                                    profile.branch = branch
+                                branch_obj = Branch.objects.filter(
+                                    Q(name=branch_name) | Q(name__icontains=branch_name)
+                                ).first()
+                                if branch_obj:
+                                    branch_id = branch_obj.id
+                                else:
+                                    errors.append(f'تحذير الصف {index + 2}: الفرع "{branch_name}" غير موجود في النظام')
                             
-                            profile.save()
+                            # المنطقة
+                            region_final = ''
+                            region_val = get_val(row, 'region', 'المنطقة', 'منطقة')
+                            if region_val:
+                                REGION_MAP = {
+                                    'north': 'north', 'المنطقة الشمالية': 'north', 'شمال': 'north', 'شمالية': 'north',
+                                    'south': 'south', 'المنطقة الجنوبية': 'south', 'جنوب': 'south', 'جنوبية': 'south',
+                                    'east': 'east', 'المنطقة الشرقية': 'east', 'شرق': 'east', 'شرقية': 'east',
+                                    'center': 'center', 'المنطقة الوسطى': 'center', 'وسط': 'center', 'وسطى': 'center',
+                                    'west': 'west', 'المنطقة الغربية': 'west', 'غرب': 'west', 'غربية': 'west',
+                                }
+                                for key, code in REGION_MAP.items():
+                                    if key.lower() == region_val.strip().lower():
+                                        region_final = code
+                                        break
+                                if not region_final:
+                                    errors.append(f'تحذير الصف {index + 2}: قيمة المنطقة "{region_val}" غير معروفة')
                             
-                            # تاريخ التعيين - استخدام التاريخ من الملف أو التاريخ الحالي
-                            hire_date_value = row.get('hire_date', row.get('تاريخ التعيين', None))
+                            # حفظ الـ profile بـ update() مع branch_id صراحة - يتجاوز الـ Django signals
+                            UserProfile.objects.filter(user=user).update(
+                                role=role_final,
+                                position=job_title,
+                                branch_id=branch_id,
+                                region=region_final,
+                            )
+                            
+                            # تاريخ التعيين
+                            hire_date_raw = get_val(row, 'hire_date', 'تاريخ التعيين', 'التاريخ')
                             hire_date = None
                             
-                            if pd.notna(hire_date_value) and hire_date_value != '':
+                            if hire_date_raw and hire_date_raw.lower() != 'nan':
                                 try:
-                                    if isinstance(hire_date_value, str):
-                                        hire_date = datetime.strptime(hire_date_value, '%Y-%m-%d').date()
-                                    else:
-                                        hire_date = hire_date_value
-                                except:
-                                    hire_date = datetime.now().date()  # استخدام التاريخ الحالي في حالة الخطأ
+                                    from django.utils.dateparse import parse_date
+                                    hire_date = parse_date(hire_date_raw)
+                                    if not hire_date:
+                                        hire_date = datetime.strptime(hire_date_raw, '%Y-%m-%d').date()
+                                except Exception:
+                                    hire_date = datetime.now().date()
                             else:
-                                hire_date = datetime.now().date()  # استخدام التاريخ الحالي إذا كان فارغاً
+                                hire_date = datetime.now().date()
                             
                             # إنشاء Employee
                             employee = Employee.objects.create(
@@ -480,7 +530,7 @@ def employee_import_view(request):
                             created_count += 1
                         else:
                             if not update_existing:
-                                errors.append(f'الصف {index + 2}: الموظف صاحب الرقم المرجعي {employee_number} موجود بالفعل (فعّل خيار "تحديث الموظفين الموجودين" لتحديثه)')
+                                errors.append(f'الصف {index + 2}: الموظف صاحب الرقم {employee_number} موجود بالفعل (فعّل خيار "تحديث الموظفين الموجودين" لتحديثه)')
                             else:
                                 errors.append(f'الصف {index + 2}: الموظف صاحب الرقم المرجعي {employee_number} موجود ولكن لم يتم تحديثه')
                     
@@ -571,6 +621,16 @@ def download_sample_file(request):
     import pandas as pd
     from django.http import HttpResponse
     
+    # محاولة الحصول على فروع من قاعدة البيانات ليكون الملف واقعياً
+    try:
+        from apps.branches.models import Branch
+        db_branches = list(Branch.objects.filter(status='active')[:3])
+        branch1 = db_branches[0].name if len(db_branches) > 0 else 'فرع الرياض'
+        branch2 = db_branches[1].name if len(db_branches) > 1 else 'فرع جدة'
+        branch3 = db_branches[2].name if len(db_branches) > 2 else 'فرع الدمام'
+    except Exception:
+        branch1, branch2, branch3 = 'فرع الرياض', 'فرع جدة', 'فرع الدمام'
+        
     # إنشاء بيانات نموذجية
     sample_data = {
         'الرقم الوظيفي': ['EMP-1001', 'EMP-1002', 'EMP-1003'],
@@ -578,9 +638,10 @@ def download_sample_file(request):
         'username': ['ahmed.mohamed', 'fatima.ali', 'mohamed.khaled'],
         'email': ['ahmed@company.com', 'fatima@company.com', 'mohamed@company.com'],
         'password': ['password123', 'password123', 'password123'],
-        'job_title': ['مطور', 'مدير مشروع', 'محلل'],
-        'role': ['employee', 'branch_manager', 'coordinator'],
-        'branch': ['الفرع الرئيسي', 'فرع الرياض', 'فرع جدة'],
+        'job_title': ['مطور', 'مدير معرض', 'محلل'],
+        'role': ['employee', 'branch_manager', 'employee'],
+        'branch': [branch1, branch2, branch3],
+        'region': ['المنطقة الوسطى', 'المنطقة الغربية', 'المنطقة الشرقية'],
         'hire_date': ['2024-01-10', '2024-01-15', '2024-02-01']
     }
     

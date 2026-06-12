@@ -94,12 +94,19 @@
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="branch" class="form-label">الفرع <span class="text-danger">*</span></label>
+                        {% if is_branch_manager and user_branch %}
+                        {# مدير المعرض: حقل قراءة فقط - لا يمكن تغييره #}
+                        <input type="text" class="form-control bg-light" value="{{ user_branch.name }}" readonly disabled>
+                        <input type="hidden" id="branch" name="branch" value="{{ user_branch.id }}">
+                        <small class="text-muted"><i class="fas fa-lock me-1"></i>الفرع المخصص لك تلقائياً</small>
+                        {% else %}
                         <select class="form-select" id="branch" name="branch" required>
                             <option value="">اختر الفرع</option>
                             {% for branch in branches %}
                             <option value="{{ branch.id }}">{{ branch.name }}</option>
                             {% endfor %}
                         </select>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -1561,8 +1568,15 @@
         console.log('Validating schedule data...');
         const errors = [];
         const maxHours = 9.0;
+        
+        const startDateStr = document.getElementById('start_date').value;
+        const endDateStr = document.getElementById('end_date').value;
 
         Object.keys(scheduleData).forEach(dateStr => {
+            if (startDateStr && endDateStr && (dateStr < startDateStr || dateStr > endDateStr)) {
+                return; // تجاهل التواريخ خارج النطاق المحدد
+            }
+            
             const dayData = scheduleData[dateStr];
             const employeeHours = {};
 
@@ -1678,7 +1692,13 @@
 
         // Collect all assignments
         let totalEntries = 0;
+        const startDateStr = data.start_date;
+        const endDateStr = data.end_date;
+
         Object.keys(scheduleData).forEach(dateStr => {
+            if (startDateStr && endDateStr && (dateStr < startDateStr || dateStr > endDateStr)) {
+                return; // تجاهل التواريخ خارج النطاق المحدد
+            }
             const dayData = scheduleData[dateStr];
             console.log(`Processing date ${dateStr}:`, dayData);
 

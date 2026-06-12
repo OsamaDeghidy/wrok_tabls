@@ -117,7 +117,11 @@ def branch_detail_view(request, branch_id):
     if request.user.is_superuser:
         can_edit = True
     elif hasattr(request.user, 'profile'):
-        can_edit = request.user.profile.can_manage_branches
+        if request.user.profile.can_manage_branches:
+            can_edit = True
+        elif request.user.profile.role == 'branch_manager' and request.user.profile.branch == branch:
+            # مدير المعرض يمكنه تعديل شفتات فرعه
+            can_edit = True
     
     context = {
         'branch': branch,
@@ -221,22 +225,29 @@ def branch_edit_view(request, branch_id):
             try:
                 branch = form.save()
                 
-                # تحديث الشفتات (حذف القديمة وإنشاء الجديدة)
-                branch.shifts.all().delete()
+                # تحديث الشفتات لمن يملك الصلاحية (مدير النظام، مدير الفروع، أو مدير المعرض على فرعه)
+                is_branch_manager_of_this_branch = (
+                    hasattr(request.user, 'profile') and
+                    request.user.profile.role == 'branch_manager' and
+                    request.user.profile.branch == branch
+                )
+                if request.user.is_superuser or request.user.profile.can_manage_branches or is_branch_manager_of_this_branch:
+                    branch.shifts.all().delete()
+                    
+                    shift_names = request.POST.getlist('shift_name[]')
+                    shift_starts = request.POST.getlist('shift_start[]')
+                    shift_ends = request.POST.getlist('shift_end[]')
+                    
+                    for i in range(len(shift_names)):
+                        if shift_names[i] and shift_starts[i] and shift_ends[i]:
+                            BranchShift.objects.create(
+                                branch=branch,
+                                name=shift_names[i],
+                                start_time=parse_time(shift_starts[i]),
+                                end_time=parse_time(shift_ends[i]),
+                                is_active=True
+                            )
                 
-                shift_names = request.POST.getlist('shift_name[]')
-                shift_starts = request.POST.getlist('shift_start[]')
-                shift_ends = request.POST.getlist('shift_end[]')
-                
-                for i in range(len(shift_names)):
-                    if shift_names[i] and shift_starts[i] and shift_ends[i]:
-                        BranchShift.objects.create(
-                            branch=branch,
-                            name=shift_names[i],
-                            start_time=parse_time(shift_starts[i]),
-                            end_time=parse_time(shift_ends[i]),
-                            is_active=True
-                        )
                 
                 messages.success(request, f'تم تحديث الفرع {branch.name} بنجاح')
                 return redirect('branches:detail', branch_id=branch.id)
@@ -284,7 +295,13 @@ def shift_create_view(request, branch_id):
     branch = get_object_or_404(Branch, id=branch_id)
     
     # التحقق من الصلاحيات
-    if not request.user.is_superuser and not (hasattr(request.user, 'profile') and request.user.profile.can_manage_branches):
+    # يُسمح لـ: المدير العام، من يملك can_manage_branches، ومدير المعرض على فرعه
+    is_branch_manager_of_this_branch = (
+        hasattr(request.user, 'profile') and
+        request.user.profile.role == 'branch_manager' and
+        request.user.profile.branch == branch
+    )
+    if not request.user.is_superuser and not (hasattr(request.user, 'profile') and request.user.profile.can_manage_branches) and not is_branch_manager_of_this_branch:
         messages.error(request, 'ليس لديك صلاحية لإنشاء شفتات')
         return redirect('branches:detail', branch_id=branch.id)
     
@@ -315,7 +332,13 @@ def shift_edit_view(request, branch_id, shift_id):
     shift = get_object_or_404(BranchShift, id=shift_id, branch=branch)
     
     # التحقق من الصلاحيات
-    if not request.user.is_superuser and not (hasattr(request.user, 'profile') and request.user.profile.can_manage_branches):
+    # يُسمح لـ: المدير العام، من يملك can_manage_branches، ومدير المعرض على فرعه
+    is_branch_manager_of_this_branch = (
+        hasattr(request.user, 'profile') and
+        request.user.profile.role == 'branch_manager' and
+        request.user.profile.branch == branch
+    )
+    if not request.user.is_superuser and not (hasattr(request.user, 'profile') and request.user.profile.can_manage_branches) and not is_branch_manager_of_this_branch:
         messages.error(request, 'ليس لديك صلاحية لتعديل الشفتات')
         return redirect('branches:detail', branch_id=branch.id)
     

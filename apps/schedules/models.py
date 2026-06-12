@@ -166,40 +166,39 @@ class Schedule(models.Model):
         return 0
     
     def calculate_required_hours(self):
-        """حساب الساعات المطلوبة للتغطية الكاملة"""
-        from datetime import timedelta
-        from apps.branches.models import BranchShift
+        """حساب الساعات المطلوبة للتغطية بناءً على عدد الموظفين المستهدفين وأيام العمل"""
+        # حساب عدد الأيام
+        days_count = self.get_duration_days()
         
-        total_hours = 0
-        current_date = self.start_date
+        # الموظفين المدرجين في الجدول
+        unique_employees = self.entries.values_list('employee', flat=True).distinct()
+        unique_count = unique_employees.count()
         
-        # الحصول على الشفتات النشطة للفرع
-        shifts = BranchShift.objects.filter(branch=self.branch, is_active=True)
-        if not shifts.exists():
-            return 0
-        
-        while current_date <= self.end_date:
-            # التحقق من أن اليوم في أيام عمل الفرع
-            day_name = current_date.strftime('%A').lower()
+        if unique_count > 0:
+            # إذا تم إضافة موظفين، نحسب بناءً على ساعات عملهم المطلوبة (افتراضيا 8)
+            from django.contrib.auth.models import User
+            users = User.objects.filter(id__in=unique_employees).select_related('profile')
             
-            # إذا لم تكن أيام العمل محددة، نعتبر كل الأيام أيام عمل
-            if not hasattr(self.branch, 'working_days') or not self.branch.working_days or day_name in self.branch.working_days:
-                # حساب ساعات الشفتات لهذا اليوم فقط
-                daily_hours = 0
-                for shift in shifts:
-                    # إذا كان الشفت محدداً لأيام معينة، نتحقق من اليوم
-                    if hasattr(shift, 'days') and shift.days:
-                        if day_name in shift.days:
-                             daily_hours += shift.get_duration()
-                    else:
-                        # إذا لم يحدد أيام، يفترض أنه لكل الأيام
-                        daily_hours += shift.get_duration()
+            total_required = 0
+            for user in users:
+                if hasattr(user, 'profile'):
+                    total_required += user.profile.work_hours * days_count
+                else:
+                    total_required += 8 * days_count
+            return total_required
+        else:
+            # إذا لم يتم تعيين موظفين، نعتمد على عدد الموظفين النشطين في الفرع كمؤشر مستهدف
+            from apps.users.models import UserProfile
+            branch_employees = UserProfile.objects.filter(branch=self.branch, status='active')
+            
+            if branch_employees.exists():
+                total_required = 0
+                for emp in branch_employees:
+                    total_required += emp.work_hours * days_count
+                return total_required
                 
-                total_hours += daily_hours
-            
-            current_date += timedelta(days=1)
-        
-        return total_hours
+            # إذا لم يوجد موظفين نشطين، نعيد 0
+            return 0
     
     def clean(self):
         """التحقق من صحة البيانات"""

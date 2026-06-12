@@ -46,8 +46,21 @@ class ScheduleForm(forms.ModelForm):
         }
     
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         
+        if user and not user.is_superuser:
+            from apps.users.models import UserProfile
+            try:
+                profile = user.profile
+                if profile.role == 'branch_manager' and profile.branch:
+                    self.fields['branch'].queryset = Branch.objects.filter(id=profile.branch.id)
+                    self.fields['branch'].initial = profile.branch
+                elif profile.role == 'region_manager' and profile.region:
+                    self.fields['branch'].queryset = Branch.objects.filter(region=profile.region)
+            except UserProfile.DoesNotExist:
+                pass
+
         # جعل الحقول غير مطلوبة
         if 'notes' in self.fields:
             self.fields['notes'].required = False

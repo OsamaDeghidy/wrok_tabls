@@ -65,6 +65,12 @@ def schedule_list_view(request):
                 schedules = schedules.filter(branch=request.user.profile.branch)
             else:
                 schedules = schedules.none()
+        elif user_role == 'region_manager':
+            # مدير المنطقة يرى جداول الفروع التابعة لمنطقته فقط
+            if hasattr(request.user.profile, 'region') and request.user.profile.region:
+                schedules = schedules.filter(branch__region=request.user.profile.region)
+            else:
+                schedules = schedules.none()
     
     # ترتيب النتائج
     schedules = schedules.order_by('-created_at')
@@ -116,7 +122,7 @@ def schedule_create_view(request):
             return redirect('schedules:list')
     
     if request.method == 'POST':
-        form = ScheduleForm(request.POST)
+        form = ScheduleForm(request.POST, user=request.user)
         if form.is_valid():
             try:
                 schedule = form.save(commit=False)
@@ -154,17 +160,24 @@ def schedule_create_view(request):
         else:
             messages.error(request, 'يرجى تصحيح الأخطاء في النموذج')
     else:
-        form = ScheduleForm()
-        
-        # تحديد الفرع الافتراضي للمديرين
-        if hasattr(request.user, 'profile') and request.user.profile.role == 'branch_manager':
-            if hasattr(request.user.profile, 'branch') and request.user.profile.branch:
-                form.fields['branch'].initial = request.user.profile.branch
+        form = ScheduleForm(user=request.user)
     
+    # تحديد ما إذا كان مدير معرض (لقفل حقل الفرع في الـ template)
+    is_branch_manager = (
+        not request.user.is_superuser and
+        hasattr(request.user, 'profile') and
+        request.user.profile.role == 'branch_manager'
+    )
+    user_branch = None
+    if is_branch_manager and hasattr(request.user, 'profile'):
+        user_branch = request.user.profile.branch
+
     context = {
         'form': form,
-        'branches': Branch.objects.all(),
+        'branches': Branch.objects.all() if not is_branch_manager else (Branch.objects.filter(id=user_branch.id) if user_branch else Branch.objects.none()),
         'schedule_types': Schedule.TYPE_CHOICES,
+        'is_branch_manager': is_branch_manager,
+        'user_branch': user_branch,
     }
     
     return render(request, 'schedules/create_single.html', context)
@@ -191,29 +204,25 @@ def schedule_detail_view(request, schedule_id):
     # إحصائيات الجدول
     entries = schedule.entries.select_related('employee', 'shift').order_by('date', 'start_time')
     
-    # تجميع الإدخالات حسب التاريخ
+    # تجميع الإدخالات حسب التاريخ (البدء بجميع أيام الجدول)
     entries_by_date = {}
+    from datetime import timedelta, datetime
+    current_date = schedule.start_date
+    while current_date <= schedule.end_date:
+        date_str = current_date.strftime('%Y-%m-%d')
+        entries_by_date[date_str] = []
+        current_date += timedelta(days=1)
+        
     for entry in entries:
         date_str = entry.date.strftime('%Y-%m-%d')
-        if date_str not in entries_by_date:
-            entries_by_date[date_str] = []
-        entries_by_date[date_str].append(entry)
-    
-    # إنشاء أيام فارغة إذا لم تكن هناك إدخالات
-    if not entries.exists():
-        from datetime import timedelta
-        current_date = schedule.start_date
-        while current_date <= schedule.end_date:
-            date_str = current_date.strftime('%Y-%m-%d')
-            entries_by_date[date_str] = []
-            current_date += timedelta(days=1)
+        if date_str in entries_by_date:
+            entries_by_date[date_str].append(entry)
     
     # إحصائيات الموظفين
     employee_stats = {}
     for entry in entries:
         employee = entry.employee
         if employee.id not in employee_stats:
-            # حساب الساعات المطلوبة للموظف
             required_hours_per_day = getattr(employee.profile, 'hours_per_day', 8)
             total_days = schedule.get_duration_days()
             required_hours = required_hours_per_day * total_days
@@ -234,7 +243,6 @@ def schedule_detail_view(request, schedule_id):
     total_hours = sum(stats['total_hours'] for stats in employee_stats.values())
     required_hours = schedule.calculate_required_hours()
     
-    # استخدام الحساب البديل إذا كان الحساب الأساسي لا يعطي نتائج منطقية
     if required_hours == 0 or total_hours == 0:
         coverage_percentage = schedule.get_coverage_percentage_alternative()
     else:
@@ -251,11 +259,43 @@ def schedule_detail_view(request, schedule_id):
         'surplus': max(0, total_hours - required_hours),
     }
     
+    # حساب إحصائيات عمل الفرع يومياً
+    branch_operating_stats = {}
+    for date_str, day_entries in entries_by_date.items():
+        if day_entries:
+            # أبكر وقت بداية
+            opening_time = min(e.start_time for e in day_entries)
+            
+            # تحديد آخر وقت نهاية
+            # نتحقق من وجود نوبات مسائية (تنتهي في اليوم التالي)
+            overnight_entries = [e for e in day_entries if e.end_time <= e.start_time]
+            if overnight_entries:
+                closing_time = max(e.end_time for e in overnight_entries)
+                is_overnight = True
+            else:
+                closing_time = max(e.end_time for e in day_entries)
+                is_overnight = False
+            
+            # حساب إجمالي الساعات من أول فتح لآخر إغلاق
+            d1 = datetime.combine(datetime.today(), opening_time)
+            d2 = datetime.combine(datetime.today(), closing_time)
+            if is_overnight:
+                d2 += timedelta(days=1)
+            
+            branch_operating_stats[date_str] = {
+                'opening_time': opening_time,
+                'closing_time': closing_time,
+                'operating_hours': (d2 - d1).total_seconds() / 3600
+            }
+        else:
+            branch_operating_stats[date_str] = None
+
     context = {
         'schedule': schedule,
         'entries_by_date': entries_by_date,
         'employee_stats': employee_stats,
         'stats': stats,
+        'branch_operating_stats': branch_operating_stats,
     }
     
     return render(request, 'schedules/detail.html', context)
@@ -358,6 +398,36 @@ def schedule_edit_view(request, schedule_id):
     # نموذج فارغ لإضافة توزيعات جديدة
     new_entry_form = ScheduleEntryEditForm(schedule=schedule)
     
+    # جلب بيانات الفرع
+    branch = schedule.branch
+    shifts = BranchShift.objects.filter(branch=branch, is_active=True)
+    employees = User.objects.filter(profile__branch=branch).select_related('profile')
+    
+    # تحويل الشفتات لبيانات JSON للاستخدام في JS
+    shifts_data = []
+    for shift in shifts:
+        shifts_data.append({
+            'id': shift.id,
+            'name': shift.name,
+            'start_time': shift.start_time.strftime('%H:%M'),
+            'end_time': shift.end_time.strftime('%H:%M'),
+            'duration': str(shift.get_duration()),
+        })
+
+    # تحويل التوزيعات الموجودة لبيانات JSON للاستخدام في JS
+    existing_entries_data = {}
+    for date_str, date_entries in entries_by_date.items():
+        existing_entries_data[date_str] = {
+            'shifts': {},
+            'employees': list(set(e.employee.id for e in date_entries)),
+            'coverage': 0 # سيتم حسابه في JS
+        }
+        for entry in date_entries:
+            shift_id = str(entry.shift.id)
+            if shift_id not in existing_entries_data[date_str]['shifts']:
+                existing_entries_data[date_str]['shifts'][shift_id] = []
+            existing_entries_data[date_str]['shifts'][shift_id].append(entry.employee.id)
+
     context = {
         'form': form,
         'schedule': schedule,
@@ -369,9 +439,13 @@ def schedule_edit_view(request, schedule_id):
         'schedule_types': Schedule.TYPE_CHOICES,
         'entry_forms': entry_forms,
         'new_entry_form': new_entry_form,
+        'branch_shifts': shifts_data,
+        'branch_employees': employees,
+        'existing_entries_json': existing_entries_data,
+        'selected_employee_ids': list(schedule.entries.values_list('employee_id', flat=True).distinct()),
     }
     
-    return render(request, 'schedules/edit_simple.html', context)
+    return render(request, 'schedules/edit.html', context)
 
 
 @login_required
@@ -391,9 +465,9 @@ def schedule_approve_view(request, schedule_id):
     current_status = schedule.status
     next_status = None
     
-    if user_role == 'coordinator' and current_status == 'pending_coordinator':
-        next_status = 'pending_region_manager'
-    elif user_role == 'region_manager' and current_status == 'pending_region_manager':
+    if user_role == 'region_manager' and current_status == 'pending_region_manager':
+        next_status = 'pending_coordinator'
+    elif user_role == 'coordinator' and current_status == 'pending_coordinator':
         next_status = 'pending_operations_manager'
     elif user_role == 'operations_manager' and current_status == 'pending_operations_manager':
         next_status = 'pending_admin_manager'
@@ -490,6 +564,38 @@ def schedule_complete_view(request, schedule_id):
     schedule.save()
     messages.success(request, 'تم إكمال الجدول التشغيلي بنجاح')
     return redirect('schedules:detail', schedule_id=schedule.id)
+
+@login_required
+def schedule_delete_view(request, schedule_id):
+    """حذف مسودة الجدول التشغيلي"""
+    from django.http import JsonResponse
+    schedule = get_object_or_404(Schedule, id=schedule_id)
+    
+    # التحقق من الصلاحيات
+    if not request.user.is_superuser and hasattr(request.user, 'profile'):
+        user_role = request.user.profile.role
+        if user_role == 'branch_manager':
+            if hasattr(request.user.profile, 'branch') and request.user.profile.branch != schedule.branch:
+                return JsonResponse({'error': 'ليس لديك صلاحية لحذف هذا الجدول'}, status=403)
+        elif user_role not in ['coordinator', 'region_manager', 'operations_manager', 'admin_manager', 'super_admin']:
+            return JsonResponse({'error': 'ليس لديك صلاحية لحذف الجداول'}, status=403)
+            
+    # التحقق من أن الجدول في حالة مسودة
+    if schedule.status != 'draft':
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'error': 'يمكن حذف الجداول التي في حالة مسودة فقط'}, status=400)
+        messages.error(request, 'يمكن حذف الجداول التي في حالة مسودة فقط')
+        return redirect('schedules:list')
+        
+    if request.method == 'POST':
+        schedule.delete()
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
+            return JsonResponse({'success': True, 'message': 'تم حذف الجدول بنجاح'})
+        messages.success(request, 'تم حذف المسودة بنجاح')
+        return redirect('schedules:list')
+        
+    return JsonResponse({'error': 'طريقة الطلب غير مسموحة'}, status=405)
+
 @login_required
 def schedule_entries_view(request, schedule_id):
     """إدارة إدخالات الجدول التشغيلي"""
@@ -647,3 +753,50 @@ def schedule_analytics_view(request, schedule_id):
     
     return render(request, 'schedules/analytics.html', context)
 
+
+@login_required
+def schedule_export_view(request, schedule_id):
+    """تصدير الجدول التشغيلي إلى Excel"""
+    import pandas as pd
+    from django.http import HttpResponse
+    
+    schedule = get_object_or_404(Schedule, id=schedule_id)
+    
+    # التحقق من الصلاحيات
+    if not request.user.is_superuser and hasattr(request.user, 'profile'):
+        user_role = request.user.profile.role
+        if user_role == 'branch_manager' and hasattr(request.user.profile, 'branch') and request.user.profile.branch != schedule.branch:
+            messages.error(request, 'ليس لديك صلاحية لتصدير هذا الجدول')
+            return redirect('schedules:list')
+        elif user_role == 'employee' and hasattr(request.user.profile, 'branch') and request.user.profile.branch != schedule.branch:
+            messages.error(request, 'ليس لديك صلاحية لتصدير هذا الجدول')
+            return redirect('schedules:list')
+            
+    entries = schedule.entries.select_related('employee__profile', 'shift').order_by('employee__first_name', 'date')
+    
+    data = []
+    for entry in entries:
+        employee_name = entry.employee.get_full_name() or entry.employee.username
+        job_id = entry.employee.profile.job_id if hasattr(entry.employee, 'profile') else ''
+        
+        data.append({
+            'الموظف': employee_name,
+            'الرقم الوظيفي': job_id,
+            'التاريخ': entry.date.strftime('%Y-%m-%d'),
+            'اليوم': entry.date.strftime('%A'),
+            'الشفت': entry.shift.name if entry.shift else '-',
+            'وقت الحضور': entry.start_time.strftime('%H:%M') if entry.start_time else '-',
+            'وقت الانصراف': entry.end_time.strftime('%H:%M') if entry.end_time else '-',
+            'عدد الساعات': entry.hours,
+            'ملاحظات': entry.notes or ''
+        })
+        
+    df = pd.DataFrame(data)
+    
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="schedule_{schedule.id}.xlsx"'
+    
+    with pd.ExcelWriter(response, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='الجدول التشغيلي')
+        
+    return response

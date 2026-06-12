@@ -3,985 +3,835 @@
 
 {% block title %}تعديل الجدول التشغيلي - {{ schedule.branch.name }}{% endblock %}
 
-{% block page_title %}تعديل الجدول التشغيلي{% endblock %}
+{% block page_title %}
+<div class="d-flex align-items-center">
+    <i class="fas fa-calendar-edit text-primary me-3"></i>
+    <div>
+        <h4 class="mb-0">تعديل الجدول التشغيلي</h4>
+        <small class="text-muted">الفرع: {{ schedule.branch.name }} | الفترة: {{ schedule.start_date }} إلى {{ schedule.end_date }}</small>
+    </div>
+</div>
+{% endblock %}
 
 {% block page_actions %}
 <div class="btn-group" role="group">
-    <a href="{% url 'schedules:detail' schedule.id %}" class="btn btn-outline-primary">
-        <i class="fas fa-eye me-1"></i>عرض التفاصيل
+    <a href="{% url 'schedules:detail' schedule.id %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right me-1"></i>العودة للتفاصيل
     </a>
-    <button type="button" class="btn btn-success" onclick="saveScheduleToDatabase()">
-        <i class="fas fa-save me-1"></i>حفظ التعديلات
+    <button type="button" class="btn btn-outline-info" onclick="showHelp()">
+        <i class="fas fa-question-circle me-1"></i>مساعدة
     </button>
-    <button type="button" class="btn btn-info btn-sm ms-2" onclick="alert('JavaScript يعمل!')">
-        <i class="fas fa-check me-1"></i>اختبار JS
-    </button>
-    <button type="button" class="btn btn-primary btn-sm ms-2" onclick="testSave()">
-        <i class="fas fa-vial me-1"></i>اختبار بسيط
-    </button>
-    <button type="button" class="btn btn-warning btn-sm ms-2" onclick="saveScheduleToDatabase()">
-        <i class="fas fa-save me-1"></i>اختبار الحفظ
-    </button>
-    <a href="{% url 'schedules:list' %}" class="btn btn-outline-secondary">
-        <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
-    </a>
 </div>
 {% endblock %}
 
 {% block content %}
-<!-- CSRF for fetch -->
-<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-
-<!-- Schedule Info -->
-<div class="alert alert-info">
-    <div class="row">
-        <div class="col-md-8">
-            <i class="fas fa-info-circle me-2"></i>
-            <strong>تعديل الجدول:</strong> {{ schedule.branch.name }} - {{ schedule.get_schedule_type_display }} ({{ schedule.start_date }} إلى {{ schedule.end_date }})
-            <br>
-            <small class="text-muted">
-                <i class="fas fa-calendar-check me-1"></i>
-                عدد التوزيعات الموجودة: {{ stats.total_entries }} توزيعة
-                {% if stats.total_entries > 0 %}
-                    <span class="badge bg-success ms-2">{{ stats.coverage_percentage|floatformat:1 }}% تغطية</span>
-                {% endif %}
-            </small>
-        </div>
-        <div class="col-md-4 text-end">
-            <div class="btn-group btn-group-sm" role="group">
-                <button type="button" class="btn btn-outline-primary" onclick="showCurrentEntriesModal()">
-                    <i class="fas fa-eye me-1"></i>عرض التوزيعات
-                </button>
-                <button type="button" class="btn btn-outline-success" onclick="reloadBranchData()">
-                    <i class="fas fa-sync me-1"></i>تحديث بيانات الفرع
-                </button>
-            </div>
-        </div>
-    </div>
+<!-- Messages -->
+{% if messages %}
+{% for message in messages %}
+<div class="alert alert-{% if message.tags == 'warning' %}warning{% elif message.tags == 'error' %}danger{% elif message.tags == 'success' %}success{% else %}info{% endif %} alert-dismissible fade show"
+    role="alert">
+    <i
+        class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' or message.tags == 'danger' %}exclamation-triangle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
-
-<!-- Warning for approved schedules -->
-{% if schedule.status == 'approved' %}
-<div class="alert alert-warning">
-    <i class="fas fa-exclamation-triangle me-2"></i>
-    <strong>تحذير:</strong> هذا الجدول معتمد حالياً. أي تعديلات قد تحتاج إلى اعتماد جديد.
-</div>
+{% endfor %}
 {% endif %}
 
-<!-- Edit Form (HTML with Django data) -->
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-primary text-white">
-        <h6 class="mb-0">
-            <i class="fas fa-edit me-2"></i>البيانات الأساسية
-        </h6>
-    </div>
+<!-- Step Navigation -->
+<div class="card shadow mb-4">
     <div class="card-body">
-        <form id="scheduleEditForm">
-            {% csrf_token %}
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label for="branch" class="form-label">الفرع</label>
-                    <select id="branch" name="branch" class="form-select" required>
-                        <option value="">اختر الفرع</option>
-                        {% for branch in branches %}
-                        <option value="{{ branch.id }}" {% if branch.id == schedule.branch.id %}selected{% endif %}>{{ branch.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label for="schedule_type" class="form-label">نوع الجدول</label>
-                    <select id="schedule_type" name="schedule_type" class="form-select" required>
-                        <option value="">اختر نوع الجدول</option>
-                        {% for value, label in schedule_types %}
-                        <option value="{{ value }}" {% if value == schedule.schedule_type %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label for="start_date" class="form-label">تاريخ البداية</label>
-                    <input type="date" id="start_date" name="start_date" class="form-control" value="{{ schedule.start_date|date:'Y-m-d' }}" required>
-                </div>
-                <div class="col-md-2">
-                    <label for="end_date" class="form-label">تاريخ النهاية</label>
-                    <input type="date" id="end_date" name="end_date" class="form-control" value="{{ schedule.end_date|date:'Y-m-d' }}" required>
-                </div>
-                <div class="col-12">
-                    <label for="notes" class="form-label">ملاحظات</label>
-                    <textarea id="notes" name="notes" class="form-control" rows="3" placeholder="ملاحظات...">{{ schedule.notes|default:'' }}</textarea>
-                </div>
+        <div class="row text-center">
+            <div class="col-md-3">
+                <div class="step-circle active" id="step1-circle">1</div>
+                <h6 class="step-title">المعلومات الأساسية</h6>
+                <small class="text-muted">الفرع والفترة</small>
             </div>
-        </form>
-    </div>
-</div>
-
-<!-- Inline Entries Editor -->
-<div class="card border-0 shadow-sm">
-    <div class="card-header bg-gradient-info text-white d-flex justify-content-between align-items-center">
-        <h6 class="mb-0">
-            <i class="fas fa-table me-2"></i>التوزيعات
-            <span class="badge bg-light text-dark ms-2" id="entriesStats">0 صف</span>
-        </h6>
-        <div class="btn-group" role="group">
-            <button type="button" class="btn btn-light btn-sm" onclick="addEntryRow()">
-                <i class="fas fa-plus me-1"></i>إضافة صف
-            </button>
-            <button type="button" class="btn btn-light btn-sm" onclick="duplicateSelectedRows()">
-                <i class="fas fa-copy me-1"></i>تكرار المحدد
-            </button>
-            <button type="button" class="btn btn-light btn-sm" onclick="deleteSelectedRows()">
-                <i class="fas fa-trash me-1"></i>حذف المحدد
-            </button>
-            <button type="button" class="btn btn-light btn-sm" onclick="selectAllRows()">
-                <i class="fas fa-check-square me-1"></i>تحديد الكل
-            </button>
-        </div>
-    </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0" id="entriesEditorTable">
-                <thead class="table-dark">
-                    <tr>
-                        <th class="text-center" style="width: 40px;">
-                            <input type="checkbox" id="selectAllCheckbox" onchange="toggleAllRows(this.checked)">
-                        </th>
-                        <th class="text-center">التاريخ</th>
-                        <th class="text-center">الموظف</th>
-                        <th class="text-center">الشفتة</th>
-                        <th class="text-center">من</th>
-                        <th class="text-center">إلى</th>
-                        <th class="text-center">الساعات</th>
-                        <th class="text-center">تغطية؟</th>
-                        <th class="text-center">ملاحظات</th>
-                        <th class="text-center">إجراءات</th>
-                    </tr>
-                </thead>
-                <tbody id="entriesEditorBody">
-                    {% for entry in entries %}
-                    <tr class="entry-row" data-entry-id="{{ entry.id }}">
-                        <td class="text-center">
-                            <input type="checkbox" class="form-check-input row-select" onchange="updateSelectAllState()">
-                        </td>
-                        <td class="text-center" style="min-width: 130px;">
-                            <input type="date" class="form-control form-control-sm entry-date" value="{{ entry.date|date:'Y-m-d' }}">
-                        </td>
-                        <td class="text-center" style="min-width: 220px;">
-                            <select class="form-select form-select-sm entry-employee">
-                                <option value="{{ entry.employee.id }}" selected>{{ entry.employee.get_full_name|default:entry.employee.username }}</option>
-                            </select>
-                        </td>
-                        <td class="text-center" style="min-width: 200px;">
-                            <select class="form-select form-select-sm entry-shift">
-                                <option value="{{ entry.shift.id }}" selected>{{ entry.shift.name }}</option>
-                            </select>
-                        </td>
-                        <td class="text-center" style="min-width: 110px;">
-                            <input type="time" class="form-control form-control-sm entry-start" value="{{ entry.start_time|time:'H:i' }}">
-                        </td>
-                        <td class="text-center" style="min-width: 110px;">
-                            <input type="time" class="form-control form-control-sm entry-end" value="{{ entry.end_time|time:'H:i' }}">
-                        </td>
-                        <td class="text-center" style="min-width: 90px;">
-                            <span class="badge bg-primary entry-hours">{{ entry.hours|floatformat:1 }}</span>
-                        </td>
-                        <td class="text-center">
-                            <input type="checkbox" class="form-check-input entry-cover" {% if entry.is_cover %}checked{% endif %}>
-                        </td>
-                        <td class="text-center" style="min-width: 180px;">
-                            <input type="text" class="form-control form-control-sm entry-notes" value="{{ entry.notes|default:'' }}">
-                        </td>
-                        <td class="text-center">
-                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeEntryRow(this)"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="10" class="text-center py-4">
-                            <div class="text-muted">
-                                <i class="fas fa-calendar-times fa-3x mb-3"></i>
-                                <h5>لا توجد توزيعات حالية</h5>
-                                <p class="mb-3">اضغط "إضافة صف" لبدء إضافة التوزيعات</p>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div class="col-md-3">
+                <div class="step-circle" id="step2-circle">2</div>
+                <h6 class="step-title">اختيار الموظفين</h6>
+                <small class="text-muted">اختيار فريق العمل</small>
+            </div>
+            <div class="col-md-3">
+                <div class="step-circle" id="step3-circle">3</div>
+                <h6 class="step-title">توزيع الشفتات</h6>
+                <small class="text-muted">جدولة الموظفين</small>
+            </div>
+            <div class="col-md-3">
+                <div class="step-circle" id="step4-circle">4</div>
+                <h6 class="step-title">مراجعة وحفظ</h6>
+                <small class="text-muted">التأكيد النهائي</small>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Current Entries Modal -->
-<div class="modal fade" id="currentEntriesModal" tabindex="-1" aria-labelledby="currentEntriesModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="currentEntriesModalLabel">
-                    <i class="fas fa-list me-2"></i>التوزيعات الحالية ({{ stats.total_entries }} توزيعة)
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Main Form -->
+<form method="post" id="scheduleForm">
+    {% csrf_token %}
+    <input type="hidden" id="schedule_id" value="{{ schedule.id }}">
+
+    <!-- Step 1: Basic Information -->
+    <div class="step-content" id="step1">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-info-circle me-2"></i>المعلومات الأساسية
+                </h6>
             </div>
-            <div class="modal-body">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="branch" class="form-label">
+                                الفرع <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="branch" name="branch" required disabled>
+                                <option value="{{ schedule.branch.id }}" selected>{{ schedule.branch.name }}</option>
+                            </select>
+                            <small class="text-muted">لا يمكن تغيير الفرع لجدول موجود مسبقاً</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="schedule_type" class="form-label">
+                                نوع الجدول <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="schedule_type" name="schedule_type" required>
+                                {% for value, label in schedule_types %}
+                                <option value="{{ value }}" {% if schedule.schedule_type == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="start_date" class="form-label">
+                                تاريخ البداية <span class="text-danger">*</span>
+                            </label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" value="{{ schedule.start_date|date:'Y-m-d' }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="end_date" class="form-label">
+                                تاريخ النهاية <span class="text-danger">*</span>
+                            </label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" value="{{ schedule.end_date|date:'Y-m-d' }}" required>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">ملاحظات</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3"
+                                placeholder="أي ملاحظات إضافية حول الجدول التشغيلي">{{ schedule.notes }}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Branch Info -->
+        <div class="card shadow mb-4" id="branch-info">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-info">
+                    <i class="fas fa-building me-2"></i>معلومات الفرع
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row" id="branch-details">
+                    <div class="col-md-6">
+                        <strong>اسم الفرع:</strong> {{ schedule.branch.name }}<br>
+                        <strong>العنوان:</strong> {{ schedule.branch.address|default:"-" }}<br>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2: Employee Selection -->
+    <div class="step-content" id="step2" style="display: none;">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-users me-2"></i>اختيار الموظفين
+                </h6>
+                <div>
+                    <span class="badge bg-primary" id="selected-count">0 موظف محدد</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row" id="employees-container">
+                    <!-- سيتم ملؤها بـ JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Leave Conflicts -->
+        <div class="card shadow mb-4" id="leave-conflicts" style="display: none;">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>تعارضات الإجازات
+                </h6>
+            </div>
+            <div class="card-body">
+                <div id="conflicts-list">
+                    <!-- سيتم ملؤها بـ JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 3: Shift Assignment -->
+    <div class="step-content" id="step3" style="display: none;">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-calendar-alt me-2"></i>توزيع الشفتات
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="shift_template" class="form-label">قالب الشفتات</label>
+                        <select class="form-select" id="shift_template">
+                            <option value="custom">مخصص</option>
+                            <option value="auto">توزيع تلقائي</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <button type="button" class="btn btn-outline-primary" onclick="generateSchedule()"
+                            id="generateBtn">
+                            <i class="fas fa-magic me-1"></i>توليد الجدول تلقائياً
+                        </button>
+                    </div>
+                </div>
+
                 <div class="table-responsive">
-                    <table class="table table-striped">
+                    <table class="table table-bordered" id="schedule-table">
                         <thead>
                             <tr>
                                 <th>التاريخ</th>
-                                <th>الموظف</th>
-                                <th>الشفتة</th>
-                                <th>الوقت</th>
-                                <th>الساعات</th>
+                                <th>اليوم</th>
+                                <th>الموظفين</th>
+                                <th>التغطية</th>
+                                <th>الإجراءات</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {% for entry in entries %}
-                            <tr>
-                                <td>{{ entry.date|date:'Y-m-d' }}</td>
-                                <td>{{ entry.employee.get_full_name|default:entry.employee.username }}</td>
-                                <td>{{ entry.shift.name }}</td>
-                                <td>{{ entry.start_time|time:'H:i' }} - {{ entry.end_time|time:'H:i' }}</td>
-                                <td>{{ entry.hours|floatformat:1 }}</td>
-                            </tr>
-                            {% empty %}
-                            <tr><td colspan="5" class="text-center text-muted">لا توجد توزيعات حالية</td></tr>
-                            {% endfor %}
+                        <tbody id="schedule-tbody">
+                            <!-- سيتم ملؤها بـ JavaScript -->
                         </tbody>
                     </table>
                 </div>
             </div>
+        </div>
+
+        <!-- Schedule Summary -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-success">
+                    <i class="fas fa-chart-bar me-2"></i>ملخص الجدول
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row" id="schedule-summary">
+                    <!-- سيتم ملؤها بـ JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee Coverage Status -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-info">
+                    <i class="fas fa-user-check me-2"></i>تحليل توزيع الموظفين
+                </h6>
+            </div>
+            <div class="card-body bg-light">
+                <div class="row" id="employee-coverage-cards">
+                    <div class="col-12 text-center text-muted">
+                        <small>قم بالتوزيع لتحديث مؤشرات الموظفين. يوضح لك كل كارد كفاءة الموظف ونسبة استيعابه.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Step 4: Review and Save -->
+    <div class="step-content" id="step4" style="display: none;">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-check-circle me-2"></i>مراجعة الجدول
+                </h6>
+            </div>
+            <div class="card-body">
+                <div id="final-review">
+                    <!-- سيتم ملؤها بـ JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="navigation-buttons">
+        <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-secondary" id="prevBtn" onclick="changeStep(-1)"
+                style="display: none;">
+                <i class="fas fa-arrow-right me-1"></i>السابق
+            </button>
+            <button type="button" class="btn btn-primary" id="nextBtn" onclick="changeStep(1)">
+                التالي <i class="fas fa-arrow-left ms-1"></i>
+            </button>
+            <button type="button" class="btn btn-success" id="submitBtn" style="display: none;" onclick="saveScheduleToDatabase()">
+                <i class="fas fa-save me-1"></i>تحديث الجدول
+            </button>
+        </div>
+    </div>
+</form>
+
+<!-- Assignment Modal -->
+<div class="modal fade" id="assignmentModal" tabindex="-1" aria-labelledby="assignmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="assignmentModalLabel">
+                    <i class="fas fa-users me-2"></i>تعيين الموظفين للشفتات - <span id="assignment-date"></span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="assignment-date-input">
+
+                <!-- Instructions -->
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>تعليمات:</strong> اختر الموظفين لكل شفتة. يمكن تعيين أكثر من موظف للشفتة الواحدة.
+                </div>
+
+                <div class="row" id="shifts-container">
+                    <!-- سيتم ملؤها بـ JavaScript -->
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="mt-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">إجراءات سريعة</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-success" onclick="autoAssignCurrentDay()">
+                                    <i class="fas fa-magic me-1"></i>توزيع تلقائي لهذا اليوم
+                                </button>
+                                <button type="button" class="btn btn-outline-info" onclick="clearAllAssignments()">
+                                    <i class="fas fa-trash me-1"></i>مسح جميع التعيينات
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>إلغاء
+                </button>
+                <button type="button" class="btn btn-success" onclick="saveAssignments()">
+                    <i class="fas fa-save me-1"></i>تأكيد التعيينات
+                </button>
             </div>
         </div>
     </div>
 </div>
-
 {% endblock %}
 
 {% block scripts %}
 <script>
-try {
-    console.log('=== JavaScript Loading ===');
-    console.log('Schedule ID from template:', {{ schedule.id }});
+    let currentStep = 1;
+    let selectedEmployees = {{ selected_employee_ids|safe|default:"[]" }};
+    let selectedBranch = "{{ schedule.branch.id }}";
+    let scheduleData = {{ existing_entries_json|safe|default:"{}" }};
+    let branchShifts = {{ branch_shifts|safe|default:"[]" }};
+    let employeeLeaves = {};
+    let employeesData = []; 
 
-    // ---- Config ----
-    const EDIT_MODE = true;
-    const SCHEDULE_ID = {{ schedule.id }};
-    let employeesData = [];
-    let shiftsData = [];
-    let prefilledRows = false;
-
-    console.log('SCHEDULE_ID set to:', SCHEDULE_ID);
-    console.log('EDIT_MODE:', EDIT_MODE);
-
-    // Simple test function first
-    function testSave() {
-        alert('Test function works!');
-        console.log('Test function called');
+    // تهيئة البيانات من السيرفر
+    function initializeData() {
+        console.log('Initializing data from server...');
+        // في التعديل، الموظفين المختارين هم الموظفون الموجودون في الجدول بالفعل
+        // ولكن يمكن للمستخدم تغييرهم في الخطوة 2
+        updateSelectedCount();
     }
 
-    // Make test function available globally immediately
-    window.testSave = testSave;
-    window.saveScheduleToDatabase = testSave; // Temporary assignment
-    
-    console.log('Basic setup completed successfully');
-} catch (error) {
-    console.error('Error in basic setup:', error);
-    alert('خطأ في تحميل JavaScript: ' + error.message);
-}
-
-// Simple save function for now
-function saveScheduleToDatabase() {
-    alert('تم استدعاء دالة الحفظ!');
-    console.log('saveScheduleToDatabase called successfully');
-}
-
-// Make save function available globally immediately
-window.saveScheduleToDatabase = saveScheduleToDatabase;
-
-
-// Existing entries from backend (for inline editor prefill)
-try {
-    const EXISTING_ENTRIES = [
-        {% for entry in entries %}
-        {
-            date: '{{ entry.date|date:"Y-m-d" }}',
-            employee_id: {{ entry.employee.id }},
-            employee_name: '{{ entry.employee.get_full_name|default:entry.employee.username|escapejs }}',
-            shift_id: {{ entry.shift.id }},
-            shift_name: '{{ entry.shift.name|escapejs }}',
-            start_time: '{{ entry.start_time|time:"H:i" }}',
-            end_time: '{{ entry.end_time|time:"H:i" }}',
-            hours: {{ entry.hours }},
-            is_cover: {{ entry.is_cover|yesno:"true,false" }},
-            notes: '{{ entry.notes|default:""|escapejs }}'
-        }{% if not forloop.last %},{% endif %}
-        {% endfor %}
-    ];
-    console.log('EXISTING_ENTRIES loaded:', EXISTING_ENTRIES.length, 'entries');
-} catch (error) {
-    console.error('Error loading EXISTING_ENTRIES:', error);
-    const EXISTING_ENTRIES = [];
-}
-
-// ---- Helpers ----
-function getCSRFToken() {
-    const el = document.querySelector('[name=csrfmiddlewaretoken]');
-    return el ? el.value : '';
-}
-
-function computeHours(startHHMM, endHHMM) {
-    if (!startHHMM || !endHHMM) return 0;
-    const [sh, sm] = startHHMM.split(':').map(Number);
-    const [eh, em] = endHHMM.split(':').map(Number);
-    let start = sh + sm / 60;
-    let end = eh + em / 60;
-    if (end < start) end += 24; // handle overnight
-    return +(end - start).toFixed(1);
-}
-
-function showCurrentEntriesModal() {
-    new bootstrap.Modal(document.getElementById('currentEntriesModal')).show();
-}
-
-// ---- Loaders ----
-function reloadBranchData() {
-    const branchId = document.getElementById('branch').value;
-    console.log('Reloading branch data for:', branchId);
-    
-    if (!branchId) {
-        console.warn('No branch ID selected');
-        return;
+    // حفظ واسترجاع البيانات (Local Storage)
+    function saveScheduleDataToStorage() {
+        try {
+            cleanupScheduleData();
+            localStorage.setItem('edit_scheduleData_{{ schedule.id }}', JSON.stringify(scheduleData));
+            localStorage.setItem('edit_selectedEmployees_{{ schedule.id }}', JSON.stringify(selectedEmployees));
+            console.log('Schedule data saved to localStorage');
+        } catch (e) {
+            console.error('Error saving to localStorage:', e);
+        }
     }
-    
-    Promise.all([
-        fetch(`/schedules/api/employees/?branch=${branchId}`).then(r => r.json()),
-        fetch(`/schedules/api/branches/${branchId}/shifts/`).then(r => r.json()),
-    ])
-    .then(([empRes, shiftRes]) => {
-        console.log('Branch data loaded:', {empRes, shiftRes});
-        
-        if (empRes.success) {
-            employeesData = empRes.employees || empRes.data || [];
-            console.log('Loaded employees for rows:', employeesData.length);
-        }
-        
-        if (shiftRes.success) {
-            shiftsData = shiftRes.shifts || shiftRes.data || [];
-            console.log('Loaded shifts for rows:', shiftsData.length);
-        }
-        
-        refreshRowSelects();
-        
-        // Prefill rows once employees & shifts are available
-        if (!prefilledRows) {
-            prefillRowsFromExisting();
-        }
-    })
-    .catch(err => {
-        console.error('Error loading branch data', err);
-        alert('خطأ في تحميل بيانات الفرع (الموظفين/الشفتات)');
-    });
-}
 
-function refreshRowSelects() {
-    document.querySelectorAll('#entriesEditorBody .entry-row').forEach(row => {
-        const empSelect = row.querySelector('.entry-employee');
-        const shiftSelect = row.querySelector('.entry-shift');
-        const currentEmp = empSelect.value;
-        const currentShift = shiftSelect.value;
-
-        if (employeesData.length) {
-            empSelect.innerHTML = employeesData.map(e => `<option value="${e.id}">${e.full_name || e.username}</option>`).join('');
-            if (currentEmp) empSelect.value = currentEmp;
-        }
-        if (shiftsData.length) {
-            shiftSelect.innerHTML = shiftsData.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-            if (currentShift) shiftSelect.value = currentShift;
-        }
-    });
-}
-
-// ---- Rows ----
-function addEntryRow(prefill = null) {
-    const tbody = document.getElementById('entriesEditorBody');
-    const tr = document.createElement('tr');
-    tr.className = 'entry-row';
-    
-    const today = new Date().toISOString().split('T')[0];
-    const defaultStart = '09:00';
-    const defaultEnd = '17:00';
-
-    const dateVal = prefill?.date || today;
-    const empVal = prefill?.employee_id || '';
-    const shiftVal = prefill?.shift_id || '';
-    const startVal = prefill?.start_time || defaultStart;
-    const endVal = prefill?.end_time || defaultEnd;
-    const hoursVal = prefill?.hours || computeHours(startVal, endVal);
-    const coverVal = !!prefill?.is_cover;
-    const notesVal = prefill?.notes || '';
-
-    tr.innerHTML = `
-        <td class="text-center"><input type="checkbox" class="form-check-input row-select" onchange="updateSelectAllState()"></td>
-        <td class="text-center"><input type="date" class="form-control form-control-sm entry-date" value="${dateVal}"></td>
-        <td class="text-center">
-            <select class="form-select form-select-sm entry-employee" onchange="showEmployeeInfo(this)"></select>
-        </td>
-        <td class="text-center">
-            <select class="form-select form-select-sm entry-shift" onchange="updateShiftTimes(this)"></select>
-        </td>
-        <td class="text-center"><input type="time" class="form-control form-control-sm entry-start" value="${startVal}"></td>
-        <td class="text-center"><input type="time" class="form-control form-control-sm entry-end" value="${endVal}"></td>
-        <td class="text-center"><span class="badge bg-primary entry-hours">${hoursVal}</span></td>
-        <td class="text-center"><input type="checkbox" class="form-check-input entry-cover" ${coverVal ? 'checked' : ''}></td>
-        <td class="text-center"><input type="text" class="form-control form-control-sm entry-notes" value="${notesVal}"></td>
-        <td class="text-center"><button class="btn btn-outline-danger btn-sm" onclick="removeEntryRow(this)"><i class="fas fa-trash"></i></button></td>
-    `;
-    tbody.appendChild(tr);
-
-    // Fill selects after attaching
-    const empSelect = tr.querySelector('.entry-employee');
-    const shiftSelect = tr.querySelector('.entry-shift');
-    empSelect.innerHTML = employeesData.map(e => `<option value="${e.id}">${e.full_name || e.username}</option>`).join('');
-    shiftSelect.innerHTML = shiftsData.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-    if (empVal) empSelect.value = empVal;
-    if (shiftVal) shiftSelect.value = shiftVal;
-
-    // Recompute hours on time change
-    const startInput = tr.querySelector('.entry-start');
-    const endInput = tr.querySelector('.entry-end');
-    const hoursBadge = tr.querySelector('.entry-hours');
-    const recompute = () => {
-        hoursBadge.textContent = computeHours(startInput.value, endInput.value);
-        updateStats();
-    };
-    startInput.addEventListener('change', recompute);
-    endInput.addEventListener('change', recompute);
-    
-    // Update stats after adding
-    updateStats();
-}
-
-function removeEntryRow(btn) {
-    btn.closest('tr').remove();
-    updateSelectAllState();
-    updateStats();
-}
-
-function updateStats() {
-    const rows = document.querySelectorAll('#entriesEditorBody .entry-row');
-    const totalHours = Array.from(rows).reduce((sum, row) => {
-        const hours = parseFloat(row.querySelector('.entry-hours').textContent) || 0;
-        return sum + hours;
-    }, 0);
-    
-    const statsEl = document.getElementById('entriesStats');
-    if (statsEl) {
-        statsEl.textContent = `${rows.length} صف • ${totalHours.toFixed(1)} ساعة`;
-    }
-}
-
-// ---- Bulk Operations ----
-function toggleAllRows(checked) {
-    document.querySelectorAll('.row-select').forEach(cb => cb.checked = checked);
-}
-
-function updateSelectAllState() {
-    const allCheckboxes = document.querySelectorAll('.row-select');
-    const checkedCheckboxes = document.querySelectorAll('.row-select:checked');
-    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-    
-    if (allCheckboxes.length === 0) {
-        selectAllCheckbox.checked = false;
-        selectAllCheckbox.indeterminate = false;
-    } else if (checkedCheckboxes.length === allCheckboxes.length) {
-        selectAllCheckbox.checked = true;
-        selectAllCheckbox.indeterminate = false;
-    } else if (checkedCheckboxes.length > 0) {
-        selectAllCheckbox.checked = false;
-        selectAllCheckbox.indeterminate = true;
-    } else {
-        selectAllCheckbox.checked = false;
-        selectAllCheckbox.indeterminate = false;
-    }
-}
-
-function selectAllRows() {
-    document.getElementById('selectAllCheckbox').checked = true;
-    toggleAllRows(true);
-}
-
-function getSelectedRows() {
-    return Array.from(document.querySelectorAll('.row-select:checked')).map(cb => cb.closest('tr'));
-}
-
-function duplicateSelectedRows() {
-    const selectedRows = getSelectedRows();
-    if (selectedRows.length === 0) {
-        alert('يرجى تحديد صف واحد على الأقل للتكرار');
-        return;
-    }
-    
-    selectedRows.forEach(row => {
-        const date = row.querySelector('.entry-date').value;
-        const employee = row.querySelector('.entry-employee').value;
-        const shift = row.querySelector('.entry-shift').value;
-        const startTime = row.querySelector('.entry-start').value;
-        const endTime = row.querySelector('.entry-end').value;
-        const isCover = row.querySelector('.entry-cover').checked;
-        const notes = row.querySelector('.entry-notes').value;
-        
-        addEntryRow({
-            date, employee_id: employee, shift_id: shift,
-            start_time: startTime, end_time: endTime,
-            is_cover: isCover, notes
+    function cleanupScheduleData() {
+        const startInput = document.getElementById('start_date');
+        const endInput = document.getElementById('end_date');
+        if (!startInput || !endInput || !startInput.value || !endInput.value) return;
+        const startDateStr = startInput.value;
+        const endDateStr = endInput.value;
+        Object.keys(scheduleData).forEach(dateKey => {
+            if (dateKey < startDateStr || dateKey > endDateStr) {
+                delete scheduleData[dateKey];
+            }
         });
-    });
-    
-    alert(`✅ تم تكرار ${selectedRows.length} صف بنجاح!`);
-}
+    }
 
-function deleteSelectedRows() {
-    const selectedRows = getSelectedRows();
-    if (selectedRows.length === 0) {
-        alert('يرجى تحديد صف واحد على الأقل للحذف');
-        return;
-    }
-    
-    if (confirm(`هل أنت متأكد من حذف ${selectedRows.length} صف؟`)) {
-        selectedRows.forEach(row => row.remove());
-        updateSelectAllState();
-        alert(`✅ تم حذف ${selectedRows.length} صف بنجاح!`);
-    }
-}
+    // Step Navigation
+    function changeStep(direction) {
+        if (direction === 1 && !validateCurrentStep()) {
+            return;
+        }
 
-function prefillRowsFromExisting() {
-    try {
-        const tbody = document.getElementById('entriesEditorBody');
-        // If there are already rows, don't duplicate
-        if (tbody.children.length === 0 && Array.isArray(EXISTING_ENTRIES) && EXISTING_ENTRIES.length > 0) {
-            EXISTING_ENTRIES.forEach(e => addEntryRow(e));
-        }
-        prefilledRows = true;
-    } catch (e) {
-        console.warn('prefillRowsFromExisting failed', e);
-    }
-}
+        saveScheduleDataToStorage();
 
-// ---- Validation ----
-function validateFormData() {
-    const errors = [];
-    
-    // Validate basic fields
-    const branch = document.getElementById('branch').value;
-    const scheduleType = document.getElementById('schedule_type').value;
-    const startDate = document.getElementById('start_date').value;
-    const endDate = document.getElementById('end_date').value;
-    
-    if (!branch) errors.push('يجب اختيار الفرع');
-    if (!scheduleType) errors.push('يجب اختيار نوع الجدول');
-    if (!startDate) errors.push('يجب تحديد تاريخ البداية');
-    if (!endDate) errors.push('يجب تحديد تاريخ النهاية');
-    
-    if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
-        errors.push('تاريخ البداية يجب أن يكون قبل تاريخ النهاية');
-    }
-    
-    // Validate entries
-    const rows = document.querySelectorAll('#entriesEditorBody .entry-row');
-    if (rows.length === 0) {
-        errors.push('يجب إضافة توزيع واحد على الأقل');
-    }
-    
-    rows.forEach((row, index) => {
-        const date = row.querySelector('.entry-date').value;
-        const employee = row.querySelector('.entry-employee').value;
-        const shift = row.querySelector('.entry-shift').value;
-        const startTime = row.querySelector('.entry-start').value;
-        const endTime = row.querySelector('.entry-end').value;
-        
-        if (!date) errors.push(`الصف ${index + 1}: يجب تحديد التاريخ`);
-        if (!employee) errors.push(`الصف ${index + 1}: يجب اختيار الموظف`);
-        if (!shift) errors.push(`الصف ${index + 1}: يجب اختيار الشفتة`);
-        if (!startTime) errors.push(`الصف ${index + 1}: يجب تحديد وقت البداية`);
-        if (!endTime) errors.push(`الصف ${index + 1}: يجب تحديد وقت النهاية`);
-        
-        if (startTime && endTime && startTime >= endTime) {
-            errors.push(`الصف ${index + 1}: وقت البداية يجب أن يكون قبل وقت النهاية`);
-        }
-        
-        // Check date range
-        if (date && (new Date(date) < new Date(startDate) || new Date(date) > new Date(endDate))) {
-            errors.push(`الصف ${index + 1}: التاريخ خارج نطاق الجدول`);
-        }
-    });
-    
-    return errors;
-}
+        document.getElementById(`step${currentStep}`).style.display = 'none';
+        document.getElementById(`step${currentStep}-circle`).classList.remove('active');
 
-// ---- Collect & Save ----
-function collectAllScheduleData() {
-    const data = {
-        branch: parseInt(document.getElementById('branch').value),
-        schedule_type: document.getElementById('schedule_type').value,
-        start_date: document.getElementById('start_date').value,
-        end_date: document.getElementById('end_date').value,
-        notes: document.getElementById('notes').value || '',
-        entries: []
-    };
-    
-    // Collect entries from table
-    document.querySelectorAll('#entriesEditorBody .entry-row').forEach(row => {
-        const date = row.querySelector('.entry-date').value;
-        const employee_id = parseInt(row.querySelector('.entry-employee').value);
-        const shift_id = parseInt(row.querySelector('.entry-shift').value);
-        const start_time = row.querySelector('.entry-start').value;
-        const end_time = row.querySelector('.entry-end').value;
-        const hours = parseFloat(row.querySelector('.entry-hours').textContent) || computeHours(start_time, end_time);
-        const is_cover = row.querySelector('.entry-cover').checked;
-        const notes = row.querySelector('.entry-notes').value || '';
-        
-        if (date && employee_id && shift_id) {
-            data.entries.push({ 
-                date, 
-                employee_id, 
-                shift_id, 
-                start_time, 
-                end_time, 
-                hours, 
-                is_cover, 
-                notes 
-            });
-        }
-    });
-    
-    return data;
-}
+        currentStep += direction;
 
-// Validation function
-function validateFormData() {
-    const errors = [];
-    
-    // Check basic schedule info
-    const branch = document.getElementById('branch');
-    const scheduleType = document.getElementById('schedule_type');
-    const startDate = document.getElementById('start_date');
-    const endDate = document.getElementById('end_date');
-    
-    if (!branch || !branch.value) {
-        errors.push('يجب اختيار الفرع');
+        if (currentStep < 1) currentStep = 1;
+        if (currentStep > 4) currentStep = 4;
+
+        document.getElementById(`step${currentStep}`).style.display = 'block';
+        document.getElementById(`step${currentStep}-circle`).classList.add('active');
+
+        document.getElementById('prevBtn').style.display = currentStep > 1 ? 'inline-block' : 'none';
+        document.getElementById('nextBtn').style.display = currentStep < 4 ? 'inline-block' : 'none';
+        document.getElementById('submitBtn').style.display = currentStep === 4 ? 'inline-block' : 'none';
+
+        loadStepData();
+
+        setTimeout(() => {
+            fixScrollIssues();
+        }, 100);
     }
-    
-    if (!scheduleType || !scheduleType.value) {
-        errors.push('يجب اختيار نوع الجدول');
-    }
-    
-    if (!startDate || !startDate.value) {
-        errors.push('يجب تحديد تاريخ البداية');
-    }
-    
-    if (!endDate || !endDate.value) {
-        errors.push('يجب تحديد تاريخ النهاية');
-    }
-    
-    if (startDate && endDate && startDate.value && endDate.value) {
-        if (new Date(startDate.value) >= new Date(endDate.value)) {
-            errors.push('تاريخ البداية يجب أن يكون قبل تاريخ النهاية');
-        }
-    }
-    
-    // Check entries in the table
-    const entryRows = document.querySelectorAll('#entries_table tbody tr');
-    let hasEntries = false;
-    
-    entryRows.forEach((row, index) => {
-        const date = row.querySelector('input[name="date"]');
-        const employee = row.querySelector('select[name="employee"]');
-        const shift = row.querySelector('select[name="shift"]');
-        const startTime = row.querySelector('input[name="start_time"]');
-        const endTime = row.querySelector('input[name="end_time"]');
-        
-        if (date && date.value && employee && employee.value && shift && shift.value) {
-            hasEntries = true;
-            
-            if (!startTime || !startTime.value) {
-                errors.push(`الصف ${index + 1}: يجب تحديد وقت البداية`);
-            }
-            
-            if (!endTime || !endTime.value) {
-                errors.push(`الصف ${index + 1}: يجب تحديد وقت النهاية`);
-            }
-            
-            if (startTime && endTime && startTime.value && endTime.value) {
-                const start = new Date(`2000-01-01 ${startTime.value}`);
-                const end = new Date(`2000-01-01 ${endTime.value}`);
-                
-                if (start >= end) {
-                    errors.push(`الصف ${index + 1}: وقت البداية يجب أن يكون قبل وقت النهاية`);
+
+    function validateCurrentStep() {
+        switch (currentStep) {
+            case 1:
+                const startDate = document.getElementById('start_date').value;
+                const endDate = document.getElementById('end_date').value;
+                if (!startDate || !endDate) {
+                    alert('يرجى ملء جميع الحقول المطلوبة');
+                    return false;
                 }
-            }
+                if (new Date(endDate) <= new Date(startDate)) {
+                    alert('تاريخ النهاية يجب أن يكون بعد تاريخ البداية');
+                    return false;
+                }
+                break;
+            case 2:
+                if (selectedEmployees.length === 0) {
+                    alert('يرجى اختيار موظف واحد على الأقل');
+                    return false;
+                }
+                break;
         }
-    });
-    
-    if (!hasEntries) {
-        errors.push('يجب إضافة توزيعة واحدة على الأقل');
+        return true;
     }
-    
-    return {
-        isValid: errors.length === 0,
-        message: errors.join('\n')
-    };
-}
 
-// Collect all schedule data
-function collectAllScheduleData() {
-    const data = {
-        schedule_id: SCHEDULE_ID,
-        is_update: true,
-        
-        // Basic schedule info
-        branch_id: document.getElementById('branch').value,
-        schedule_type: document.getElementById('schedule_type').value,
-        start_date: document.getElementById('start_date').value,
-        end_date: document.getElementById('end_date').value,
-        notes: document.getElementById('notes').value || '',
-        
-        // Entries
-        entries: []
-    };
-    
-    // Collect entries from table
-    const entryRows = document.querySelectorAll('#entries_table tbody tr');
-    
-    entryRows.forEach(row => {
-        const date = row.querySelector('input[name="date"]');
-        const employee = row.querySelector('select[name="employee"]');
-        const shift = row.querySelector('select[name="shift"]');
-        const startTime = row.querySelector('input[name="start_time"]');
-        const endTime = row.querySelector('input[name="end_time"]');
-        const isCover = row.querySelector('input[name="is_cover"]');
-        const notes = row.querySelector('input[name="notes"]');
-        
-        if (date && date.value && employee && employee.value && shift && shift.value) {
-            const entry = {
-                date: date.value,
-                employee_id: parseInt(employee.value),
-                shift_id: parseInt(shift.value),
-                start_time: startTime ? startTime.value : '',
-                end_time: endTime ? endTime.value : '',
-                is_cover: isCover ? isCover.checked : false,
-                notes: notes ? notes.value : ''
-            };
-            
-            // Calculate hours
-            if (entry.start_time && entry.end_time) {
-                entry.hours = computeHours(entry.start_time, entry.end_time);
+    function loadStepData() {
+        console.log('Loading step data for step:', currentStep);
+        switch (currentStep) {
+            case 2:
+                loadEmployees();
+                break;
+            case 3:
+                loadScheduleTable();
+                break;
+            case 4:
+                loadFinalReview();
+                break;
+        }
+    }
+
+    function loadEmployees() {
+        const branchId = selectedBranch;
+        if (!branchId) return;
+
+        fetch(`/schedules/api/employees/?branch=${branchId}`, {
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                employeesData = data.employees || [];
+                const container = document.getElementById('employees-container');
+                container.innerHTML = '';
+
+                employeesData.forEach(employee => {
+                    const isSelected = selectedEmployees.includes(employee.id);
+                    const employeeCard = document.createElement('div');
+                    employeeCard.className = 'col-md-4 mb-3';
+                    employeeCard.innerHTML = `
+                    <div class="card employee-card ${isSelected ? 'selected' : ''}" onclick="toggleEmployee(${employee.id})">
+                        <div class="card-body text-center">
+                            <div class="avatar-circle mb-2">
+                                <i class="fas fa-user fa-2x"></i>
+                            </div>
+                            <h6 class="card-title">${employee.full_name}</h6>
+                            <small class="text-muted">${employee.role_display}</small>
+                            <div class="mt-2">
+                                <span class="badge bg-info">${employee.hours_per_day} ساعة/يوم</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                    container.appendChild(employeeCard);
+                });
+                updateSelectedCount();
+                checkLeaveConflicts();
+            });
+    }
+
+    function toggleEmployee(employeeId) {
+        const card = event.currentTarget;
+        const index = selectedEmployees.indexOf(employeeId);
+        if (index > -1) {
+            selectedEmployees.splice(index, 1);
+            card.classList.remove('selected');
+        } else {
+            selectedEmployees.push(employeeId);
+            card.classList.add('selected');
+        }
+        saveScheduleDataToStorage();
+        updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+        const countEl = document.getElementById('selected-count');
+        if (countEl) countEl.textContent = `${selectedEmployees.length} موظف محدد`;
+    }
+
+    function checkLeaveConflicts() {
+        const startDate = document.getElementById('start_date').value;
+        const endDate = document.getElementById('end_date').value;
+        if (!startDate || !endDate) return;
+
+        fetch(`/schedules/api/leaves/conflicts/?start_date=${startDate}&end_date=${endDate}&employees=${selectedEmployees.join(',')}`, {
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                const conflictsSection = document.getElementById('leave-conflicts');
+                if (data.conflicts && data.conflicts.length > 0) {
+                    conflictsSection.style.display = 'block';
+                    document.getElementById('conflicts-list').innerHTML = data.conflicts.map(conflict => `
+                    <div class="alert alert-warning">
+                        <strong>${conflict.employee_name}</strong> في إجازة من ${conflict.start_date} إلى ${conflict.end_date}
+                        <span class="badge bg-warning ms-2">${conflict.type}</span>
+                    </div>
+                `).join('');
+                } else {
+                    conflictsSection.style.display = 'none';
+                }
+            });
+    }
+
+    function loadScheduleTable() {
+        const startDateStr = document.getElementById('start_date').value;
+        const endDateStr = document.getElementById('end_date').value;
+        const tbody = document.getElementById('schedule-tbody');
+        tbody.innerHTML = '';
+
+        const startDate = new Date(startDateStr);
+        const endDate = new Date(endDateStr);
+        const currentDate = new Date(startDate);
+
+        while (currentDate <= endDate) {
+            const dateStr = currentDate.toISOString().split('T')[0];
+            const dayName = currentDate.toLocaleDateString('ar-SA', { weekday: 'long' });
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+            <td><div class="fw-bold">${dateStr}</div></td>
+            <td><div class="badge bg-light text-dark p-2"><i class="fas fa-calendar-day text-primary me-2"></i>${dayName}</div></td>
+            <td><div class="employee-assignments" id="assignments-${dateStr}">
+                <div class="selected-employees mb-2" id="selected-list-${dateStr}"></div>
+                <div class="shift-assignments" id="shift-assignments-${dateStr}"></div>
+            </div></td>
+            <td><div class="coverage-status" id="coverage-${dateStr}">
+                <div class="d-flex align-items-center"><div class="progress me-2" style="width: 80px; height: 8px;">
+                <div class="progress-bar bg-danger" id="coverage-bar-${dateStr}" style="width: 0%"></div></div>
+                <span class="badge bg-danger" id="coverage-badge-${dateStr}">0%</span></div>
+                <small class="text-muted d-block mt-1" id="coverage-text-${dateStr}">لم يتم تعيين شفتات</small>
+            </div></td>
+            <td><div class="btn-group btn-group-sm">
+                <button type="button" class="btn btn-outline-primary" onclick="assignEmployees('${dateStr}')" title="تعيين">
+                    <i class="fas fa-users"></i>
+                </button>
+                <button type="button" class="btn btn-outline-success" onclick="autoAssignRow('${dateStr}')" title="توزيع تلقائي">
+                    <i class="fas fa-magic"></i>
+                </button>
+            </div></td>`;
+            tbody.appendChild(row);
+
+            if (!scheduleData[dateStr]) {
+                scheduleData[dateStr] = { employees: [...selectedEmployees], shifts: {}, coverage: 0 };
             } else {
-                entry.hours = 0;
+                scheduleData[dateStr].employees = [...selectedEmployees];
+                // إعادة حساب التغطية
+                setTimeout(() => {
+                    updateDaySchedule(dateStr);
+                    updateCoverage(dateStr);
+                }, 10);
             }
-            
-            data.entries.push(entry);
+            currentDate.setDate(currentDate.getDate() + 1);
         }
-    });
-    
-    console.log('Collected data:', data);
-    return data;
-}
-
-
-// ---- Init ----
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing...');
-    
-    // Check if all required functions are defined
-    const requiredFunctions = [
-        'reloadBranchData', 'validateFormData', 
-        'collectAllScheduleData', 'saveScheduleToDatabase', 'getCSRFToken'
-    ];
-    
-    const missingFunctions = requiredFunctions.filter(func => typeof window[func] !== 'function');
-    if (missingFunctions.length > 0) {
-        console.error('Missing functions:', missingFunctions);
-        alert('خطأ: بعض الدوال المطلوبة غير موجودة: ' + missingFunctions.join(', '));
-        return;
+        updateScheduleSummary();
+        saveScheduleDataToStorage();
     }
-    
-    // Check if SCHEDULE_ID is defined
-    if (typeof SCHEDULE_ID === 'undefined') {
-        console.error('SCHEDULE_ID is not defined');
-        alert('خطأ: معرف الجدول غير محدد');
-        return;
+
+    function autoAssignRow(dateStr) {
+        if (selectedEmployees.length === 0 || branchShifts.length === 0) return;
+        const shiftsForDate = {};
+        selectedEmployees.forEach((empId, index) => {
+            const shift = branchShifts[index % branchShifts.length];
+            if (!shiftsForDate[shift.id]) shiftsForDate[shift.id] = [];
+            shiftsForDate[shift.id].push(parseInt(empId));
+        });
+        scheduleData[dateStr].shifts = shiftsForDate;
+        updateDaySchedule(dateStr);
+        updateCoverage(dateStr);
+        updateScheduleSummary();
     }
-    
-    console.log('All required functions are available');
-    console.log('SCHEDULE_ID:', SCHEDULE_ID);
-    
-    // Load employees/shifts for current branch
-    reloadBranchData();
-    
-    // Add event listener for branch change
-    const branchSelect = document.getElementById('branch');
-    if (branchSelect) {
-        branchSelect.addEventListener('change', function() {
-            const branchId = this.value;
-            console.log('Branch changed to:', branchId);
-            if (branchId) {
-                // Reload rows data
-                reloadBranchData();
-            }
+
+    function assignEmployees(dateStr) {
+        document.getElementById('assignment-date').textContent = dateStr;
+        document.getElementById('assignment-date-input').value = dateStr;
+        prepareModalContent(dateStr);
+        const modal = new bootstrap.Modal(document.getElementById('assignmentModal'));
+        modal.show();
+    }
+
+    function prepareModalContent(dateStr) {
+        const container = document.getElementById('shifts-container');
+        container.innerHTML = '';
+        branchShifts.forEach(shift => {
+            const assigned = scheduleData[dateStr].shifts[shift.id] || [];
+            const div = document.createElement('div');
+            div.className = 'col-md-6 mb-3';
+            div.innerHTML = `
+                <div class="card h-100 border-primary">
+                    <div class="card-header bg-primary text-white"><h6>${shift.name}</h6><small>${shift.start_time} - ${shift.end_time}</small></div>
+                    <div class="card-body">
+                        <div class="assigned-employees mb-3" id="modal-assigned-${shift.id}">
+                            ${assigned.map(id => `<span class="badge bg-success me-1 mb-1">${getEmployeeName(id)} <i class="fas fa-times ms-1" onclick="removeEmpFromShift('${dateStr}', ${shift.id}, ${id})"></i></span>`).join('')}
+                        </div>
+                        <select class="form-select" onchange="addEmpToShift('${dateStr}', ${shift.id}, this.value)">
+                            <option value="">إضافة موظف...</option>
+                            ${selectedEmployees.filter(id => !assigned.includes(id)).map(id => `<option value="${id}">${getEmployeeName(id)}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>`;
+            container.appendChild(div);
         });
     }
-    
-    // If employees/shifts load quickly, rows will be prefilled in reloadBranchData.then
-    // Otherwise, set a fallback timer to prefill after a short delay
-    setTimeout(() => { 
-        console.log('Fallback timer triggered');
-        if (!prefilledRows) prefillRowsFromExisting(); 
-        updateStats();
-    }, 2000);
-});
 
+    function addEmpToShift(dateStr, shiftId, empId) {
+        if (!empId) return;
+        if (!scheduleData[dateStr].shifts[shiftId]) scheduleData[dateStr].shifts[shiftId] = [];
+        scheduleData[dateStr].shifts[shiftId].push(parseInt(empId));
+        prepareModalContent(dateStr);
+    }
 
-// ---- Employee Info ----
-function showEmployeeInfo(selectElement) {
-    const employeeId = selectElement.value;
-    if (!employeeId) return;
-    
-    const employee = employeesData.find(emp => emp.id == employeeId);
-    if (employee) {
-        // Show employee info in a tooltip or alert
-        const info = `
-الموظف: ${employee.full_name || employee.username}
-المنصب: ${employee.position || 'غير محدد'}
-ساعات العمل اليومية: ${employee.hours_per_day || 8} ساعة
-الهاتف: ${employee.phone || 'غير محدد'}
-البريد الإلكتروني: ${employee.email || 'غير محدد'}
-        `;
+    function removeEmpFromShift(dateStr, shiftId, empId) {
+        const idx = scheduleData[dateStr].shifts[shiftId].indexOf(empId);
+        if (idx > -1) scheduleData[dateStr].shifts[shiftId].splice(idx, 1);
+        prepareModalContent(dateStr);
+    }
+
+    function saveAssignments() {
+        const dateStr = document.getElementById('assignment-date-input').value;
+        updateDaySchedule(dateStr);
+        updateCoverage(dateStr);
+        updateScheduleSummary();
+        bootstrap.Modal.getInstance(document.getElementById('assignmentModal')).hide();
+    }
+
+    function updateDaySchedule(dateStr) {
+        const el = document.getElementById(`shift-assignments-${dateStr}`);
+        if (!el) return;
+        const shifts = scheduleData[dateStr].shifts;
+        let html = '';
+        Object.keys(shifts).forEach(sid => {
+            const s = branchShifts.find(x => x.id == sid);
+            const emps = shifts[sid];
+            if (s && emps.length > 0) {
+                html += `
+                <div class="assignment-item mb-2 p-1 border-bottom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="badge bg-primary-soft text-primary small">${s.name}</span>
+                    </div>
+                    <div class="assigned-names mt-1">
+                        ${emps.map(id => `<span class="badge bg-info text-white me-1" style="font-size: 0.75rem;">${getEmployeeName(id)}</span>`).join('')}
+                    </div>
+                </div>`;
+            }
+        });
+        el.innerHTML = html || '<span class="text-muted small"><i class="fas fa-info-circle me-1"></i>لم يتم التوزيع</span>';
+    }
+
+    function updateCoverage(dateStr) {
+        const total = branchShifts.length;
+        const assigned = Object.keys(scheduleData[dateStr].shifts).length;
+        const percent = total > 0 ? Math.round((assigned / total) * 100) : 0;
         
-        // Create a temporary tooltip or show in console
-        console.log('Employee Info:', info);
+        // حفظ النسبة في البيانات
+        scheduleData[dateStr].coverage = percent;
         
-        // You can also show this in a modal or tooltip
-        if (window.showEmployeeModal) {
-            showEmployeeModal(employee);
+        const bar = document.getElementById(`coverage-bar-${dateStr}`);
+        const badge = document.getElementById(`coverage-badge-${dateStr}`);
+        const text = document.getElementById(`coverage-text-${dateStr}`);
+        
+        if (bar) {
+            bar.style.width = percent + '%';
+            bar.className = 'progress-bar ' + (percent < 50 ? 'bg-danger' : (percent < 100 ? 'bg-warning' : 'bg-success'));
+        }
+        if (badge) {
+            badge.textContent = percent + '%';
+            badge.className = 'badge ' + (percent < 50 ? 'bg-danger' : (percent < 100 ? 'bg-warning' : 'bg-success'));
+        }
+        if (text) {
+            if (percent === 0) text.textContent = 'لم يتم تعيين شفتات';
+            else if (percent < 100) text.textContent = `تغطية جزئية (${assigned}/${total} شفتات)`;
+            else text.textContent = 'تغطية كاملة';
         }
     }
-}
 
-// ---- Shift Time Update ----
-function updateShiftTimes(selectElement) {
-    const shiftId = selectElement.value;
-    if (!shiftId) return;
-    
-    const shift = shiftsData.find(s => s.id == shiftId);
-    if (shift) {
-        const row = selectElement.closest('tr');
-        const startInput = row.querySelector('.entry-start');
-        const endInput = row.querySelector('.entry-end');
-        const hoursBadge = row.querySelector('.entry-hours');
-        
-        // Update times based on shift
-        startInput.value = shift.start_time;
-        endInput.value = shift.end_time;
-        
-        // Recalculate hours
-        const hours = computeHours(shift.start_time, shift.end_time);
-        hoursBadge.textContent = hours.toFixed(1);
-        
-        // Update stats
-        updateStats();
+    function getEmployeeName(id) {
+        const e = employeesData.find(x => x.id == id);
+        return e ? e.full_name : 'موظف ' + id;
     }
-}
 
-
-// ---- Employee Modal ----
-function showEmployeeModal(employee) {
-    // Create modal HTML if it doesn't exist
-    let modal = document.getElementById('employeeInfoModal');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'employeeInfoModal';
-        modal.className = 'modal fade';
-        modal.innerHTML = `
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">معلومات الموظف</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body" id="employeeInfoContent">
-                        <!-- Content will be filled here -->
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
+    function getEmployeeById(id) {
+        return employeesData.find(x => x.id == id);
     }
-    
-    // Fill modal content
-    const content = document.getElementById('employeeInfoContent');
-    content.innerHTML = `
-        <div class="row">
-            <div class="col-md-6">
-                <strong>الاسم:</strong> ${employee.full_name || employee.username}
-            </div>
-            <div class="col-md-6">
-                <strong>المنصب:</strong> ${employee.position || 'غير محدد'}
-            </div>
-            <div class="col-md-6">
-                <strong>ساعات العمل اليومية:</strong> ${employee.hours_per_day || 8} ساعة
-            </div>
-            <div class="col-md-6">
-                <strong>الهاتف:</strong> ${employee.phone || 'غير محدد'}
-            </div>
-            <div class="col-md-12">
-                <strong>البريد الإلكتروني:</strong> ${employee.email || 'غير محدد'}
-            </div>
-        </div>
-    `;
-    
-    // Show modal
-    new bootstrap.Modal(modal).show();
-}
 
-// Also expose a quick modal viewer
-function showCurrentEntriesModal() { new bootstrap.Modal(document.getElementById('currentEntriesModal')).show(); }
+    function updateScheduleSummary() {
+        const container = document.getElementById('schedule-summary');
+        const dates = Object.keys(scheduleData);
+        const avg = dates.length > 0 ? Math.round(dates.reduce((s, d) => s + scheduleData[d].coverage, 0) / dates.length) : 0;
+        container.innerHTML = `
+            <div class="col-md-4"><div class="card bg-primary text-white text-center p-2"><h6>${dates.length} يوم</h6></div></div>
+            <div class="col-md-4"><div class="card bg-success text-white text-center p-2"><h6>${selectedEmployees.length} موظف</h6></div></div>
+            <div class="col-md-4"><div class="card bg-info text-white text-center p-2"><h6>${avg}% تغطية</h6></div></div>`;
+        renderEmployeeCoverageCards();
+    }
 
-// Test function to verify everything is working
-function testEditPage() {
-    console.log('=== Testing Edit Page ===');
-    console.log('SCHEDULE_ID:', typeof SCHEDULE_ID !== 'undefined' ? SCHEDULE_ID : 'UNDEFINED');
-    console.log('employeesData:', employeesData.length);
-    console.log('shiftsData:', shiftsData.length);
-    console.log('Required functions check:');
-    const functions = ['reloadBranchData', 'updateFormOptions', 'validateFormData', 'collectAllScheduleData', 'saveScheduleToDatabase', 'getCSRFToken'];
-    functions.forEach(func => {
-        console.log(`  ${func}: ${typeof window[func]}`);
+    function renderEmployeeCoverageCards() {
+        const container = document.getElementById('employee-coverage-cards');
+        if (!container) return;
+        let html = '';
+        selectedEmployees.forEach(id => {
+            const emp = getEmployeeById(id);
+            if (!emp) return;
+            html += `<div class="col-md-3 mb-2"><div class="card p-2 shadow-sm"><small><strong>${emp.full_name}</strong></small></div></div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    async function saveScheduleToDatabase() {
+        const scheduleId = document.getElementById('schedule_id').value;
+        const data = {
+            schedule_type: document.getElementById('schedule_type').value,
+            start_date: document.getElementById('start_date').value,
+            end_date: document.getElementById('end_date').value,
+            notes: document.getElementById('notes').value,
+            entries: []
+        };
+
+        Object.keys(scheduleData).forEach(date => {
+            Object.keys(scheduleData[date].shifts).forEach(sid => {
+                const shift = branchShifts.find(x => x.id == sid);
+                scheduleData[date].shifts[sid].forEach(eid => {
+                    data.entries.push({
+                        employee_id: eid,
+                        date: date,
+                        shift_id: parseInt(sid),
+                        start_time: shift.start_time,
+                        end_time: shift.end_time,
+                        hours: shift.duration
+                    });
+                });
+            });
+        });
+
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> جاري التحديث...';
+
+        try {
+            const res = await fetch(`/schedules/api/${scheduleId}/save-entries/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            if (result.success) {
+                alert('تم تحديث الجدول بنجاح');
+                window.location.href = `/schedules/${scheduleId}/`;
+            } else {
+                alert('خطأ: ' + result.error);
+                btn.disabled = false;
+                btn.innerHTML = 'تحديث الجدول';
+            }
+        } catch (e) {
+            alert('حدث خطأ غير متوقع');
+            btn.disabled = false;
+        }
+    }
+
+    function loadFinalReview() {
+        const container = document.getElementById('final-review');
+        container.innerHTML = `
+            <div class="alert alert-info"><h6>ملخص المراجعة</h6><p>أنت على وشك تحديث الجدول. سيتم استبدال جميع التوزيعات القديمة بالتوزيعات الجديدة التي قمت بها في نظام الشبكة.</p></div>
+            <button type="button" class="btn btn-success w-100" onclick="saveScheduleToDatabase()">تأكيد وحفظ التغييرات</button>`;
+    }
+
+    function showHelp() {
+        alert('يمكنك تعديل الجدول بالكامل عبر الخطوات الموضحة. نظام الشبكة يسهل عليك رؤية التغطية اليومية لكل شفت وموظف.');
+    }
+
+    function fixScrollIssues() {
+        document.body.style.overflow = 'auto';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initializeData();
+        loadStepData();
+        fixScrollIssues();
     });
-    console.log('DOM elements check:');
-    const elements = ['branch', 'schedule_type', 'start_date', 'end_date'];
-    elements.forEach(id => {
-        const el = document.getElementById(id);
-        console.log(`  ${id}: ${el ? 'EXISTS' : 'MISSING'}`);
-    });
-    console.log('=== End Test ===');
-}
-
-// Make test function available globally
-window.testEditPage = testEditPage;
-
-console.log('=== JavaScript Loaded Successfully ===');
-console.log('saveScheduleToDatabase function:', typeof window.saveScheduleToDatabase);
-console.log('testSave function:', typeof window.testSave);
-console.log('testEditPage function:', typeof window.testEditPage);
-
-// Final test
-if (typeof window.saveScheduleToDatabase === 'function') {
-    console.log('✅ saveScheduleToDatabase is available globally');
-} else {
-    console.error('❌ saveScheduleToDatabase is NOT available globally');
-}
 </script>
+
+<style>
+    .step-circle { width: 40px; height: 40px; border-radius: 50%; background: #eee; display: flex; align-items: center; justify-content: center; margin: 0 auto 5px; font-weight: bold; }
+    .step-circle.active { background: #007bff; color: #fff; }
+    .employee-card { cursor: pointer; transition: 0.3s; }
+    .employee-card.selected { border-color: #007bff; background: #e7f1ff; }
+    .avatar-circle { width: 50px; height: 50px; background: #f8f9fa; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
+    .navigation-buttons { border-top: 1px solid #ddd; padding-top: 20px; }
+    .assigned-employees .badge i { cursor: pointer; }
+    .assigned-employees .badge i:hover { color: #ff0000; }
+    .bg-primary-soft { background-color: rgba(0, 123, 255, 0.1); }
+</style>
 {% endblock %}

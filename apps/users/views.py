@@ -319,7 +319,7 @@ def user_detail_view(request, user_id):
 @login_required
 def user_create_view(request):
     """إنشاء مستخدم جديد"""
-    if not request.user.is_superuser and not (hasattr(request.user, 'profile') and request.user.profile.can_manage_employees):
+    if not request.user.is_superuser and not (hasattr(request.user, 'profile') and request.user.profile.role == 'super_admin'):
         messages.error(request, 'ليس لديك صلاحية لإنشاء مستخدمين')
         return redirect('users:list')
     
@@ -352,7 +352,7 @@ def user_edit_view(request, user_id):
     user = get_object_or_404(User, id=user_id)
     
     # التحقق من الصلاحيات
-    if not request.user.is_superuser and not (hasattr(request.user, 'profile') and request.user.profile.can_manage_employees):
+    if not request.user.is_superuser and not (hasattr(request.user, 'profile') and request.user.profile.role == 'super_admin'):
         if user != request.user:
             messages.error(request, 'ليس لديك صلاحية لتعديل هذا المستخدم')
             return redirect('users:list')

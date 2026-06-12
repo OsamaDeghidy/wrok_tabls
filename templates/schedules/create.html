@@ -1234,6 +1234,7 @@
     // التحقق من صحة الجدول قبل الحفظ
     function validateSchedule() {
         console.log('Validating schedule data...');
+        cleanupScheduleData(); // تنظيف تواريخ الأشهر القديمة
         const errors = [];
         const maxHours = 9.0;
 

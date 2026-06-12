@@ -42,19 +42,62 @@
                         <div class="form-text">
                             يرجى رفع ملف Excel يحتوي على بيانات الموظفين. يجب أن يحتوي الملف على الأعمدة التالية:
                             <ul class="mt-2">
-                                <li><strong>employee_number</strong> - الرقم الوظيفي (مطلوب)</li>
-                                <li><strong>full_name</strong> - الاسم الكامل (مطلوب)</li>
-                                <li><strong>username</strong> - اسم المستخدم (اختياري)</li>
-                                <li><strong>email</strong> - البريد الإلكتروني (اختياري)</li>
-                                <li><strong>password</strong> - كلمة المرور (اختياري، افتراضي: password123)</li>
-                                <li><strong>job_title</strong> - المسمى الوظيفي</li>
-                                <li><strong>role</strong> - الدور (employee, branch_manager, coordinator, etc.)</li>
-                                <li><strong>branch</strong> - الفرع</li>
-                                <li><strong>hire_date</strong> - تاريخ التعيين (YYYY-MM-DD)</li>
+                                <li><strong>employee_number</strong> أو <strong>الرقم الوظيفي</strong> - (مطلوب)</li>
+                                <li><strong>full_name</strong> أو <strong>الاسم الكامل</strong> - (مطلوب)</li>
+                                <li><strong>username</strong> أو <strong>اسم المستخدم</strong> - (اختياري)</li>
+                                <li><strong>email</strong> أو <strong>البريد الإلكتروني</strong> - (اختياري)</li>
+                                <li><strong>password</strong> أو <strong>كلمة المرور</strong> - (اختياري، الافتراضي: password123)</li>
+                                <li><strong>job_title</strong> أو <strong>المسمى الوظيفي</strong></li>
+                                <li><strong>role</strong> أو <strong>الدور</strong> - (employee, branch_manager, coordinator, region_manager, ...)</li>
+                                <li><strong>branch</strong> أو <strong>الفرع</strong> - اسم الفرع كما هو مسجل في النظام</li>
+                                <li><strong>region</strong> أو <strong>المنطقة</strong> - انظر جدول المناطق أدناه</li>
+                                <li><strong>hire_date</strong> أو <strong>تاريخ التعيين</strong> - بصيغة YYYY-MM-DD</li>
                             </ul>
+
+                            <!-- جدول المناطق -->
+                            <div class="mt-3">
+                                <strong><i class="fas fa-map-marker-alt me-1 text-primary"></i>القيم المقبولة لحقل المنطقة:</strong>
+                                <table class="table table-sm table-bordered mt-2">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>القيمة في الملف (إنجليزي)</th>
+                                            <th>أو بالعربي</th>
+                                            <th>المنطقة</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><code>north</code></td>
+                                            <td>شمال / شمالية / المنطقة الشمالية</td>
+                                            <td>🟡 المنطقة الشمالية</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>south</code></td>
+                                            <td>جنوب / جنوبية / المنطقة الجنوبية</td>
+                                            <td>🟠 المنطقة الجنوبية</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>east</code></td>
+                                            <td>شرق / شرقية / المنطقة الشرقية</td>
+                                            <td>🟢 المنطقة الشرقية</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>center</code></td>
+                                            <td>وسط / وسطى / المنطقة الوسطى</td>
+                                            <td>🔵 المنطقة الوسطى</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>west</code></td>
+                                            <td>غرب / غربية / المنطقة الغربية</td>
+                                            <td>🔴 المنطقة الغربية</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
                             <div class="alert alert-info mt-2">
                                 <small><i class="fas fa-info-circle me-1"></i>
-                                    يفضل استخدام الأسماء العربية للأعمدة الموجودة في الملف النموذجي
+                                    يمكنك استخدام الأسماء العربية أو الإنجليزية لحقل المنطقة. النظام يدعم كليهما تلقائياً.
                                 </small>
                             </div>
                         </div>

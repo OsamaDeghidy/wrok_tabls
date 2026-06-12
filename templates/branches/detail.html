@@ -7,7 +7,7 @@
 
 {% block page_actions %}
 <div class="btn-group" role="group">
-    {% if request.user.is_superuser or request.user.profile.can_manage_branches %}
+    {% if can_edit %}
     <a href="{% url 'branches:edit' branch.id %}" class="btn btn-warning">
         <i class="fas fa-edit me-1"></i>تعديل
     </a>
@@ -218,6 +218,13 @@
 
                     <!-- Schedules Tab -->
                     <div class="tab-pane fade" id="schedules" role="tabpanel">
+                        {% if can_edit %}
+                        <div class="mb-3 text-end">
+                            <a href="{% url 'branches:shift_create' branch.id %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus me-1"></i>إضافة شفت
+                            </a>
+                        </div>
+                        {% endif %}
                         <div class="table-responsive">
                             <table class="table table-bordered">
                                 <thead>
@@ -226,7 +233,7 @@
                                         <th>وقت البداية</th>
                                         <th>وقت النهاية</th>
                                         <th>الحالة</th>
-                                        <th>الإجراءات</th>
+                                        {% if can_edit %}<th>الإجراءات</th>{% endif %}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -241,14 +248,16 @@
                                                 {% if shift.is_active %}نشط{% else %}غير نشط{% endif %}
                                             </span>
                                         </td>
+                                        {% if can_edit %}
                                         <td>
-                                            <button class="btn btn-outline-primary btn-sm"
-                                                onclick="editShift({{ shift.id }})">تعديل</button>
+                                            <a href="{% url 'branches:shift_edit' branch.id shift.id %}"
+                                                class="btn btn-outline-primary btn-sm">تعديل</a>
                                         </td>
+                                        {% endif %}
                                     </tr>
                                     {% empty %}
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted">
+                                        <td colspan="{% if can_edit %}5{% else %}4{% endif %}" class="text-center text-muted">
                                             <i class="fas fa-clock me-2"></i>
                                             لا توجد شفتات في هذا الفرع
                                         </td>

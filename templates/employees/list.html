@@ -212,55 +212,84 @@
         </div>
     </div>
 </div>
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>تأكيد الحذف
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>هل أنت متأكد من حذف الموظف <strong id="deleteEmployeeName"></strong>؟</p>
+                <p class="text-danger small"><i class="fas fa-info-circle me-1"></i>هذا الإجراء لا يمكن التراجع عنه.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>حذف
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-// Table search functionality
-document.getElementById('search').addEventListener('keyup', function() {
-    const searchTerm = this.value.toLowerCase();
-    const table = document.getElementById('employeesTable');
-    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
-    
-    for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
-        const text = row.textContent.toLowerCase();
-        if (text.indexOf(searchTerm) > -1) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    }
+// Delete functionality
+let employeeToDelete = null;
+
+document.querySelectorAll('[data-confirm-delete]').forEach(btn => {
+    btn.addEventListener('click', function () {
+        employeeToDelete = this.dataset.employeeId;
+        document.getElementById('deleteEmployeeName').textContent = this.dataset.employeeName;
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    });
 });
 
-// Import functionality
-function startImport() {
-    const fileInput = document.getElementById('importFile');
-    const file = fileInput.files[0];
-    
-    if (!file) {
-        alert('يرجى اختيار ملف للاستيراد');
-        return;
-    }
-    
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('skip_duplicates', document.getElementById('skipDuplicates').checked);
-    formData.append('update_existing', document.getElementById('updateExisting').checked);
-    
-    // Show loading
-    const importBtn = document.querySelector('#importModal .btn-primary');
-    const originalText = importBtn.innerHTML;
-    importBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>جاري الاستيراد...';
-    importBtn.disabled = true;
-    
-    // Simulate import process
-    setTimeout(() => {
-        alert('تم استيراد البيانات بنجاح!');
-        importBtn.innerHTML = originalText;
-        importBtn.disabled = false;
-        bootstrap.Modal.getInstance(document.getElementById('importModal')).hide();
-    }, 2000);
-}
+document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+    if (!employeeToDelete) return;
+
+    const btn = this;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>جاري الحذف...';
+
+    fetch(`/employees/${employeeToDelete}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+            // إزالة الصف من الجدول مباشرة
+            const row = document.querySelector(`[data-employee-id="${employeeToDelete}"]`).closest('tr');
+            row.style.transition = 'opacity 0.3s';
+            row.style.opacity = '0';
+            setTimeout(() => row.remove(), 300);
+            // رسالة نجاح
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+            alert.style.zIndex = '9999';
+            alert.innerHTML = `<i class="fas fa-check-circle me-1"></i>${data.message} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+            document.body.appendChild(alert);
+            setTimeout(() => alert.remove(), 3000);
+        } else {
+            alert('حدث خطأ: ' + data.message);
+        }
+    })
+    .catch(() => alert('حدث خطأ في الاتصال'))
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-trash me-1"></i>حذف';
+        employeeToDelete = null;
+    });
+});
 </script>
 {% endblock %}

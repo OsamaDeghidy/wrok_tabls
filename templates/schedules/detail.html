@@ -161,6 +161,57 @@
     </div>
 </div>
 
+<!-- Branch Operating Hours Analysis -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-gradient-info text-white">
+        <h6 class="mb-0">
+            <i class="fas fa-clock me-2"></i>تحليل ساعات عمل المعرض يومياً
+        </h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="text-center" style="width: 25%;">التاريخ</th>
+                        <th class="text-center" style="width: 25%;">وقت الافتتاح (أول شفت)</th>
+                        <th class="text-center" style="width: 25%;">وقت الإغلاق (آخر شفت)</th>
+                        <th class="text-center" style="width: 25%;">إجمالي ساعات عمل المعرض</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for date_str, data in branch_operating_stats.items %}
+                    <tr>
+                        <td class="text-center fw-bold">{{ date_str }}</td>
+                        <td class="text-center">
+                            {% if data %}
+                                <span class="text-primary"><i class="far fa-clock me-1"></i>{{ data.opening_time|time:"H:i" }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if data %}
+                                <span class="text-danger"><i class="far fa-clock me-1"></i>{{ data.closing_time|time:"H:i" }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if data %}
+                                <span class="badge bg-info text-dark fs-6">{{ data.operating_hours|floatformat:1 }} ساعة</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <!-- Detailed Schedule Table -->
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-header bg-gradient-primary text-white">
@@ -587,8 +638,7 @@ function printSchedule() {
 }
 
 function exportSchedule() {
-    alert('تم تصدير الجدول بنجاح');
-    // TODO: Implement actual export functionality
+    window.location.href = `{% url 'schedules:export' schedule.id %}`;
 }
 
 // إجراءات التعديل والحذف

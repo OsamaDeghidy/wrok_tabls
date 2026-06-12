@@ -23,6 +23,9 @@ urlpatterns = [
     # تحليلات الجدول
     path('<int:schedule_id>/analytics/', views.schedule_analytics_view, name='analytics'),
     
+    # تصدير الجدول
+    path('<int:schedule_id>/export/', views.schedule_export_view, name='export'),
+    
     # اعتماد الجدول
     path('<int:schedule_id>/approve/', views.schedule_approve_view, name='approve'),
     
@@ -33,6 +36,9 @@ urlpatterns = [
     path('<int:schedule_id>/activate/', views.schedule_activate_view, name='activate'),
     # إكمال الجدول
     path('<int:schedule_id>/complete/', views.schedule_complete_view, name='complete'),
+    
+    # حذف الجدول
+    path('<int:schedule_id>/delete/', views.schedule_delete_view, name='delete'),
     
     # API Endpoints
     path('api/branches/<int:branch_id>/', views.branch_info_api, name='branch_info_api'),

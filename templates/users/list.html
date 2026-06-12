@@ -6,6 +6,7 @@
 {% block page_title %}إدارة المستخدمين{% endblock %}
 
 {% block page_actions %}
+{% if request.user.is_superuser or request.user.profile.role == 'super_admin' %}
 <div class="btn-group" role="group">
     <a href="{% url 'users:create' %}" class="btn btn-primary">
         <i class="fas fa-plus me-1"></i>إضافة مستخدم جديد
@@ -17,6 +18,7 @@
         <i class="fas fa-download me-1"></i>تصدير
     </button>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -114,6 +116,7 @@
                                     <a href="{% url 'users:detail' user.id %}" class="btn btn-outline-info">
                                         <i class="fas fa-eye"></i>
                                     </a>
+                                    {% if request.user.is_superuser or request.user.profile.role == 'super_admin' %}
                                     <a href="{% url 'users:edit' user.id %}" class="btn btn-outline-warning">
                                         <i class="fas fa-edit"></i>
                                     </a>
@@ -121,6 +124,7 @@
                                             onclick="deleteUser({{ user.id }}, '{{ user.user.get_full_name }}')">
                                         <i class="fas fa-trash"></i>
                                     </button>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -196,6 +200,7 @@
                                             <a href="{% url 'users:detail' user.id %}" class="btn btn-outline-info">
                                                 <i class="fas fa-eye"></i>
                                             </a>
+                                            {% if request.user.is_superuser or request.user.profile.role == 'super_admin' %}
                                             <a href="{% url 'users:edit' user.id %}" class="btn btn-outline-warning">
                                                 <i class="fas fa-edit"></i>
                                             </a>
@@ -203,6 +208,7 @@
                                                     onclick="deleteUser({{ user.id }}, '{{ user.user.get_full_name }}')">
                                                 <i class="fas fa-trash"></i>
                                             </button>
+                                            {% endif %}
                                         </div>
                                     </td>
                                 </tr>

@@ -304,8 +304,8 @@ class ApprovalFlow(models.Model):
     def get_step_role(self, step_number):
         """الحصول على الدور المطلوب للخطوة"""
         roles = [
-            'coordinator',      # الخطوة 1: المنسق
-            'region_manager',   # الخطوة 2: مدير المنطقة
+            'region_manager',   # الخطوة 1: مدير المنطقة
+            'coordinator',      # الخطوة 2: المنسق
             'operations_manager', # الخطوة 3: مدير العمليات
             'admin_manager',    # الخطوة 4: مدير الإدارة
         ]
@@ -473,10 +473,10 @@ class ApprovalStep(models.Model):
         
         # تحديد عدد الخطوات بناءً على نوع الكائن
         if approval_flow.content_type.model == 'schedule':
-            # للجداول: منسق -> مدير المنطقة -> مدير العمليات -> مدير الإدارة
+            # للجداول: مدير المنطقة -> منسق -> مدير العمليات -> مدير الإدارة
             steps = [
-                ('coordinator', 'منسق'),
                 ('region_manager', 'مدير المنطقة'),
+                ('coordinator', 'منسق'),
                 ('operations_manager', 'مدير العمليات'),
                 ('admin_manager', 'مدير الإدارة'),
             ]
