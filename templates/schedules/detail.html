@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load schedule_filters %}
 
 {% block title %}تفاصيل الجدول التشغيلي - نظام إدارة الجداول التشغيلية{% endblock %}
 
@@ -30,9 +31,36 @@
     <button type="button" class="btn btn-outline-primary" onclick="printSchedule()">
         <i class="fas fa-print me-1"></i>طباعة
     </button>
-    <button type="button" class="btn btn-outline-success" onclick="exportSchedule()">
-        <i class="fas fa-download me-1"></i>تصدير
-    </button>
+    <div class="btn-group">
+        <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-file-excel me-1"></i>تصدير الإكسيل
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow">
+            <li><h6 class="dropdown-header text-primary"><i class="fas fa-file-export me-1"></i>تصدير لنظام ساب (SAP)</h6></li>
+            <li>
+                <a class="dropdown-item" href="{% url 'schedules:export' schedule.id %}?type=sap_staff">
+                    <i class="fas fa-user-tie text-primary me-2"></i>ملف الموظفين فقط (SAP)
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" href="{% url 'schedules:export' schedule.id %}?type=sap_labor">
+                    <i class="fas fa-hard-hat text-warning me-2"></i>ملف العمالة فقط (SAP)
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" href="{% url 'schedules:export' schedule.id %}?type=sap">
+                    <i class="fas fa-users text-success me-2"></i>الملف الشامل (SAP)
+                </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li><h6 class="dropdown-header text-muted"><i class="fas fa-table me-1"></i>تصدير تفصيلي عادي</h6></li>
+            <li>
+                <a class="dropdown-item" href="{% url 'schedules:export' schedule.id %}?type=standard">
+                    <i class="fas fa-file-alt text-secondary me-2"></i>جدول الورديات التفصيلي
+                </a>
+            </li>
+        </ul>
+    </div>
     <a href="{% url 'schedules:list' %}" class="btn btn-outline-secondary">
         <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
     </a>
@@ -312,11 +340,8 @@
                         <td class="text-center">
                             <div class="d-flex flex-column align-items-center">
                                 {% if entries %}
-                                    {% with total_shift_hours=0 %}
-                                        {% for entry in entries %}
-                                            {% with total_shift_hours=total_shift_hours|add:entry.hours %}{% endwith %}
-                                        {% endfor %}
-                                        {% if total_shift_hours >= 8 %}
+                                    {% with total_shift_hours=entries|sum_entries_hours op_stats=branch_operating_stats|get_item:date_str %}
+                                        {% if op_stats and total_shift_hours >= op_stats.operating_hours %}
                                         <span class="badge bg-success fs-6">
                                             <i class="fas fa-check me-1"></i>مغطى
                                         </span>
@@ -389,23 +414,47 @@
                 <div class="employee-summary-card">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <div class="employee-name">{{ emp_data.employee.get_full_name|default:emp_data.employee.username }}</div>
-                            <div class="employee-hours">{{ emp_data.employee.profile.get_role_display|default:"موظف" }} • {{ emp_data.hours_per_day }} ساعة/يوم</div>
+                            <div class="employee-name">
+                                {{ emp_data.employee.get_full_name|default:emp_data.employee.username }}
+                                {% if emp_data.is_laborer %}<span class="badge bg-secondary ms-1">عمالة</span>{% endif %}
+                            </div>
+                            <div class="employee-hours">
+                                {{ emp_data.employee.profile.get_role_display|default:"موظف" }} • 
+                                {% if emp_data.is_laborer %}
+                                عمالة مساندة
+                                {% elif emp_data.hours_per_day == 85 %}
+                                8س + 5س جمعة (45س/أسبوع)
+                                {% else %}
+                                {{ emp_data.hours_per_day }} ساعة/يوم
+                                {% endif %}
+                            </div>
                         </div>
-                        {% widthratio emp_data.total_hours emp_data.required_hours 100 as percentage %}
-                        {% if percentage >= 100 %}
-                        <span class="badge bg-success">{{ percentage }}%</span>
-                        {% elif percentage >= 50 %}
-                        <span class="badge bg-warning">{{ percentage }}%</span>
+                        {% if emp_data.is_laborer %}
+                        <span class="badge bg-secondary">عمالة</span>
                         {% else %}
-                        <span class="badge bg-danger">{{ percentage }}%</span>
+                            {% widthratio emp_data.total_hours emp_data.required_hours 100 as percentage %}
+                            {% if percentage >= 100 %}
+                            <span class="badge bg-success">{{ percentage }}%</span>
+                            {% elif percentage >= 50 %}
+                            <span class="badge bg-warning">{{ percentage }}%</span>
+                            {% else %}
+                            <span class="badge bg-danger">{{ percentage }}%</span>
+                            {% endif %}
                         {% endif %}
                     </div>
                     <div class="hours-progress">
+                        {% if emp_data.is_laborer %}
+                        <div class="hours-progress-bar bg-secondary" style="width: 100%"></div>
+                        {% else %}
                         <div class="hours-progress-bar" style="width: {% widthratio emp_data.total_hours emp_data.required_hours 100 %}%"></div>
+                        {% endif %}
                     </div>
                     <div class="mt-2 text-center">
+                        {% if emp_data.is_laborer %}
+                        <small class="text-muted">{{ emp_data.total_hours|floatformat:0 }} ساعة عمل فعلية (لا تحتسب في عجز التغطية)</small>
+                        {% else %}
                         <small class="text-muted">{{ emp_data.total_hours|floatformat:0 }}/{{ emp_data.required_hours|floatformat:0 }} ساعة مخصصة</small>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -450,9 +499,9 @@
                     </div>
                 </div>
                 <div class="mt-3">
-                    <div class="progress" style="height: 20px;">
-                        <div class="progress-bar bg-gradient-success" role="progressbar" style="width: {{ stats.coverage_percentage }}%">
-                            <span class="fw-bold">{{ stats.coverage_percentage|floatformat:0 }}%</span>
+                    <div class="progress" style="height: 22px;">
+                        <div class="progress-bar {% if stats.coverage_percentage >= 100 %}bg-success{% elif stats.coverage_percentage >= 80 %}bg-warning text-dark{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ stats.coverage_percentage }}%">
+                            <span class="fw-bold">{{ stats.coverage_percentage|floatformat:1 }}%</span>
                         </div>
                     </div>
                 </div>
@@ -460,13 +509,23 @@
         </div>
     </div>
     <div class="col-md-6">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-gradient-warning text-white">
+        <div class="card border-{% if stats.deficit > 0 %}danger{% else %}0{% endif %} shadow-sm h-100">
+            <div class="card-header {% if stats.deficit > 0 %}bg-danger{% else %}bg-gradient-warning{% endif %} text-white">
                 <h6 class="mb-0">
-                    <i class="fas fa-exclamation-triangle me-2"></i>ملخص الجدول
+                    <i class="fas fa-{% if stats.deficit > 0 %}exclamation-circle{% else %}exclamation-triangle{% endif %} me-2"></i>ملخص الجدول
                 </h6>
             </div>
             <div class="card-body">
+                {% if stats.deficit > 0 %}
+                <div class="alert alert-danger d-flex align-items-center mb-3 shadow-sm border-danger border-2 p-3 rounded-3">
+                    <i class="fas fa-exclamation-triangle fa-2x text-danger me-3"></i>
+                    <div>
+                        <div class="fw-bold text-danger fs-6">تنبيه: يوجد عجز في ساعات التغطية!</div>
+                        <div class="text-danger">إجمالي الساعات الناقصة: <strong>{{ stats.deficit|floatformat:1 }} ساعة</strong> (نسبة التغطية {{ stats.coverage_percentage|floatformat:1 }}%)</div>
+                    </div>
+                </div>
+                {% endif %}
+
                 {% if schedule.status == 'approved' or schedule.status == 'active' %}
                 <div class="d-flex align-items-center text-success mb-2">
                     <i class="fas fa-check-circle me-2"></i>
@@ -494,10 +553,22 @@
                     <span>إجمالي الساعات: {{ stats.total_hours|floatformat:0 }} ساعة</span>
                 </div>
                 
+                {% if stats.deficit > 0 %}
+                <div class="d-flex align-items-center justify-content-between p-2 rounded-3 bg-danger bg-opacity-10 border border-danger text-danger mb-2">
+                    <div class="fw-bold">
+                        <i class="fas fa-chart-pie me-2 text-danger"></i>
+                        <span>نسبة التغطية:</span>
+                    </div>
+                    <div>
+                        <span class="badge bg-danger fs-6 px-2 py-1">{{ stats.coverage_percentage|floatformat:1 }}% (عجز {{ stats.deficit|floatformat:0 }}س)</span>
+                    </div>
+                </div>
+                {% else %}
                 <div class="d-flex align-items-center text-primary mb-2">
                     <i class="fas fa-calendar-check me-2"></i>
                     <span>التغطية: {{ stats.coverage_percentage|floatformat:1 }}%</span>
                 </div>
+                {% endif %}
                 
                 <div class="d-flex align-items-center text-info mb-2">
                     <i class="fas fa-clock me-2"></i>
@@ -508,13 +579,6 @@
                     <i class="fas fa-chart-line me-2"></i>
                     <span>الساعات الفعلية: {{ stats.total_hours|floatformat:0 }} ساعة</span>
                 </div>
-                
-                {% if stats.deficit > 0 %}
-                <div class="d-flex align-items-center text-danger mb-2 fw-bold">
-                    <i class="fas fa-exclamation-circle me-2"></i>
-                    <span>العجز: {{ stats.deficit|floatformat:1 }} ساعة ناقصة</span>
-                </div>
-                {% endif %}
                 
                 {% if stats.surplus > 0 %}
                 <div class="d-flex align-items-center text-primary mb-2">
@@ -543,6 +607,48 @@
         </div>
     </div>
 </div>
+
+{% if branch_leaves %}
+<!-- Approved Leaves During Schedule Period -->
+<div class="card border-warning shadow-sm mb-4">
+    <div class="card-header bg-warning text-dark">
+        <h6 class="mb-0">
+            <i class="fas fa-umbrella-beach me-2"></i>الإجازات المعتمدة لموظفي الفرع خلال فترة الجدول
+        </h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th>الموظف</th>
+                        <th>نوع الإجازة</th>
+                        <th>من تاريخ</th>
+                        <th>إلى تاريخ</th>
+                        <th>عدد الأيام</th>
+                        <th>السبب / ملاحظات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for leave in branch_leaves %}
+                    <tr>
+                        <td class="fw-bold">
+                            <i class="fas fa-user-circle text-primary me-1"></i>
+                            {{ leave.employee.get_full_name|default:leave.employee.username }}
+                        </td>
+                        <td><span class="badge bg-warning text-dark">{{ leave.get_leave_type_display }}</span></td>
+                        <td>{{ leave.start_date|date:"Y-m-d" }}</td>
+                        <td>{{ leave.end_date|date:"Y-m-d" }}</td>
+                        <td>{{ leave.days_count }} أيام</td>
+                        <td>{{ leave.reason|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}

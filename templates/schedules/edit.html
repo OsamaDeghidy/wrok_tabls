@@ -161,6 +161,29 @@
                 </div>
             </div>
             <div class="card-body">
+                <!-- Employee Category Filter Bar -->
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 p-2 bg-light rounded-3 gap-2 border">
+                    <div class="btn-group" role="group" aria-label="Employee Filter">
+                        <button type="button" class="btn btn-primary" id="edit-filter-all" onclick="filterEditEmployees('all')">
+                            <i class="fas fa-users me-1"></i>جميع الكادر (<span id="edit-count-all">0</span>)
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" id="edit-filter-staff" onclick="filterEditEmployees('staff')">
+                            <i class="fas fa-user-tie me-1"></i>الموظفين فقط (<span id="edit-count-staff">0</span>)
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" id="edit-filter-labor" onclick="filterEditEmployees('labor')">
+                            <i class="fas fa-hard-hat me-1"></i>العمالة فقط (<span id="edit-count-labor">0</span>)
+                        </button>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-outline-success" onclick="selectAllEditEmployees()">
+                            <i class="fas fa-check-double me-1"></i>تحديد الكل في العرض
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="deselectAllEditEmployees()">
+                            <i class="fas fa-times me-1"></i>إلغاء التحديد
+                        </button>
+                    </div>
+                </div>
+
                 <div class="row" id="employees-container">
                     <!-- سيتم ملؤها بـ JavaScript -->
                 </div>
@@ -356,6 +379,7 @@
     let branchShifts = {{ branch_shifts|safe|default:"[]" }};
     let employeeLeaves = {};
     let employeesData = []; 
+    let currentEditEmployeeFilter = 'all'; 
 
     // تهيئة البيانات من السيرفر
     function initializeData() {
@@ -459,6 +483,119 @@
         }
     }
 
+    function isLaborerEmployee(emp) {
+        return emp.is_laborer === true || (emp.username && emp.username.toString().startsWith('98979'));
+    }
+
+    function filterEditEmployees(filterType) {
+        currentEditEmployeeFilter = filterType;
+        ['all', 'staff', 'labor'].forEach(t => {
+            const btn = document.getElementById(`edit-filter-${t}`);
+            if (btn) {
+                if (t === filterType) {
+                    btn.classList.add('active', 'btn-primary');
+                    btn.classList.remove('btn-outline-primary');
+                } else {
+                    btn.classList.remove('active', 'btn-primary');
+                    btn.classList.add('btn-outline-primary');
+                }
+            }
+        });
+        renderEditEmployees();
+    }
+
+    function selectAllEditEmployees() {
+        const visibleEmployees = getFilteredEditEmployees();
+        visibleEmployees.forEach(emp => {
+            if (!selectedEmployees.includes(emp.id)) {
+                selectedEmployees.push(emp.id);
+            }
+        });
+        renderEditEmployees();
+        updateSelectedCount();
+        saveScheduleDataToStorage();
+    }
+
+    function deselectAllEditEmployees() {
+        const visibleEmployees = getFilteredEditEmployees();
+        const visibleIds = visibleEmployees.map(e => e.id);
+        selectedEmployees = selectedEmployees.filter(id => !visibleIds.includes(id));
+        renderEditEmployees();
+        updateSelectedCount();
+        saveScheduleDataToStorage();
+    }
+
+    function getFilteredEditEmployees() {
+        if (!employeesData || employeesData.length === 0) return [];
+        if (currentEditEmployeeFilter === 'staff') {
+            return employeesData.filter(e => !isLaborerEmployee(e));
+        } else if (currentEditEmployeeFilter === 'labor') {
+            return employeesData.filter(e => isLaborerEmployee(e));
+        }
+        return employeesData;
+    }
+
+    function renderEditEmployees() {
+        const container = document.getElementById('employees-container');
+        if (!container) return;
+        container.innerHTML = '';
+
+        if (!employeesData || employeesData.length === 0) {
+            container.innerHTML = `
+            <div class="col-12 text-center py-3 text-muted">
+                <i class="fas fa-exclamation-circle me-1"></i>لا يوجد موظفين في هذا الفرع
+            </div>`;
+            return;
+        }
+
+        const laborCount = employeesData.filter(isLaborerEmployee).length;
+        const staffCount = employeesData.length - laborCount;
+
+        const countAllEl = document.getElementById('edit-count-all');
+        const countStaffEl = document.getElementById('edit-count-staff');
+        const countLaborEl = document.getElementById('edit-count-labor');
+
+        if (countAllEl) countAllEl.textContent = employeesData.length;
+        if (countStaffEl) countStaffEl.textContent = staffCount;
+        if (countLaborEl) countLaborEl.textContent = laborCount;
+
+        const filteredList = getFilteredEditEmployees();
+
+        if (filteredList.length === 0) {
+            container.innerHTML = `
+            <div class="col-12 text-center py-3 text-info">
+                <i class="fas fa-info-circle me-1"></i>لا توجد عناصر مطابقة لهذا التصنيف (${currentEditEmployeeFilter === 'staff' ? 'موظفين' : 'عمالة'})
+            </div>`;
+            return;
+        }
+
+        filteredList.forEach(employee => {
+            const isSelected = selectedEmployees.includes(employee.id);
+            const isLabor = isLaborerEmployee(employee);
+            const employeeCard = document.createElement('div');
+            employeeCard.className = 'col-md-4 mb-3';
+            employeeCard.innerHTML = `
+            <div class="card employee-card ${isSelected ? 'selected' : ''}" onclick="toggleEmployee(${employee.id}, this)">
+                <div class="card-body text-center">
+                    <div class="avatar-circle mb-2">
+                        <i class="fas ${isLabor ? 'fa-hard-hat text-warning' : 'fa-user text-primary'} fa-2x"></i>
+                    </div>
+                    <h6 class="card-title mb-1">
+                        ${employee.full_name || employee.username}
+                        ${isLabor ? '<span class="badge bg-secondary ms-1">عمالة</span>' : ''}
+                    </h6>
+                    <small class="text-muted d-block">${employee.role_display || 'موظف'}</small>
+                    <div class="mt-2">
+                        <span class="badge bg-info">${employee.hours_per_day == 85 ? '8س + 5س جمعة' : (employee.hours_per_day + ' ساعة/يوم')}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+            container.appendChild(employeeCard);
+        });
+        updateSelectedCount();
+    }
+
     function loadEmployees() {
         const branchId = selectedBranch;
         if (!branchId) return;
@@ -472,43 +609,20 @@
             .then(response => response.json())
             .then(data => {
                 employeesData = data.employees || [];
-                const container = document.getElementById('employees-container');
-                container.innerHTML = '';
-
-                employeesData.forEach(employee => {
-                    const isSelected = selectedEmployees.includes(employee.id);
-                    const employeeCard = document.createElement('div');
-                    employeeCard.className = 'col-md-4 mb-3';
-                    employeeCard.innerHTML = `
-                    <div class="card employee-card ${isSelected ? 'selected' : ''}" onclick="toggleEmployee(${employee.id})">
-                        <div class="card-body text-center">
-                            <div class="avatar-circle mb-2">
-                                <i class="fas fa-user fa-2x"></i>
-                            </div>
-                            <h6 class="card-title">${employee.full_name}</h6>
-                            <small class="text-muted">${employee.role_display}</small>
-                            <div class="mt-2">
-                                <span class="badge bg-info">${employee.hours_per_day} ساعة/يوم</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                    container.appendChild(employeeCard);
-                });
-                updateSelectedCount();
+                renderEditEmployees();
                 checkLeaveConflicts();
             });
     }
 
-    function toggleEmployee(employeeId) {
-        const card = event.currentTarget;
+    function toggleEmployee(employeeId, element) {
+        const card = element || event.currentTarget;
         const index = selectedEmployees.indexOf(employeeId);
         if (index > -1) {
             selectedEmployees.splice(index, 1);
-            card.classList.remove('selected');
+            if (card) card.classList.remove('selected');
         } else {
             selectedEmployees.push(employeeId);
-            card.classList.add('selected');
+            if (card) card.classList.add('selected');
         }
         saveScheduleDataToStorage();
         updateSelectedCount();

@@ -162,10 +162,16 @@ class UserProfileForm(forms.ModelForm):
                     initial=profile.job_id,
                     widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': True})
                 ),
+                'is_laborer': forms.BooleanField(
+                    required=False,
+                    label='عمالة (لا تحتسب في عجز التغطية)',
+                    initial=getattr(profile, 'is_laborer', False),
+                    widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+                ),
                 'work_hours': forms.ChoiceField(
                     choices=UserProfile.WORK_HOURS_CHOICES,
                     required=True,
-                    label='عدد ساعات العمل',
+                    label='نظام ساعات العمل',
                     initial=profile.work_hours,
                     widget=forms.Select(attrs={'class': 'form-control'})
                 ),
@@ -263,6 +269,7 @@ class UserProfileForm(forms.ModelForm):
                 profile = user.profile
                 profile.phone = self.cleaned_data.get('phone', '')
                 profile.role = self.cleaned_data.get('role', 'employee')
+                profile.is_laborer = self.cleaned_data.get('is_laborer', False)
                 profile.work_hours = self.cleaned_data.get('work_hours', 8)
                 profile.status = self.cleaned_data.get('status', 'active')
                 profile.position = self.cleaned_data.get('position', '')
@@ -275,7 +282,6 @@ class UserProfileForm(forms.ModelForm):
                 profile.notes = self.cleaned_data.get('notes', '')
                 profile.branch = self.cleaned_data.get('branch')
                 role = self.cleaned_data.get('role', profile.role)
-                profile.region = self.cleaned_data.get('region') if role == 'region_manager' else ''
                 profile.save()
         
         return user

@@ -19,8 +19,9 @@ class UserProfile(models.Model):
     ]
     
     WORK_HOURS_CHOICES = [
-        (8, '8 ساعات (6 أيام عمل)'),
-        (9, '9 ساعات (5 أيام عمل)'),
+        (8, '8 ساعات (يوم واحد راحة - 48 ساعة أسبوعياً)'),
+        (9, '9 ساعات (يومان راحة - 45 ساعة أسبوعياً)'),
+        (85, '8 ساعات عمل و5 ساعات يوم الجمعة (يوم واحد راحة - 45 ساعة أسبوعياً)'),
     ]
     
     STATUS_CHOICES = [
@@ -81,10 +82,15 @@ class UserProfile(models.Model):
         help_text='سيتم إنشاؤه تلقائياً إذا لم يتم تحديده'
     )
     
+    is_laborer = models.BooleanField(
+        default=False,
+        verbose_name='عمالة (لا تحتسب في عجز التغطية)'
+    )
+    
     work_hours = models.PositiveIntegerField(
         choices=WORK_HOURS_CHOICES, 
         default=8, 
-        verbose_name='عدد ساعات العمل'
+        verbose_name='نظام ساعات العمل'
     )
     
     work_days = models.PositiveIntegerField(
@@ -183,17 +189,20 @@ class UserProfile(models.Model):
         return f"{self.user.get_full_name()} - {self.get_role_display()}"
     
     def save(self, *args, **kwargs):
+        # تحديد ما إذا كان عامل خارجي
+        if self.user and self.user.username and self.user.username.startswith('98979'):
+            self.is_laborer = True
+            
+        # حساب عدد أيام العمل بناءً على ساعات العمل
+        if self.work_hours == 9:
+            self.work_days = 5   # 5 أيام عمل (يومان راحة)
+        elif self.work_hours == 85:
+            self.work_days = 6   # 6 أيام عمل (8 ساعات + 5 ساعات جمعة)
+        else:
+            self.work_days = 6   # 6 أيام عمل (يوم واحد راحة)
+            
         # إنشاء الرقم الوظيفي تلقائياً إذا لم يتم تحديده
         if not self.job_id:
-            # إذا كان رقم الموظف يبدأ بـ 98979 (عامل خارجي)
-            if self.user.username.startswith('98979'):
-                self.work_hours = 9  # العامل الخارجي يعمل 9 ساعات
-                self.work_days = 5   # 5 أيام عمل
-            else:
-                # حساب عدد أيام العمل بناءً على ساعات العمل
-                self.work_days = 6 if self.work_hours == 8 else 5
-            
-            # إنشاء الرقم الوظيفي
             last_profile = UserProfile.objects.order_by('-id').first()
             if last_profile and last_profile.job_id:
                 try:

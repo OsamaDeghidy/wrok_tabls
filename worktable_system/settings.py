@@ -158,6 +158,14 @@ REST_FRAMEWORK = {
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
+# CSRF Trusted Origins (needed for POST requests via specific IPs or domains)
+CSRF_TRUSTED_ORIGINS = [
+    'http://64.227.108.135',
+    'https://64.227.108.135',
+    'http://localhost',
+    'http://127.0.0.1',
+]
+
 # Cache (dummy cache for development)
 CACHES = {
     'default': {

@@ -31,3 +31,20 @@ def safe_decimal(value):
         return f"{float_value:.1f}"
     except (ValueError, TypeError):
         return "0.0"
+
+@register.filter
+def sum_entries_hours(entries):
+    """حساب إجمالي الساعات لقائمة من الإدخالات"""
+    if not entries:
+        return 0
+    try:
+        return sum(float(entry.hours) for entry in entries)
+    except (ValueError, TypeError, AttributeError):
+        return 0
+
+@register.filter
+def get_item(dictionary, key):
+    """الحصول على قيمة من قاموس باستخدام المفتاح"""
+    if dictionary is None:
+        return None
+    return dictionary.get(key)

@@ -68,8 +68,9 @@ def employees_api(request):
                     'role': profile.role,
                     'role_display': profile.get_role_display(),
                     'position': getattr(profile, 'position', 'موظف'),
+                    'is_laborer': getattr(profile, 'is_laborer', False),
                     'hours_per_day': getattr(profile, 'work_hours', 8),
-                    'work_days': getattr(profile, 'work_days', 6 if getattr(profile, 'work_hours', 8) == 8 else 5),
+                    'work_days': getattr(profile, 'work_days', 6 if getattr(profile, 'work_hours', 8) in [8, 85] else 5),
                     'phone': getattr(profile, 'phone', ''),
                     'email': employee.email,
                 })

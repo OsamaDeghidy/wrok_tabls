@@ -166,38 +166,69 @@ class Schedule(models.Model):
         return 0
     
     def calculate_required_hours(self):
-        """حساب الساعات المطلوبة للتغطية بناءً على عدد الموظفين المستهدفين وأيام العمل"""
-        # حساب عدد الأيام
-        days_count = self.get_duration_days()
+        """حساب الساعات المطلوبة للتغطية بناءً على عدد الموظفين المستهدفين وأنظمة عملهم"""
+        from datetime import timedelta
         
         # الموظفين المدرجين في الجدول
         unique_employees = self.entries.values_list('employee', flat=True).distinct()
         unique_count = unique_employees.count()
         
         if unique_count > 0:
-            # إذا تم إضافة موظفين، نحسب بناءً على ساعات عملهم المطلوبة (افتراضيا 8)
             from django.contrib.auth.models import User
             users = User.objects.filter(id__in=unique_employees).select_related('profile')
             
             total_required = 0
             for user in users:
-                if hasattr(user, 'profile'):
-                    total_required += user.profile.work_hours * days_count
-                else:
-                    total_required += 8 * days_count
+                profile = getattr(user, 'profile', None)
+                if not profile or getattr(profile, 'is_laborer', False):
+                    continue  # استبعاد العمالة من ساعات التغطية والعجز
+                
+                work_hours = getattr(profile, 'work_hours', 8)
+                
+                current_date = self.start_date
+                while current_date <= self.end_date:
+                    weekday = current_date.weekday()  # 0: Mon, 1: Tue, 2: Wed, 3: Thu, 4: Fri, 5: Sat, 6: Sun
+                    if work_hours == 9:
+                        if weekday not in [4, 5]:  # استبعاد يومين راحة (الجمعة والسبت)
+                            total_required += 9
+                    elif work_hours == 85:
+                        if weekday == 4:  # دوام الجمعة 5 ساعات
+                            total_required += 5
+                        elif weekday != 2:  # استبعاد يوم راحة (الأربعاء) وباقي الأيام 8 ساعات
+                            total_required += 8
+                    else:  # نظام 8 ساعات (6 أيام عمل)
+                        if weekday != 4:  # استبعاد يوم راحة واحد (الجمعة)
+                            total_required += 8
+                    current_date += timedelta(days=1)
+                
             return total_required
         else:
-            # إذا لم يتم تعيين موظفين، نعتمد على عدد الموظفين النشطين في الفرع كمؤشر مستهدف
             from apps.users.models import UserProfile
-            branch_employees = UserProfile.objects.filter(branch=self.branch, status='active')
+            branch_employees = UserProfile.objects.filter(branch=self.branch, status='active', is_laborer=False)
             
             if branch_employees.exists():
                 total_required = 0
                 for emp in branch_employees:
-                    total_required += emp.work_hours * days_count
+                    work_hours = getattr(emp, 'work_hours', 8)
+                    
+                    current_date = self.start_date
+                    while current_date <= self.end_date:
+                        weekday = current_date.weekday()
+                        if work_hours == 9:
+                            if weekday not in [4, 5]:
+                                total_required += 9
+                        elif work_hours == 85:
+                            if weekday == 4:
+                                total_required += 5
+                        elif weekday != 2:
+                            total_required += 8
+                        else:
+                            if weekday != 4:
+                                total_required += 8
+                        current_date += timedelta(days=1)
+                        
                 return total_required
                 
-            # إذا لم يوجد موظفين نشطين، نعيد 0
             return 0
     
     def clean(self):

@@ -202,7 +202,16 @@ class ApprovalFlow(models.Model):
             return
             
         if self.status == 'approved':
+            old_status = getattr(obj, 'status', None)
             obj.status = 'approved'
+            obj.save()
+            if self.content_type.model == 'schedule' and old_status != 'approved':
+                try:
+                    from apps.schedules.utils import send_schedule_approval_emails
+                    send_schedule_approval_emails(obj)
+                except Exception as e:
+                    pass
+            return
         elif self.status == 'rejected':
             obj.status = 'rejected'
         elif self.status == 'cancelled':

@@ -223,15 +223,37 @@ def schedule_detail_view(request, schedule_id):
     for entry in entries:
         employee = entry.employee
         if employee.id not in employee_stats:
-            required_hours_per_day = getattr(employee.profile, 'hours_per_day', 8)
-            total_days = schedule.get_duration_days()
-            required_hours = required_hours_per_day * total_days
+            profile = getattr(employee, 'profile', None)
+            is_laborer = getattr(profile, 'is_laborer', False) if profile else False
+            work_hours = getattr(profile, 'work_hours', 8) if profile else 8
+            
+            if is_laborer:
+                required_hours = 0
+            else:
+                required_hours = 0
+                current_date = schedule.start_date
+                from datetime import timedelta
+                while current_date <= schedule.end_date:
+                    weekday = current_date.weekday()
+                    if work_hours == 9:
+                        if weekday not in [4, 5]:
+                            required_hours += 9
+                    elif work_hours == 85:
+                        if weekday == 4:
+                            required_hours += 5
+                        elif weekday != 2:
+                            required_hours += 8
+                    else:
+                        if weekday != 4:
+                            required_hours += 8
+                    current_date += timedelta(days=1)
             
             employee_stats[employee.id] = {
                 'employee': employee,
                 'total_hours': 0,
                 'required_hours': required_hours,
-                'hours_per_day': required_hours_per_day,
+                'hours_per_day': work_hours,
+                'is_laborer': is_laborer,
                 'days_count': 0,
                 'entries': []
             }
@@ -239,24 +261,30 @@ def schedule_detail_view(request, schedule_id):
         employee_stats[employee.id]['days_count'] += 1
         employee_stats[employee.id]['entries'].append(entry)
     
-    # حساب الإحصائيات العامة
+    # حساب الإحصائيات العامة (باستثناء ساعات العمالة من متطلبات التغطية والعجز)
     total_hours = sum(stats['total_hours'] for stats in employee_stats.values())
+    regular_total_hours = sum(stats['total_hours'] for stats in employee_stats.values() if not stats.get('is_laborer'))
     required_hours = schedule.calculate_required_hours()
     
     if required_hours == 0 or total_hours == 0:
         coverage_percentage = schedule.get_coverage_percentage_alternative()
     else:
-        coverage_percentage = schedule.get_coverage_percentage()
+        # نسبة التغطية تعتمد على ساعات الموظفين الأساسيين مقارنة بالمطلوب
+        coverage_percentage = min(100.0, (regular_total_hours / required_hours) * 100) if required_hours > 0 else 100.0
+    
+    deficit = max(0.0, float(required_hours) - float(regular_total_hours))
+    surplus = max(0.0, float(regular_total_hours) - float(required_hours))
     
     stats = {
         'total_entries': entries.count(),
         'unique_employees': len(employee_stats),
         'total_hours': total_hours,
+        'regular_total_hours': regular_total_hours,
         'coverage_percentage': coverage_percentage,
         'required_hours': required_hours,
         'duration_days': schedule.get_duration_days(),
-        'deficit': max(0, required_hours - total_hours),
-        'surplus': max(0, total_hours - required_hours),
+        'deficit': deficit,
+        'surplus': surplus,
     }
     
     # حساب إحصائيات عمل الفرع يومياً
@@ -290,12 +318,21 @@ def schedule_detail_view(request, schedule_id):
         else:
             branch_operating_stats[date_str] = None
 
+    from apps.leaves.models import LeaveRequest
+    branch_leaves = LeaveRequest.objects.filter(
+        employee__profile__branch=schedule.branch,
+        status='approved',
+        start_date__lte=schedule.end_date,
+        end_date__gte=schedule.start_date
+    ).select_related('employee')
+
     context = {
         'schedule': schedule,
         'entries_by_date': entries_by_date,
         'employee_stats': employee_stats,
         'stats': stats,
         'branch_operating_stats': branch_operating_stats,
+        'branch_leaves': branch_leaves,
     }
     
     return render(request, 'schedules/detail.html', context)
@@ -477,6 +514,9 @@ def schedule_approve_view(request, schedule_id):
     if next_status:
         schedule.status = next_status
         schedule.save()
+        if next_status == 'approved':
+            from apps.schedules.utils import send_schedule_approval_emails
+            send_schedule_approval_emails(schedule)
         messages.success(request, f'تم اعتماد الجدول التشغيلي بنجاح')
     else:
         messages.error(request, 'لا يمكنك اعتماد هذا الجدول في الوقت الحالي')
@@ -756,9 +796,10 @@ def schedule_analytics_view(request, schedule_id):
 
 @login_required
 def schedule_export_view(request, schedule_id):
-    """تصدير الجدول التشغيلي إلى Excel"""
+    """تصدير الجدول التشغيلي إلى Excel (عادي أو ساب SAP)"""
     import pandas as pd
     from django.http import HttpResponse
+    from collections import Counter
     
     schedule = get_object_or_404(Schedule, id=schedule_id)
     
@@ -772,16 +813,131 @@ def schedule_export_view(request, schedule_id):
             messages.error(request, 'ليس لديك صلاحية لتصدير هذا الجدول')
             return redirect('schedules:list')
             
+    export_type = request.GET.get('type', 'standard')
     entries = schedule.entries.select_related('employee__profile', 'shift').order_by('employee__first_name', 'date')
     
+    # تصدير ساب SAP (سواء شامل أو موظفين فقط أو عمالة فقط)
+    if export_type.startswith('sap'):
+        # تحديد الفئة المستهدفة
+        if export_type == 'sap_staff':
+            # استبعاد العمالة
+            target_entries = [e for e in entries if not (getattr(e.employee.profile, 'is_laborer', False) or e.employee.username.startswith('98979'))]
+            filename_prefix = f"SAP_Staff_Schedule_{schedule.branch.name}_{schedule.start_date}"
+        elif export_type == 'sap_labor':
+            # العمالة فقط
+            target_entries = [e for e in entries if getattr(e.employee.profile, 'is_laborer', False) or e.employee.username.startswith('98979')]
+            filename_prefix = f"SAP_Labor_Schedule_{schedule.branch.name}_{schedule.start_date}"
+        else:
+            target_entries = list(entries)
+            filename_prefix = f"SAP_Full_Schedule_{schedule.branch.name}_{schedule.start_date}"
+
+        # الحصول على جميع الموظفين المرتبطين بالجدول
+        all_emp_ids = list(schedule.entries.values_list('employee_id', flat=True).distinct())
+        if not all_emp_ids:
+            # في حال عدم وجود إدخالات بعد، جلب موظفي الفرع
+            from apps.branches.models import Branch
+            all_emp_ids = list(User.objects.filter(profile__branch=schedule.branch).values_list('id', flat=True))
+
+        all_employees = User.objects.filter(id__in=all_emp_ids).select_related('profile').order_by('first_name', 'username')
+
+        # تصفية حسب الفئة
+        if export_type == 'sap_staff':
+            target_employees = [emp for emp in all_employees if not (getattr(emp.profile, 'is_laborer', False) or emp.username.startswith('98979'))]
+            filename_prefix = f"SAP_Staff_Schedule_{schedule.branch.name}_{schedule.start_date}"
+        elif export_type == 'sap_labor':
+            target_employees = [emp for emp in all_employees if getattr(emp.profile, 'is_laborer', False) or emp.username.startswith('98979')]
+            filename_prefix = f"SAP_Labor_Schedule_{schedule.branch.name}_{schedule.start_date}"
+        else:
+            target_employees = list(all_employees)
+            filename_prefix = f"SAP_Full_Schedule_{schedule.branch.name}_{schedule.start_date}"
+
+        day_abbr_map = {0: 'MON', 1: 'TUE', 2: 'WED', 3: 'THU', 4: 'FRI', 5: 'SAT', 6: 'SUN'}
+        sap_rows = []
+
+        # تصدير تفصيلي يومي كامل لجميع أيام الفترة لكل موظف
+        for employee in target_employees:
+            profile = getattr(employee, 'profile', None)
+            emp_no = profile.job_id if (profile and profile.job_id) else employee.username
+            emp_entries = [e for e in entries if e.employee_id == employee.id]
+
+            current_date = schedule.start_date
+            while current_date <= schedule.end_date:
+                date_str = current_date.strftime('%d.%m.%Y')
+                weekday = current_date.weekday()
+                day_code = day_abbr_map.get(weekday, 'MON')
+
+                day_entries = [e for e in emp_entries if e.date == current_date]
+
+                if day_entries:
+                    if len(day_entries) == 1:
+                        e = day_entries[0]
+                        in_time_1 = f"{e.start_time.hour}:{e.start_time.minute:02d}" if e.start_time else ""
+                        out_time_1 = f"{e.end_time.hour}:{e.end_time.minute:02d}" if e.end_time else ""
+                        in_time_2 = ""
+                        out_time_2 = ""
+                        end_nxt_dy = "X" if (e.start_time and e.end_time and e.end_time < e.start_time) else ""
+                    else:
+                        # شفت منقسم (أكثر من وردية في نفس اليوم)
+                        sorted_e = sorted(day_entries, key=lambda x: x.start_time or datetime.min.time())
+                        e1, e2 = sorted_e[0], sorted_e[1]
+                        in_time_1 = f"{e1.start_time.hour}:{e1.start_time.minute:02d}" if e1.start_time else ""
+                        out_time_1 = f"{e1.end_time.hour}:{e1.end_time.minute:02d}" if e1.end_time else ""
+                        in_time_2 = f"{e2.start_time.hour}:{e2.start_time.minute:02d}" if e2.start_time else ""
+                        out_time_2 = f"{e2.end_time.hour}:{e2.end_time.minute:02d}" if e2.end_time else ""
+                        end_nxt_dy = "X" if (e2.start_time and e2.end_time and e2.end_time < e2.start_time) else ""
+
+                    rst_day = ""
+                    rst_day_2 = ""
+                else:
+                    # يوم راحة للموظف (Rest Day)
+                    in_time_1 = ""
+                    out_time_1 = ""
+                    in_time_2 = ""
+                    out_time_2 = ""
+                    end_nxt_dy = ""
+                    rst_day = day_code
+                    rst_day_2 = ""
+
+                sap_rows.append({
+                    'Emp No': emp_no,
+                    'Start Dt': date_str,
+                    'End Dt': date_str,
+                    'In Time 1': in_time_1,
+                    'Out Time1': out_time_1,
+                    'In Time 2': in_time_2,
+                    'Out Time2': out_time_2,
+                    'Rst Day': rst_day,
+                    'End Nxt Dy': end_nxt_dy,
+                    'Rst Day 2': rst_day_2,
+                    'REST DAY3': "",
+                })
+
+                current_date += timedelta(days=1)
+
+        df = pd.DataFrame(sap_rows, columns=[
+            'Emp No', 'Start Dt', 'End Dt', 'In Time 1', 'Out Time1',
+            'In Time 2', 'Out Time2', 'Rst Day', 'End Nxt Dy', 'Rst Day 2', 'REST DAY3'
+        ])
+
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = f'attachment; filename="{filename_prefix}.xlsx"'
+        
+        with pd.ExcelWriter(response, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='SAP_Schedule')
+            
+        return response
+
+    # التصدير العادي التفصيلي
     data = []
     for entry in entries:
         employee_name = entry.employee.get_full_name() or entry.employee.username
         job_id = entry.employee.profile.job_id if hasattr(entry.employee, 'profile') else ''
+        is_laborer = getattr(entry.employee.profile, 'is_laborer', False) if hasattr(entry.employee, 'profile') else False
         
         data.append({
             'الموظف': employee_name,
             'الرقم الوظيفي': job_id,
+            'الفئة': 'عمالة' if is_laborer else 'موظف',
             'التاريخ': entry.date.strftime('%Y-%m-%d'),
             'اليوم': entry.date.strftime('%A'),
             'الشفت': entry.shift.name if entry.shift else '-',
@@ -794,7 +950,7 @@ def schedule_export_view(request, schedule_id):
     df = pd.DataFrame(data)
     
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = f'attachment; filename="schedule_{schedule.id}.xlsx"'
+    response['Content-Disposition'] = f'attachment; filename="schedule_{schedule.id}_{schedule.branch.name}.xlsx"'
     
     with pd.ExcelWriter(response, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='الجدول التشغيلي')
